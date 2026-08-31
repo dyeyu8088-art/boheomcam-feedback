@@ -1,0 +1,23 @@
+{
+  "name": "@yanbian/admin-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5174 --host",
+    "build": "vue-tsc --noEmit && vite build",
+    "test": "echo admin-web: build is the test"
+  },
+  "dependencies": {
+    "echarts": "^5.5.1",
+    "element-plus": "^2.8.8",
+    "vue": "^3.5.13",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.0",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.11",
+    "vue-tsc": "^2.1.10"
+  }
+}
