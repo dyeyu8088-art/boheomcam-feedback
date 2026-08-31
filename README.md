@@ -56,6 +56,7 @@ node tests/e2e-smoke.mjs                   # 全栈 E2E 28 项（四游戏整局
 node tests/ui-smoke.mjs                    # 客户端浏览器冒烟 8 项（Playwright）
 node tests/admin-ui-smoke.mjs              # 后台浏览器冒烟 7 项（需 ADMIN_PASSWORD）
 node tests/lobby-shot.mjs                  # 大厅四分辨率截图回归（1920/2560/Android 横屏/手机竖屏）
+node tests/table-shot.mjs                  # 麻将/红十牌桌截图回归（1920×1080 / 960×540@2x）
 node tests/load-ws.mjs 500 0.1             # WS 负载（本机阶梯；生产压测见 docs/09）
 ```
 

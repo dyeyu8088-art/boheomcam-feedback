@@ -18,7 +18,7 @@
     </div>
 
     <template v-else>
-      <div class="table-bg" />
+      <TableSurface tone="wine" />
       <div class="hud-top">
         <button class="hback" @click="leaveToLobby()"><AppIcon name="back" :size="18" /></button>
         <div class="hinfo num">{{ t('room.round', { a: room?.currentRound ?? 1, b: room?.totalRounds ?? 4 }) }}</div>
@@ -41,18 +41,22 @@
           <div class="ocount num">×{{ p.handCount }}</div>
           <CountdownRing v-if="turnSeat === p.seat" :deadline="deadlineAt" />
         </div>
-        <div v-if="lastPlayOf(p.seat)" class="opp-play">
-          <PlayCard v-for="c in lastPlayOf(p.seat)!" :key="c" :card="c" size="sm" />
-        </div>
-        <div v-else-if="passedSeats.has(p.seat)" class="pass-tag">{{ t('hs.pass') }}</div>
       </div>
 
-      <!-- 中央出牌区（自己的上一手） -->
-      <div class="center-area">
-        <div v-if="lastPlayOf(mySeat)" class="my-play">
-          <PlayCard v-for="c in lastPlayOf(mySeat)!" :key="c" :card="c" size="sm" />
+      <!-- 中央出牌区：四家最近一手围绕中心底盘，视线不再被拉到桌角 -->
+      <div class="play-zone">
+        <div class="center-area">
+          <svg v-if="!anyPlay" class="plate-mark" viewBox="0 0 80 80">
+            <path d="M14 56 L30 30 L40 42 L52 22 L66 56 z" fill="#c9a063" opacity="0.09" />
+            <circle cx="52" cy="16" r="4.5" fill="#c9a063" opacity="0.09" />
+          </svg>
         </div>
-        <div v-else-if="passedSeats.has(mySeat)" class="pass-tag">{{ t('hs.pass') }}</div>
+        <div v-for="p in seatsRel" :key="p.seat" class="play-slot" :class="`ppos${p.pos}`">
+          <template v-if="lastPlayOf(p.seat)">
+            <PlayCard v-for="c in lastPlayOf(p.seat)!" :key="c" :card="c" size="sm" class="pcard" />
+          </template>
+          <span v-else-if="passedSeats.has(p.seat)" class="pass-tag">{{ t('hs.pass') }}</span>
+        </div>
       </div>
 
       <!-- 操作按钮 -->
@@ -120,6 +124,7 @@ import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
 import ModalSheet from '../../ui/ModalSheet.vue';
 import CountdownRing from '../CountdownRing.vue';
+import TableSurface from '../TableSurface.vue';
 import PlayCard from './PlayCard.vue';
 import { useGameRoom, relativePos } from '../useGameRoom.js';
 import AvatarBadge from '../../ui/AvatarBadge.vue';
@@ -150,6 +155,11 @@ const others = computed(() =>
     .map((p) => ({ ...p, pos: relativePos(p.seat, mySeat.value), handCount: handCounts.value.get(p.seat) ?? 13 })),
 );
 const myPlayer = computed(() => room.value?.players.find((p) => p.seat === mySeat.value));
+/** 四家（含自己）及其相对位：0=下(自己) 1=右 2=上 3=左 */
+const seatsRel = computed(() =>
+  (room.value?.players ?? []).map((p) => ({ seat: p.seat, pos: relativePos(p.seat, mySeat.value) })),
+);
+const anyPlay = computed(() => lastPlays.value.size > 0 || passedSeats.value.size > 0);
 const nameOf = (seat: number): string => room.value?.players.find((p) => p.seat === seat)?.nickname ?? `#${seat}`;
 const lastPlayOf = (seat: number): number[] | null => lastPlays.value.get(seat) ?? null;
 const identityOf = (seat: number): boolean | null => (identities.value.has(seat) ? identities.value.get(seat)! : null);
@@ -293,15 +303,8 @@ function cancelTrustee(): void {
   height: 100%;
   position: relative;
   overflow: hidden;
-  background: radial-gradient(120% 100% at 50% 45%, #2a1c2e 0%, #180f1e 55%, #100a14 100%);
-}
-.table-bg {
-  position: absolute;
-  inset: 6% 4%;
-  border-radius: 40px;
-  border: 2px solid rgba(201, 160, 99, 0.14);
-  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
+  /* 会所环境：牌桌之外的深色空间 */
+  background: radial-gradient(120% 100% at 50% 28%, #241019 0%, #170a11 48%, #0d050a 100%);
 }
 .overlay {
   position: absolute;
@@ -406,30 +409,45 @@ function cancelTrustee(): void {
   align-items: center;
 }
 .opp.pos2 {
-  top: calc(var(--safe-top) + 54px);
+  top: calc(var(--safe-top) + 60px);
   left: 50%;
   transform: translateX(-50%);
 }
 .opp.pos1 {
-  right: max(var(--safe-right), 12px);
-  top: 34%;
+  right: max(var(--safe-right), 4.5%);
+  top: 50%;
+  transform: translateY(-50%);
 }
 .opp.pos3 {
-  left: max(var(--safe-left), 12px);
-  top: 34%;
+  left: max(var(--safe-left), 4.5%);
+  top: 50%;
+  transform: translateY(-50%);
 }
 .opp-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(154, 163, 178, 0.15);
-  border-radius: 14px;
-  padding: 6px 10px;
+  gap: 9px;
+  background: linear-gradient(160deg, rgba(38, 16, 24, 0.9), rgba(16, 6, 11, 0.82));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(201, 160, 99, 0.18);
+  border-radius: 999px;
+  padding: 5px 15px 5px 5px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.1),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.34),
+    0 8px 20px rgba(0, 0, 0, 0.45);
+  transition:
+    border-color 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out);
 }
 .opp-head.active {
-  border-color: var(--gold-warm);
-  box-shadow: var(--shadow-glow-gold);
+  border-color: rgba(201, 160, 99, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.16),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.34),
+    0 8px 20px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(201, 160, 99, 0.34);
 }
 .opp-head.off {
   opacity: 0.55;
@@ -470,27 +488,91 @@ function cancelTrustee(): void {
   color: var(--gold-champagne);
   font-weight: 700;
 }
-.opp-play {
-  display: flex;
-  gap: 3px;
-}
 .pass-tag {
-  font-size: 12px;
-  color: var(--text-disabled);
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 8px;
-  padding: 3px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-secondary);
+  background: linear-gradient(160deg, rgba(38, 16, 24, 0.9), rgba(16, 6, 11, 0.85));
+  border: 1px solid rgba(201, 160, 99, 0.16);
+  border-radius: 10px;
+  padding: 5px 13px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.08),
+    0 6px 14px rgba(0, 0, 0, 0.4);
 }
+/* 出牌区总容器：四家出牌 + 中心底盘 */
+.play-zone {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  width: clamp(420px, 52vw, 760px);
+  height: clamp(300px, 46vh, 480px);
+}
+/* 中央底盘：牌桌中心的凹陷区，空手时也有明确视觉锚点 */
 .center-area {
   position: absolute;
   left: 50%;
-  top: 52%;
+  top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 3;
+  min-width: clamp(180px, 22vw, 320px);
+  min-height: clamp(96px, 13vh, 148px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  background: radial-gradient(70% 90% at 50% 34%, rgba(255, 232, 198, 0.06), rgba(0, 0, 0, 0.28) 74%);
+  border: 1px solid rgba(201, 160, 99, 0.16);
+  box-shadow:
+    inset 0 2px 12px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 rgba(255, 236, 200, 0.07);
 }
-.my-play {
+.center-area::after {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border-radius: 15px;
+  border: 1px solid rgba(201, 160, 99, 0.08);
+  pointer-events: none;
+}
+/* 中央纹章水印（无人出牌时） */
+.plate-mark {
+  width: 46%;
+  max-width: 96px;
+  opacity: 0.9;
+}
+/* 四家出牌槽：贴着中心底盘的四边 */
+.play-slot {
+  position: absolute;
   display: flex;
   gap: 3px;
+  align-items: center;
+  justify-content: center;
+}
+.play-slot .pcard:not(:first-child) {
+  margin-left: -14px;
+}
+.play-slot.ppos0 {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.play-slot.ppos2 {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.play-slot.ppos1 {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.play-slot.ppos3 {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 .hs-actions {
   position: absolute;
@@ -501,14 +583,23 @@ function cancelTrustee(): void {
   gap: 12px;
   z-index: 8;
 }
+/* 手牌托盘：与桌沿同材质的胡桃木条盘 */
 .my-hand {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(var(--safe-bottom) + 12px);
+  bottom: calc(var(--safe-bottom) + 10px);
   display: flex;
   z-index: 6;
   max-width: 96vw;
+  padding: 14px 20px 16px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(46, 27, 24, 0.94) 0%, rgba(28, 15, 14, 0.96) 52%, rgba(15, 7, 7, 0.97) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 200, 0.16),
+    inset 0 -12px 26px rgba(0, 0, 0, 0.55),
+    0 -6px 26px rgba(0, 0, 0, 0.45),
+    0 10px 30px rgba(0, 0, 0, 0.5);
 }
 .hcard {
   margin-left: calc(min(52px, 7vw) * -0.45);

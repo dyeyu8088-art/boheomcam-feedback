@@ -153,6 +153,8 @@ export const ko: Record<string, string> = {
   'mj.dianpao': '방총',
   'mj.liuju': '유국',
   'mj.wallLeft': '남은 패 {n}장',
+  'mj.wallUnit': '장',
+  'mj.seatWind': '자풍',
   'mj.dealer': '장',
   'mj.settle.title': '이번 판 정산',
   'mj.settle.next': '다음 판이 곧 시작됩니다…',

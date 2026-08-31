@@ -34,7 +34,7 @@
 
     <!-- 牌桌 -->
     <template v-else>
-      <div class="table-bg" />
+      <TableSurface tone="emerald" />
       <!-- 顶部信息 -->
       <div class="hud-top">
         <button class="hback" @click="leaveToLobby()"><AppIcon name="back" :size="18" /></button>
@@ -50,7 +50,9 @@
       <div v-for="p in others" :key="p.uid" class="opp" :class="`pos${p.pos}`">
         <div class="opp-head" :class="{ active: turnSeat === p.seat, off: !p.online }">
           <div class="oavatar"><AvatarBadge :id="p.avatarId" :size="30" /><span v-if="p.seat === dealerSeat" class="dealer">{{ t('mj.dealer') }}</span></div>
+          <span class="wind-badge">{{ windOfSeat(p.seat) }}</span>
           <div class="oname">{{ p.nickname }}</div>
+          <div class="ocount num">×{{ p.handCount }}</div>
           <div class="oscore num">{{ p.score }}</div>
           <CountdownRing v-if="turnSeat === p.seat" :deadline="deadlineAt" />
           <span v-if="p.trustee" class="tflag">{{ t('room.trustee') }}</span>
@@ -76,8 +78,39 @@
             :class="{ latest: lastDiscard && lastDiscard.seat === p.seat && i === p.discards.length - 1 }"
           />
         </div>
-        <div class="center-disc glass">
-          <div class="turn-arrow" :style="{ transform: `rotate(${arrowDeg}deg)` }">▲</div>
+        <!-- 中央罗盘：四门风 + 余牌数 + 当前出牌方指针 -->
+        <div class="center-disc">
+          <svg class="cmp" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="cmpGold" x1="0.1" y1="0" x2="0.7" y2="1">
+                <stop offset="0" stop-color="#f6e6bd" />
+                <stop offset="0.5" stop-color="#c9a063" />
+                <stop offset="1" stop-color="#7d5f2c" />
+              </linearGradient>
+              <radialGradient id="cmpPlate" cx="0.36" cy="0.28" r="0.85">
+                <stop offset="0" stop-color="#17422f" />
+                <stop offset="0.6" stop-color="#0c2a1e" />
+                <stop offset="1" stop-color="#061510" />
+              </radialGradient>
+            </defs>
+            <circle cx="60" cy="60" r="53" fill="url(#cmpPlate)" />
+            <circle cx="60" cy="60" r="53" fill="none" stroke="url(#cmpGold)" stroke-width="1.4" stroke-opacity="0.55" />
+            <circle cx="60" cy="60" r="46" fill="none" stroke="url(#cmpGold)" stroke-width="0.8" stroke-opacity="0.26" />
+            <!-- 朝鲜族菱格 -->
+            <path d="M60 24 L96 60 L60 96 L24 60 z" fill="none" stroke="url(#cmpGold)" stroke-width="0.9" stroke-opacity="0.24" />
+            <!-- 长白山双峰纹章 -->
+            <path d="M38 76 L52 54 L60 63 L70 46 L82 76 z" fill="url(#cmpGold)" opacity="0.16" />
+            <circle cx="70" cy="40" r="3.4" fill="url(#cmpGold)" opacity="0.2" />
+          </svg>
+          <span class="cmp-wind wn">{{ windAt(2) }}</span>
+          <span class="cmp-wind we">{{ windAt(1) }}</span>
+          <span class="cmp-wind ws">{{ windAt(0) }}</span>
+          <span class="cmp-wind ww">{{ windAt(3) }}</span>
+          <span class="cmp-left num">{{ wallLeft }}</span>
+          <span class="cmp-left-cap">{{ t('mj.wallUnit') }}</span>
+          <svg class="cmp-arrow" viewBox="0 0 120 120" :style="{ transform: `rotate(${arrowDeg}deg)` }">
+            <path d="M60 6 L67.5 22 L60 17.5 L52.5 22 z" fill="url(#cmpGold)" />
+          </svg>
         </div>
       </div>
 
@@ -85,6 +118,7 @@
       <div class="my-zone">
         <div class="my-head" :class="{ active: turnSeat === mySeat }">
           <div class="mavatar"><AvatarBadge :id="me?.avatarId ?? 1" :size="34" /><span v-if="mySeat === dealerSeat" class="dealer">{{ t('mj.dealer') }}</span></div>
+          <span class="wind-badge lg">{{ windOfSeat(mySeat) }}</span>
           <div class="mscore num">{{ myPlayer?.score ?? 0 }}</div>
           <CountdownRing v-if="turnSeat === mySeat" :deadline="deadlineAt" />
         </div>
@@ -193,6 +227,7 @@ import { toast } from '../../ui/toast.js';
 import ModalSheet from '../../ui/ModalSheet.vue';
 import CountdownRing from '../CountdownRing.vue';
 import MjTile from './MjTile.vue';
+import TableSurface from '../TableSurface.vue';
 import { useGameRoom, relativePos } from '../useGameRoom.js';
 import AvatarBadge from '../../ui/AvatarBadge.vue';
 import AppIcon from '../../ui/AppIcon.vue';
@@ -249,6 +284,18 @@ const handSorted = computed(() => {
 });
 const relPos = (seat: number): number => relativePos(seat, mySeat.value);
 const arrowDeg = computed(() => [180, 90, 0, 270][relPos(turnSeat.value)] ?? 0);
+
+/** 门风：庄家为東，逆时针 南→西→北 */
+const WINDS = ['東', '南', '西', '北'];
+function windOfSeat(seat: number): string {
+  if (dealerSeat.value < 0 || seat < 0) return '';
+  return WINDS[(seat - dealerSeat.value + 4) % 4] ?? '';
+}
+/** 罗盘四向：0=自己(下) 1=右 2=对(上) 3=左 */
+function windAt(pos: number): string {
+  const p = allPlayers.value.find((x) => relPos(x.seat) === pos);
+  return p ? windOfSeat(p.seat) : '';
+}
 const nameOf = (seat: number): string => room.value?.players.find((p) => p.seat === seat)?.nickname ?? `#${seat}`;
 const scoreOf = (seat: number): number => (roundResult.value?.scoreChanges?.[seat] as number) ?? 0;
 
@@ -486,17 +533,8 @@ function copyRoomNo(): void {
   height: 100%;
   position: relative;
   overflow: hidden;
-  background: radial-gradient(120% 100% at 50% 45%, #14351f 0%, #0c2114 55%, #071710 100%);
-}
-.table-bg {
-  position: absolute;
-  inset: 6% 4%;
-  border-radius: 40px;
-  border: 2px solid rgba(201, 160, 99, 0.15);
-  box-shadow:
-    inset 0 0 80px rgba(0, 0, 0, 0.5),
-    0 0 40px rgba(0, 0, 0, 0.4);
-  pointer-events: none;
+  /* 房间环境：牌桌之外的深色空间，让台面“浮”起来 */
+  background: radial-gradient(120% 100% at 50% 30%, #10261c 0%, #0a1a13 48%, #05100c 100%);
 }
 .overlay {
   position: absolute;
@@ -650,36 +688,75 @@ function copyRoomNo(): void {
   gap: 6px;
 }
 .opp.pos2 {
-  top: calc(var(--safe-top) + 52px);
+  top: calc(var(--safe-top) + 58px);
   left: 50%;
   transform: translateX(-50%);
   align-items: center;
 }
 .opp.pos1 {
-  right: max(var(--safe-right), 10px);
+  right: max(var(--safe-right), 6.5%);
   top: 50%;
-  transform: translateY(-70%);
+  transform: translateY(-66%);
   align-items: flex-end;
 }
 .opp.pos3 {
-  left: max(var(--safe-left), 10px);
+  left: max(var(--safe-left), 6.5%);
   top: 50%;
-  transform: translateY(-70%);
+  transform: translateY(-66%);
   align-items: flex-start;
 }
 .opp-head {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(154, 163, 178, 0.15);
-  border-radius: 14px;
-  padding: 5px 10px;
+  background: linear-gradient(160deg, rgba(16, 32, 25, 0.88), rgba(6, 15, 11, 0.8));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(201, 160, 99, 0.18);
+  border-radius: 999px;
+  padding: 5px 14px 5px 5px;
   position: relative;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.1),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.34),
+    0 8px 20px rgba(0, 0, 0, 0.45);
+  transition:
+    border-color 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out);
 }
 .opp-head.active {
-  border-color: var(--gold-warm);
-  box-shadow: var(--shadow-glow-gold);
+  border-color: rgba(201, 160, 99, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.16),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.34),
+    0 8px 20px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(201, 160, 99, 0.34);
+}
+/* 门风徽章：金属方章 */
+.wind-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #241a08;
+  background: linear-gradient(180deg, #f6e6bd, #c9a063 62%, #9a7940);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.wind-badge.lg {
+  width: 23px;
+  height: 23px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+.wind-badge:empty {
+  display: none;
 }
 .opp-head.off {
   opacity: 0.55;
@@ -712,6 +789,10 @@ function copyRoomNo(): void {
   color: var(--gold-champagne);
   font-weight: 700;
 }
+.ocount {
+  font-size: 11px;
+  color: var(--text-disabled);
+}
 .tflag {
   font-size: 9px;
   color: var(--accent-jade);
@@ -735,7 +816,7 @@ function copyRoomNo(): void {
 
 .river-zone {
   position: absolute;
-  inset: 22% 18% 30%;
+  inset: 29% 30% 33%;
   z-index: 2;
 }
 .river {
@@ -771,22 +852,65 @@ function copyRoomNo(): void {
   outline-offset: 1px;
   box-shadow: var(--shadow-glow-gold);
 }
+/* ── 中央罗盘 ── */
 .center-disc {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: clamp(132px, 15vh, 196px);
+  height: clamp(132px, 15vh, 196px);
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.55));
 }
-.turn-arrow {
-  color: var(--gold-warm);
-  font-size: 18px;
-  transition: transform 0.4s var(--ease-out);
+.cmp,
+.cmp-arrow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.cmp-arrow {
+  transition: transform 400ms var(--ease-out);
+  filter: drop-shadow(0 0 6px rgba(201, 160, 99, 0.7));
+}
+.cmp-wind {
+  position: absolute;
+  font-size: clamp(13px, 1.5vh, 18px);
+  font-weight: 800;
+  color: var(--gold-champagne);
+  opacity: 0.72;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+.cmp-wind.wn {
+  top: 23%;
+}
+.cmp-wind.ws {
+  bottom: 23%;
+}
+.cmp-wind.we {
+  right: 19%;
+}
+.cmp-wind.ww {
+  left: 19%;
+}
+.cmp-left {
+  font-size: clamp(27px, 3.2vh, 40px);
+  font-weight: 800;
+  line-height: 1;
+  transform: translateY(-5px);
+  background: linear-gradient(180deg, #fff8e6 8%, #e6cfa3 54%, #b3924f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.cmp-left-cap {
+  position: absolute;
+  top: 62%;
+  font-size: clamp(10px, 1.1vh, 13px);
+  letter-spacing: 0.14em;
+  color: var(--text-disabled);
 }
 
 .my-zone {
@@ -802,20 +926,35 @@ function copyRoomNo(): void {
 }
 .my-head {
   position: absolute;
+  z-index: 2;
   left: max(var(--safe-left), 12px);
   bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(154, 163, 178, 0.15);
-  border-radius: 14px;
-  padding: 6px 10px;
+  gap: 9px;
+  background: linear-gradient(160deg, rgba(16, 32, 25, 0.9), rgba(6, 15, 11, 0.82));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(201, 160, 99, 0.2);
+  border-radius: 999px;
+  padding: 6px 16px 6px 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.1),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.34),
+    0 10px 24px rgba(0, 0, 0, 0.5);
+  transition:
+    border-color 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out);
 }
 .my-head.active {
-  border-color: var(--gold-warm);
-  box-shadow: var(--shadow-glow-gold);
+  border-color: rgba(201, 160, 99, 0.75);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.16),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.34),
+    0 10px 24px rgba(0, 0, 0, 0.5),
+    0 0 22px rgba(201, 160, 99, 0.36);
 }
+
 .mavatar {
   font-size: 24px;
   position: relative;
@@ -826,18 +965,34 @@ function copyRoomNo(): void {
   font-size: 13px;
 }
 .my-melds {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 8px;
   align-self: flex-start;
   margin-left: 110px;
 }
+/* 手牌托盘：胡桃木条盘，与桌沿同材质，让手牌“放在托盘上”而不是贴在屏幕底 */
 .my-hand {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  padding: 0 8px;
-  max-width: 100vw;
+  padding: 12px 16px 14px;
+  max-width: 96vw;
   overflow-x: auto;
+  scrollbar-width: none;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(46, 33, 21, 0.94) 0%, rgba(28, 19, 12, 0.96) 52%, rgba(15, 10, 6, 0.97) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 200, 0.16),
+    inset 0 -12px 26px rgba(0, 0, 0, 0.55),
+    0 -6px 26px rgba(0, 0, 0, 0.45),
+    0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.my-hand::-webkit-scrollbar {
+  display: none;
 }
 .htile {
   cursor: pointer;
@@ -1001,5 +1156,38 @@ function copyRoomNo(): void {
   font-size: 12px;
   color: var(--text-disabled);
   margin-top: 6px;
+}
+
+/* ── 横屏短屏：左右两家的竖排暗牌会超出可视高度，改为只保留座位牌上的 ×N ── */
+@media (max-height: 640px) {
+  .pos1 .opp-hand,
+  .pos3 .opp-hand,
+  .pos1 .opp-melds,
+  .pos3 .opp-melds {
+    display: none;
+  }
+  .opp.pos1,
+  .opp.pos3 {
+    transform: translateY(-50%);
+  }
+  .opp.pos2 {
+    top: calc(var(--safe-top) + 46px);
+  }
+  .opp-head {
+    padding: 4px 11px 4px 4px;
+    gap: 7px;
+  }
+  .oname {
+    max-width: 60px;
+    font-size: 10.5px;
+  }
+  .my-hand {
+    padding: 8px 12px 10px;
+    border-radius: 16px;
+  }
+  /* 短屏：自己的座位牌上移到托盘之上，避免压住第一张手牌 */
+  .my-head {
+    bottom: calc(100% - 4px);
+  }
 }
 </style>

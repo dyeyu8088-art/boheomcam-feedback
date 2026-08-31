@@ -167,6 +167,8 @@ export const zh: Record<string, string> = {
   'mj.dianpao': '点炮',
   'mj.liuju': '流局',
   'mj.wallLeft': '余 {n} 张',
+  'mj.wallUnit': '张',
+  'mj.seatWind': '门风',
   'mj.dealer': '庄',
   'mj.settle.title': '本局结算',
   'mj.settle.next': '下一局即将开始…',

@@ -47,8 +47,11 @@ const rank = computed(() => (props.kind < 27 ? (props.kind % 9) + 1 : props.kind
   width: var(--w);
   height: calc(var(--w) * 1.38);
   border-radius: calc(var(--w) * 0.14);
-  background: linear-gradient(180deg, #fbf6ea 0%, #efe6d2 78%, #cfc3a8 100%);
+  /* 象牙面：左上受光、右下转暗，底部一条绿色侧面构成 2.5D 体积 */
+  background: linear-gradient(158deg, #fffdf6 0%, #f7f1e2 42%, #ece2cc 78%, #d4c8ac 100%);
   box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset calc(var(--w) * -0.035) calc(var(--w) * -0.05) calc(var(--w) * 0.1) rgba(120, 104, 72, 0.28),
     0 calc(var(--w) * 0.07) 0 #2e6e50,
     0 calc(var(--w) * 0.16) calc(var(--w) * 0.2) rgba(0, 0, 0, 0.45);
   display: flex;
@@ -56,6 +59,15 @@ const rank = computed(() => (props.kind < 27 ? (props.kind % 9) + 1 : props.kind
   justify-content: center;
   flex-shrink: 0;
   transition: transform var(--dur-micro) var(--ease-out);
+}
+/* 面部斜切高光（牌面的“抛光感”） */
+.tile:not(.back)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(122deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 34%);
+  pointer-events: none;
 }
 .tile.selected {
   transform: translateY(calc(var(--w) * -0.28));
@@ -68,17 +80,24 @@ const rank = computed(() => (props.kind < 27 ? (props.kind % 9) + 1 : props.kind
   filter: brightness(0.65);
 }
 .tile.back {
-  background: linear-gradient(180deg, #2f7a58 0%, #226044 80%, #16452f 100%);
+  background: linear-gradient(158deg, #368b64 0%, #2a6f50 44%, #1d5439 78%, #133c28 100%);
   box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 calc(var(--w) * -0.14) calc(var(--w) * 0.2) rgba(0, 0, 0, 0.36),
     0 calc(var(--w) * 0.07) 0 #123524,
     0 calc(var(--w) * 0.14) calc(var(--w) * 0.18) rgba(0, 0, 0, 0.45);
 }
+/* 牌背暗纹：延边雪晶菱格（原创，抽象化） */
 .tile.back::after {
   content: '';
   position: absolute;
-  inset: 14%;
-  border-radius: inherit;
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  inset: 15%;
+  border-radius: calc(var(--w) * 0.07);
+  border: 1px solid rgba(214, 245, 228, 0.18);
+  background:
+    linear-gradient(45deg, transparent 46%, rgba(214, 245, 228, 0.14) 46% 54%, transparent 54%),
+    linear-gradient(-45deg, transparent 46%, rgba(214, 245, 228, 0.14) 46% 54%, transparent 54%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16);
 }
 .s-lg,
 .slg {
