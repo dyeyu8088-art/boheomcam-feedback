@@ -7,7 +7,7 @@
       </div>
       <el-menu :default-active="route.path" router background-color="#10151f" text-color="#9aa3b2" active-text-color="#e6cfa3">
         <el-menu-item v-for="m in menus" :key="m.path" :index="m.path">
-          <span class="mi">{{ m.icon }}</span>{{ m.title }}
+          <span class="mi"><NavIcon :name="m.icon" /></span>{{ m.title }}
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -30,21 +30,22 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { can, session, setSession } from '../api.js';
+import NavIcon from '../components/NavIcon.vue';
 
 const route = useRoute();
 const router = useRouter();
 const sess = computed(() => session());
 
 const all = [
-  { path: '/dashboard', title: 'Dashboard', icon: '📊', perm: 'dashboard.view' },
-  { path: '/users', title: '用户管理', icon: '👥', perm: 'user.view' },
-  { path: '/wallet', title: '金币流水 / 结算', icon: '💰', perm: 'wallet.view' },
-  { path: '/rooms', title: '房间 / 战绩', icon: '🎴', perm: 'room.view' },
-  { path: '/configs', title: '游戏 / 配置', icon: '⚙️', perm: 'config.view' },
-  { path: '/ops', title: '公告 / 邮件', icon: '📣', perm: 'announce.manage' },
-  { path: '/risk', title: '风控 / 封禁', icon: '🛡️', perm: 'risk.view' },
-  { path: '/audit', title: '操作日志', icon: '📜', perm: 'audit.view' },
-  { path: '/admins', title: '后台账号', icon: '🔐', perm: 'admin.manage' },
+  { path: '/dashboard', title: 'Dashboard', icon: 'dashboard', perm: 'dashboard.view' },
+  { path: '/users', title: '用户管理', icon: 'users', perm: 'user.view' },
+  { path: '/wallet', title: '金币流水 / 结算', icon: 'wallet', perm: 'wallet.view' },
+  { path: '/rooms', title: '房间 / 战绩', icon: 'rooms', perm: 'room.view' },
+  { path: '/configs', title: '游戏 / 配置', icon: 'configs', perm: 'config.view' },
+  { path: '/ops', title: '公告 / 邮件', icon: 'ops', perm: 'announce.manage' },
+  { path: '/risk', title: '风控 / 封禁', icon: 'risk', perm: 'risk.view' },
+  { path: '/audit', title: '操作日志', icon: 'audit', perm: 'audit.view' },
+  { path: '/admins', title: '后台账号', icon: 'admins', perm: 'admin.manage' },
 ];
 const menus = computed(() => all.filter((m) => can(m.perm)));
 
@@ -79,7 +80,10 @@ function logout(): void {
   margin-top: 4px;
 }
 .mi {
-  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 10px;
+  vertical-align: -3px;
 }
 .header {
   display: flex;

@@ -10,7 +10,11 @@
 
     <!-- 免费旋转横幅 -->
     <transition name="pop">
-      <div v-if="freeSpinsRemaining > 0" class="fs-banner">✨ {{ t('sl.freeSpins', { n: freeSpinsRemaining }) }} ✨</div>
+      <div v-if="freeSpinsRemaining > 0" class="fs-banner">
+        <svg class="fsb-star" viewBox="0 0 24 24"><path d="M12 2.4 14.3 9 21 11.3 14.3 13.6 12 20.2 9.7 13.6 3 11.3 9.7 9 z" fill="currentColor" /><path d="M19.4 3 20.3 5.4 22.7 6.3 20.3 7.2 19.4 9.6 18.5 7.2 16.1 6.3 18.5 5.4 z" fill="currentColor" opacity="0.7" /></svg>
+        {{ t('sl.freeSpins', { n: freeSpinsRemaining }) }}
+        <svg class="fsb-star" viewBox="0 0 24 24"><path d="M12 2.4 14.3 9 21 11.3 14.3 13.6 12 20.2 9.7 13.6 3 11.3 9.7 9 z" fill="currentColor" /><path d="M19.4 3 20.3 5.4 22.7 6.3 20.3 7.2 19.4 9.6 18.5 7.2 16.1 6.3 18.5 5.4 z" fill="currentColor" opacity="0.7" /></svg>
+      </div>
     </transition>
 
     <!-- 大奖演出（金币雨 + 滚动数字） -->
@@ -359,10 +363,14 @@ function layout(): void {
   if (!app) return;
   const w = app.renderer.width;
   const h = app.renderer.height;
-  cellW = Math.min(110, (w - 40) / COLS);
-  cellH = Math.min(100, (h - 60) / (ROWS + 0.6));
+  // 机台随视口放大（此前固定 110×100 的上限会让 1080p 下的机器缩成一小块）。
+  // 投注条是画布外的 DOM 层，这里只需为顶部铭牌与底部币槽留出余量。
+  const topSafe = 52;
+  const cell = Math.min((w - 60) / COLS, ((h - 84) / ROWS) * 1.05, 220);
+  cellW = cell;
+  cellH = cell / 1.05;
   originX = (w - cellW * COLS) / 2;
-  originY = (h - cellH * ROWS) / 2 - cellH;
+  originY = topSafe - cellH;
   reels.forEach((reel, col) => {
     reel.x = originX + cellW * (col + 0.5);
     reel.y = originY;
@@ -453,11 +461,36 @@ onMounted(async () => {
   await app.init({ resizeTo: stageEl.value!, background: 0x0c0a12, antialias: true, resolution: Math.min(2, window.devicePixelRatio) });
   stageEl.value!.appendChild(app.canvas);
 
-  // 背景装饰
+  // 背景：放射流光 + 金色光晕（机台后方的演出光）
+  const rays = new Graphics();
   const glow = new Graphics();
-  glow.circle(0, 0, 260).fill({ color: 0x2a2138, alpha: 0.5 });
-  glow.position.set(app.renderer.width / 2, app.renderer.height / 2);
-  app.stage.addChild(glow);
+  const drawBackdrop = (): void => {
+    const w = app!.renderer.width;
+    const h = app!.renderer.height;
+    const cx = w / 2;
+    const cy = h * 0.44;
+    const R = Math.hypot(w, h);
+    rays.clear();
+    for (let i = 0; i < 16; i += 1) {
+      const a0 = (Math.PI * 2 * i) / 16;
+      const a1 = a0 + 0.16;
+      rays.poly([cx, cy, cx + Math.cos(a0) * R, cy + Math.sin(a0) * R, cx + Math.cos(a1) * R, cy + Math.sin(a1) * R])
+        .fill({ color: 0xf0c46a, alpha: 0.028 });
+    }
+    rays.position.set(0, 0);
+    rays.pivot.set(0, 0);
+    glow.clear();
+    // 多层同心圆叠出柔和光晕（Graphics 无径向渐变）
+    for (let i = 10; i >= 1; i -= 1) {
+      glow.circle(cx, cy, (Math.min(w, h) * 0.62 * i) / 10).fill({ color: 0x3b2b52, alpha: 0.05 });
+    }
+    for (let i = 6; i >= 1; i -= 1) {
+      glow.circle(cx, cy, (Math.min(w, h) * 0.3 * i) / 6).fill({ color: 0xf0c46a, alpha: 0.012 });
+    }
+  };
+  drawBackdrop();
+  app.stage.addChild(glow, rays);
+  let raySpin = 0;
 
   const reelStage = new Container();
   app.stage.addChild(reelStage);
@@ -514,11 +547,49 @@ onMounted(async () => {
     const midY = wy + wh / 2;
     frame.poly([wx - 16, midY - 8, wx - 4, midY, wx - 16, midY + 8]).fill(0xc9a063);
     frame.poly([wx + ww + 16, midY - 8, wx + ww + 4, midY, wx + ww + 16, midY + 8]).fill(0xc9a063);
+
+    // 顶部铭牌（机台冠部）+ 灯珠
+    const mqH = Math.max(22, cellH * 0.2);
+    const mqW = ww * 0.52;
+    const mqX = wx + (ww - mqW) / 2;
+    const mqY = wy - 6 - mqH - 10;
+    frame.roundRect(mqX, mqY, mqW, mqH, mqH / 2).fill(0x1a1327);
+    frame.roundRect(mqX, mqY, mqW, mqH, mqH / 2).stroke({ color: 0xc9a063, width: 2.2 });
+    frame.roundRect(mqX + 4, mqY + 4, mqW - 8, mqH - 8, (mqH - 8) / 2).stroke({ color: 0xe6cfa3, width: 1, alpha: 0.45 });
+    const lamps = 5;
+    for (let i = 0; i < lamps; i += 1) {
+      const lx = mqX + (mqW * (i + 0.5)) / lamps;
+      frame.circle(lx, mqY + mqH / 2, mqH * 0.16).fill(i % 2 === 0 ? 0xfff3d0 : 0xf0c46a);
+      frame.circle(lx, mqY + mqH / 2, mqH * 0.26).stroke({ color: 0xc9a063, width: 1, alpha: 0.4 });
+    }
+
+    // 左右立柱（机台侧板）
+    const pillarW = Math.max(12, cellW * 0.1);
+    for (const px of [wx - 6 - pillarW - 6, wx + ww + 6 + 6] as const) {
+      frame.roundRect(px, wy - 6, pillarW, wh + 12, pillarW / 2).fill(0x191223);
+      frame.roundRect(px, wy - 6, pillarW, wh + 12, pillarW / 2).stroke({ color: 0x8a6b3c, width: 1.6, alpha: 0.85 });
+      for (let i = 1; i <= 3; i += 1) {
+        frame.circle(px + pillarW / 2, wy - 6 + ((wh + 12) * i) / 4, pillarW * 0.18).fill({ color: 0xc9a063, alpha: 0.7 });
+      }
+    }
+
+    // 底部币槽
+    const trayY = wy + wh + 12;
+    frame.roundRect(wx + ww * 0.18, trayY, ww * 0.64, Math.max(10, cellH * 0.09), 6).fill(0x120d1c);
+    frame.roundRect(wx + ww * 0.18, trayY, ww * 0.64, Math.max(10, cellH * 0.09), 6).stroke({ color: 0x8a6b3c, width: 1.4, alpha: 0.8 });
   };
   drawFrame();
   window.addEventListener('resize', () => {
     layout();
+    drawBackdrop();
     drawFrame();
+  });
+  // 放射流光极慢自转（60s 一圈，环境动效不抢主体）
+  app.ticker.add((ticker) => {
+    raySpin += (ticker.deltaMS / 60000) * Math.PI * 2;
+    rays.rotation = raySpin;
+    rays.pivot.set(app!.renderer.width / 2, app!.renderer.height * 0.44);
+    rays.position.set(app!.renderer.width / 2, app!.renderer.height * 0.44);
   });
 
   try {
@@ -593,6 +664,9 @@ onBeforeUnmount(() => {
   position: relative;
 }
 .fs-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   position: absolute;
   top: calc(var(--safe-top) + 52px);
   left: 50%;
@@ -745,5 +819,10 @@ onBeforeUnmount(() => {
 .activeAuto {
   border-color: var(--accent-jade);
   color: var(--accent-jade);
+}
+.fsb-star {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 </style>

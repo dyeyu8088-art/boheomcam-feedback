@@ -6,7 +6,9 @@
           <div class="sheet glass" :style="{ maxWidth: width }">
             <header v-if="title">
               <h3>{{ title }}</h3>
-              <button class="x" @click="close">✕</button>
+              <button class="x" :aria-label="'close'" @click="close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5" /></svg>
+        </button>
             </header>
             <div class="body"><slot /></div>
           </div>
@@ -56,12 +58,27 @@ h3 {
   letter-spacing: 0.05em;
 }
 .x {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
   background: none;
   border: none;
+  border-radius: 9px;
   color: var(--text-secondary);
-  font-size: 15px;
   cursor: pointer;
-  padding: 4px 8px;
+  transition:
+    color 160ms var(--ease-out),
+    background 160ms var(--ease-out);
+}
+.x svg {
+  width: 16px;
+  height: 16px;
+}
+.x:hover {
+  color: var(--gold-champagne);
+  background: rgba(201, 160, 99, 0.1);
 }
 .body {
   padding: 6px 20px 20px;

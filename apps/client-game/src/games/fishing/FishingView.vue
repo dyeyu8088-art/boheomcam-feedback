@@ -9,7 +9,11 @@
     </div>
 
     <transition name="pop">
-      <div v-if="bossWarning" class="boss-banner">⚠ {{ t('fs.bossComing') }} ⚠</div>
+      <div v-if="bossWarning" class="boss-banner">
+        <svg class="bw-mark" viewBox="0 0 24 24"><path d="M12 3 L22 20 H2 z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /><path d="M12 9 v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" /><circle cx="12" cy="17.2" r="1.2" fill="currentColor" /></svg>
+        {{ t('fs.bossComing') }}
+        <svg class="bw-mark" viewBox="0 0 24 24"><path d="M12 3 L22 20 H2 z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /><path d="M12 9 v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" /><circle cx="12" cy="17.2" r="1.2" fill="currentColor" /></svg>
+      </div>
     </transition>
 
     <div class="hud-bottom">
@@ -19,7 +23,7 @@
         <button class="mbtn" @click="stepMult(1)">＋</button>
       </div>
       <button class="btn btn-secondary btn-sm" :class="{ activeAuto: autoFire }" @click="toggleAuto">
-        {{ t('fs.auto') }}{{ autoFire ? ' ⏸' : '' }}
+        {{ t('fs.auto') }}<i v-if="autoFire" class="auto-dot" />
       </button>
       <div class="cost num">{{ bulletCost }}/发</div>
     </div>
@@ -33,7 +37,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Application, Container, FillGradient, Graphics, Text } from 'pixi.js';
 import { Ev } from '@yanbian/protocol';
 import { FISH_TYPES, pathById, pointOnPath } from '@yanbian/game-common/fishing';
 import { gameSocket } from '../../net/ws.js';
@@ -151,8 +155,12 @@ function buildFishNode(typeId: string): { node: Container; tail: Graphics | null
   let tail: Graphics | null = null;
   const body = (rx = 1, ry = 0.46): void => {
     g.ellipse(0, 0, size * rx, size * ry).fill(color);
+    // 腹部暗面
     g.ellipse(0, size * ry * 0.45, size * rx * 0.92, size * ry * 0.55).fill({ color: shade(color, 0.72), alpha: 0.85 });
+    // 背面受光
     g.ellipse(-size * 0.1, -size * ry * 0.4, size * rx * 0.6, size * ry * 0.34).fill({ color: 0xffffff, alpha: 0.16 });
+    // 背脊轮廓光：水下顶光打在鱼背上的一条锐利高光边
+    g.ellipse(0, 0, size * rx, size * ry).stroke({ color: shade(color, 1.45), width: Math.max(1.2, size * 0.045), alpha: 0.55 });
   };
   const dorsal = (h = 0.75): void => {
     g.poly([-size * 0.24, -size * 0.4, size * 0.08, -size * h, size * 0.3, -size * 0.38]).fill(shade(color, 0.8));
@@ -617,15 +625,53 @@ onMounted(async () => {
     const w = W();
     const h = H();
     bg.clear();
-    // 纵向水色分层（模拟深度渐变）
-    const bands = [0x0d2740, 0x0b2136, 0x091b2d, 0x071524, 0x05101c, 0x040c16];
-    for (let i = 0; i < bands.length; i += 1) {
-      bg.rect(0, (h / bands.length) * i, w, h / bands.length + 1).fill(bands[i]!);
+    // 水体：连续深度渐变（近水面通透、越深越暗）。
+    // Pixi v8 的 FillGradient 默认使用 local 纹理空间（0–1 归一化到图形自身包围盒），
+    // 因此这里必须用 0–1 而不是像素坐标，否则渐变会被压缩成一条硬边。
+    const water = new FillGradient(0, 0, 0, 1);
+    water.addColorStop(0, 0x18506e);
+    water.addColorStop(0.16, 0x134159);
+    water.addColorStop(0.42, 0x0c2c3f);
+    water.addColorStop(0.72, 0x071b28);
+    water.addColorStop(1, 0x030d14);
+    bg.rect(0, 0, w, h).fill(water);
+
+    // 水面光带 + 焦散波纹
+    bg.rect(0, 0, w, h * 0.05).fill({ color: 0xbfe8f2, alpha: 0.1 });
+    for (let r = 0; r < 5; r += 1) {
+      const y0 = h * (0.035 + r * 0.038);
+      const amp = 5 - r * 0.7;
+      const step = w / 26;
+      bg.moveTo(-step, y0);
+      for (let i = 0; i <= 27; i += 1) {
+        bg.quadraticCurveTo((i - 0.5) * step, y0 + (i % 2 === 0 ? -amp : amp), i * step, y0);
+      }
+      bg.stroke({ color: 0xbfe8f2, width: 1.6 - r * 0.2, alpha: 0.13 - r * 0.02 });
     }
-    // 顶部水面光带
-    bg.rect(0, 0, w, h * 0.06).fill({ color: 0x9fd4e8, alpha: 0.07 });
-    // 四角暗角
-    bg.rect(0, 0, w, h).fill({ color: 0x000000, alpha: 0.001 });
+
+    // 悬浮微粒（水中尘埃，营造体积感）
+    for (let i = 0; i < 46; i += 1) {
+      const px = ((i * 197) % 1000) / 1000;
+      const py = ((i * 421) % 1000) / 1000;
+      const pr = 0.7 + ((i * 13) % 5) * 0.34;
+      bg.circle(px * w, py * h, pr).fill({ color: 0xbfe8f2, alpha: 0.05 + ((i * 7) % 10) / 160 });
+    }
+
+    // 电影级暗角：Graphics 无径向渐变，用四条线性渐变带叠出来
+    const edge = Math.max(90, Math.min(w, h) * 0.28);
+    // 每条带用自身包围盒的 0–1 归一化坐标定向
+    const strips: [number, number, number, number, number, number, number, number][] = [
+      [0, 0, w, edge, 0, 0, 0, 1],
+      [0, h - edge, w, edge, 0, 1, 0, 0],
+      [0, 0, edge, h, 0, 0, 1, 0],
+      [w - edge, 0, edge, h, 1, 0, 0, 0],
+    ];
+    for (const [rx, ry, rw, rh, x0, y0, x1, y1] of strips) {
+      const gr = new FillGradient(x0, y0, x1, y1);
+      gr.addColorStop(0, 'rgba(2, 10, 16, 0.55)');
+      gr.addColorStop(1, 'rgba(2, 10, 16, 0)');
+      bg.rect(rx, ry, rw, rh).fill(gr);
+    }
     seabed.clear();
     // 远景沙丘
     seabed.poly([0, h, 0, h - 46, w * 0.18, h - 72, w * 0.4, h - 40, w * 0.62, h - 66, w * 0.85, h - 36, w, h - 58, w, h]).fill({ color: 0x0a1a2a, alpha: 0.9 });
@@ -666,17 +712,24 @@ onMounted(async () => {
   fxLayer = new Container();
   app.stage.addChild(fishLayer, bulletLayer, fxLayer);
 
-  // 炮台：固定基座 + 旋转炮塔
+  // 炮台：固定基座 + 旋转炮塔（整体放大到商业捕鱼的常规体量）
+  const CANNON_SCALE = 1.5;
   const cannonBase = new Graphics();
-  cannonBase.ellipse(0, 16, 44, 14).fill({ color: 0x000000, alpha: 0.4 });
-  cannonBase.poly([-40, 18, -26, -6, 26, -6, 40, 18]).fill(0x1a2130);
-  cannonBase.poly([-40, 18, -26, -6, 26, -6, 40, 18]).stroke({ color: 0x8a6b3c, width: 1.6 });
-  cannonBase.circle(0, -2, 24).fill(0x232c40);
-  cannonBase.circle(0, -2, 24).stroke({ color: 0xc9a063, width: 2 });
-  for (let i = 0; i < 6; i += 1) {
-    const a = (Math.PI * 2 * i) / 6;
-    cannonBase.circle(Math.cos(a) * 18, -2 + Math.sin(a) * 18, 1.8).fill(0xc9a063);
+  cannonBase.ellipse(0, 18, 52, 16).fill({ color: 0x000000, alpha: 0.45 });
+  // 梯形平台 + 金色包边
+  cannonBase.poly([-46, 20, -30, -8, 30, -8, 46, 20]).fill(0x18202e);
+  cannonBase.poly([-46, 20, -30, -8, 30, -8, 46, 20]).stroke({ color: 0x8a6b3c, width: 1.8 });
+  cannonBase.poly([-30, -8, 30, -8, 26, -14, -26, -14]).fill(0x222b3d);
+  cannonBase.poly([-30, -8, 30, -8, 26, -14, -26, -14]).stroke({ color: 0xc9a063, width: 1.3, alpha: 0.8 });
+  // 转盘
+  cannonBase.circle(0, -4, 27).fill(0x232c40);
+  cannonBase.circle(0, -4, 27).stroke({ color: 0xc9a063, width: 2.2 });
+  cannonBase.circle(0, -4, 20).stroke({ color: 0xc9a063, width: 1, alpha: 0.4 });
+  for (let i = 0; i < 8; i += 1) {
+    const a = (Math.PI * 2 * i) / 8;
+    cannonBase.circle(Math.cos(a) * 20, -4 + Math.sin(a) * 20, 1.9).fill(0xc9a063);
   }
+  cannonBase.scale.set(CANNON_SCALE);
   app.stage.addChild(cannonBase);
 
   cannon = new Container();
@@ -695,7 +748,9 @@ onMounted(async () => {
   hub2.circle(0, 0, 5).fill(0xc9a063);
   hub2.circle(-1.4, -1.6, 1.6).fill({ color: 0xffffff, alpha: 0.6 });
   cannon.addChild(barrel, hub2);
-  cannon.position.set(W() / 2, H() - 32);
+  cannon.scale.set(CANNON_SCALE);
+  cannon.position.set(W() / 2, H() - 34);
+  cannonBase.position.set(W() / 2, H() - 34);
   app.stage.addChild(cannon);
 
   const bubbles: { g: Graphics; v: number }[] = [];
@@ -717,7 +772,8 @@ onMounted(async () => {
         b.g.x = Math.random() * W();
       }
     }
-    cannon.position.set(W() / 2, H() - 30);
+    cannon.position.set(W() / 2, H() - 34);
+    cannonBase.position.set(W() / 2, H() - 34);
   });
 
   // 指针交互：点击/拖动开火
@@ -836,6 +892,24 @@ onBeforeUnmount(() => {
   z-index: 6;
   animation: glow-pulse 0.8s ease infinite;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.bw-mark {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+/* 自动开火指示：暂停符的原创替代（两根竖条） */
+.auto-dot {
+  display: inline-block;
+  width: 9px;
+  height: 11px;
+  margin-left: 7px;
+  vertical-align: -1px;
+  border-left: 3px solid currentColor;
+  border-right: 3px solid currentColor;
 }
 .hud-bottom {
   position: absolute;
