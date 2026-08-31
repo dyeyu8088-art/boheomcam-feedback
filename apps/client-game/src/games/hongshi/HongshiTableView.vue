@@ -20,15 +20,15 @@
     <template v-else>
       <div class="table-bg" />
       <div class="hud-top">
-        <button class="hback" @click="leaveToLobby()">‹</button>
+        <button class="hback" @click="leaveToLobby()"><AppIcon name="back" :size="18" /></button>
         <div class="hinfo num">{{ t('room.round', { a: room?.currentRound ?? 1, b: room?.totalRounds ?? 4 }) }}</div>
-        <div class="hcoins num">◉ {{ fmt(user.me?.coins) }}</div>
+        <div class="hcoins num"><AppIcon name="coin" :size="15" />{{ fmt(user.me?.coins) }}</div>
       </div>
 
       <!-- 其他玩家 -->
       <div v-for="p in others" :key="p.uid" class="opp" :class="`pos${p.pos}`">
         <div class="opp-head" :class="{ active: turnSeat === p.seat, off: !p.online }">
-          <div class="oavatar">{{ avatarEmoji(p.avatarId) }}</div>
+          <AvatarBadge :id="p.avatarId" :size="30" />
           <div class="ocol">
             <div class="oname">{{ p.nickname }}</div>
             <div class="obadges">
@@ -122,7 +122,9 @@ import ModalSheet from '../../ui/ModalSheet.vue';
 import CountdownRing from '../CountdownRing.vue';
 import PlayCard from './PlayCard.vue';
 import { useGameRoom, relativePos } from '../useGameRoom.js';
-import { avatarEmoji, fmt, fmtSigned } from '../../ui/format.js';
+import AvatarBadge from '../../ui/AvatarBadge.vue';
+import AppIcon from '../../ui/AppIcon.vue';
+import { fmt, fmtSigned } from '../../ui/format.js';
 
 const user = useUserStore();
 const { room, phase, mySeat, on, begin, ready, leaveToLobby, cancelMatch } = useGameRoom('hongshi');

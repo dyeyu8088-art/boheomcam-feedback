@@ -1,11 +1,11 @@
 <template>
   <div class="panel">
     <section class="glass hero">
-      <div class="avatar-big">{{ avatarEmoji(me?.avatarId ?? 1) }}</div>
+      <AvatarBadge :id="me?.avatarId ?? 1" :size="64" />
       <div class="hinfo">
         <div class="hn">
           {{ me?.nickname }}
-          <button class="edit" @click="editing = true">✎</button>
+          <button class="edit" @click="editing = true">编辑</button>
         </div>
         <div class="hu num">UID {{ me?.uid }} · Lv.{{ me?.level }} <span v-if="me?.vip" class="vip">VIP{{ me?.vip }}</span></div>
       </div>
@@ -58,7 +58,8 @@ import { api } from '../../net/api.js';
 import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
 import ModalSheet from '../../ui/ModalSheet.vue';
-import { avatarEmoji, fmt, fmtSigned, fmtTime } from '../../ui/format.js';
+import AvatarBadge from '../../ui/AvatarBadge.vue';
+import { fmt, fmtSigned, fmtTime } from '../../ui/format.js';
 
 defineEmits<{ (e: 'logout'): void }>();
 
@@ -104,18 +105,6 @@ async function saveName(): Promise<void> {
   align-items: center;
   gap: 16px;
   padding: 20px;
-}
-.avatar-big {
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  background: linear-gradient(160deg, #263040, #1a2130);
-  border: 1px solid var(--gold-warm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  box-shadow: var(--shadow-glow-gold);
 }
 .hn {
   font-size: 18px;

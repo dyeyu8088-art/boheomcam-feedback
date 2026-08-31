@@ -1,10 +1,4 @@
-/** 展示格式化工具 */
-const AVATARS = ['🀄', '🦁', '🐯', '🦅', '🐉', '🦊', '🐺', '🦌', '🐢', '🦈', '🐙', '🦚', '🐴', '🦉', '🐻', '🦋', '🐬', '🌸', '🍀', '⭐', '🌙', '🔥', '🎐', '🏮'];
-
-export function avatarEmoji(id: number): string {
-  return AVATARS[(id - 1) % AVATARS.length] ?? '🀄';
-}
-
+/** 展示格式化工具（无 Emoji：头像由 AvatarBadge 纹章系统绘制） */
 export function fmt(n: number | undefined | null): string {
   if (n === undefined || n === null) return '—';
   if (n >= 100_000_000) return `${(n / 100_000_000).toFixed(1)}亿`;

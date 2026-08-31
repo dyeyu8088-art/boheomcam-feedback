@@ -14,7 +14,7 @@
         <div class="wno num" @click="copyRoomNo">{{ t('room.no', { no: room?.roomNo ?? '' }) }} ⧉</div>
         <div class="wplayers">
           <div v-for="p in room?.players ?? []" :key="p.uid" class="wp">
-            <div class="wavatar">{{ avatarEmoji(p.avatarId) }}</div>
+            <AvatarBadge :id="p.avatarId" :size="34" />
             <div class="wname">{{ p.nickname }}</div>
             <div class="wready" :class="{ on: p.ready }">{{ p.ready ? '✓' : '…' }}</div>
           </div>
@@ -37,19 +37,19 @@
       <div class="table-bg" />
       <!-- 顶部信息 -->
       <div class="hud-top">
-        <button class="hback" @click="leaveToLobby()">‹</button>
+        <button class="hback" @click="leaveToLobby()"><AppIcon name="back" :size="18" /></button>
         <div class="hinfo">
           <span class="num">{{ t('room.round', { a: room?.currentRound ?? 1, b: room?.totalRounds ?? 4 }) }}</span>
           <span class="sep">·</span>
           <span class="num">{{ t('mj.wallLeft', { n: wallLeft }) }}</span>
         </div>
-        <div class="hcoins num">◉ {{ fmt(user.me?.coins) }}</div>
+        <div class="hcoins num"><AppIcon name="coin" :size="15" />{{ fmt(user.me?.coins) }}</div>
       </div>
 
       <!-- 对家/上下家 -->
       <div v-for="p in others" :key="p.uid" class="opp" :class="`pos${p.pos}`">
         <div class="opp-head" :class="{ active: turnSeat === p.seat, off: !p.online }">
-          <div class="oavatar">{{ avatarEmoji(p.avatarId) }}<span v-if="p.seat === dealerSeat" class="dealer">{{ t('mj.dealer') }}</span></div>
+          <div class="oavatar"><AvatarBadge :id="p.avatarId" :size="30" /><span v-if="p.seat === dealerSeat" class="dealer">{{ t('mj.dealer') }}</span></div>
           <div class="oname">{{ p.nickname }}</div>
           <div class="oscore num">{{ p.score }}</div>
           <CountdownRing v-if="turnSeat === p.seat" :deadline="deadlineAt" />
@@ -84,7 +84,7 @@
       <!-- 自己区域 -->
       <div class="my-zone">
         <div class="my-head" :class="{ active: turnSeat === mySeat }">
-          <div class="mavatar">{{ avatarEmoji(me?.avatarId ?? 1) }}<span v-if="mySeat === dealerSeat" class="dealer">{{ t('mj.dealer') }}</span></div>
+          <div class="mavatar"><AvatarBadge :id="me?.avatarId ?? 1" :size="34" /><span v-if="mySeat === dealerSeat" class="dealer">{{ t('mj.dealer') }}</span></div>
           <div class="mscore num">{{ myPlayer?.score ?? 0 }}</div>
           <CountdownRing v-if="turnSeat === mySeat" :deadline="deadlineAt" />
         </div>
@@ -136,7 +136,7 @@
       </div>
 
       <!-- 聊天 -->
-      <button class="chat-btn glass" @click="showChat = !showChat">💬</button>
+      <button class="chat-btn glass" @click="showChat = !showChat"><AppIcon name="chat" :size="18" /></button>
       <transition name="pop">
         <div v-if="showChat" class="chat-panel glass">
           <button v-for="n in 6" :key="n" class="chat-q" @click="sendQuick(n - 1)">{{ t(`room.chat.q${n - 1}`) }}</button>
@@ -194,7 +194,9 @@ import ModalSheet from '../../ui/ModalSheet.vue';
 import CountdownRing from '../CountdownRing.vue';
 import MjTile from './MjTile.vue';
 import { useGameRoom, relativePos } from '../useGameRoom.js';
-import { avatarEmoji, fmt, fmtSigned } from '../../ui/format.js';
+import AvatarBadge from '../../ui/AvatarBadge.vue';
+import AppIcon from '../../ui/AppIcon.vue';
+import { fmt, fmtSigned } from '../../ui/format.js';
 
 const user = useUserStore();
 const me = computed(() => user.me);
@@ -576,7 +578,7 @@ function copyRoomNo(): void {
 .wp.empty-seat {
   opacity: 0.4;
 }
-.wavatar {
+.wavatar-unused {
   font-size: 28px;
 }
 .wname {

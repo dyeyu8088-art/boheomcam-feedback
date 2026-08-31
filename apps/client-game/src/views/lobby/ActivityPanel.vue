@@ -14,7 +14,7 @@
           :class="{ done: (signin?.streak ?? 0) >= r.day, next: !signin?.todaySigned && (signin?.streak ?? 0) + 1 === r.day }"
         >
           <div class="d">{{ t('signin.day', { n: r.day }) }}</div>
-          <div class="r">{{ r.currency === 'COIN' ? '◉' : '◆' }}{{ fmt(r.amount) }}</div>
+          <div class="r"><AppIcon :name="r.currency === 'COIN' ? 'coin' : 'gem'" :size="13" />{{ fmt(r.amount) }}</div>
         </div>
       </div>
       <button class="btn btn-primary wide" :disabled="signin?.todaySigned || busy" @click="doSign">
@@ -36,7 +36,7 @@
           </div>
           <div class="tprog num">{{ task.progress }}/{{ task.target }}</div>
         </div>
-        <div class="treward num">{{ task.rewards.map((r: any) => `${r.currency === 'COIN' ? '◉' : '◆'}${fmt(r.amount)}`).join(' ') }}</div>
+        <div class="treward num">{{ task.rewards.map((r: any) => `${fmt(r.amount)} ${r.currency === 'COIN' ? '金币' : '钻石'}`).join(' · ') }}</div>
         <button
           class="btn btn-sm"
           :class="task.completed && !task.claimed ? 'btn-primary' : 'btn-ghost'"
@@ -55,6 +55,7 @@ import { onActivated, onMounted, ref } from 'vue';
 import { api } from '../../net/api.js';
 import { t, currentLocale } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
+import AppIcon from '../../ui/AppIcon.vue';
 import { fmt } from '../../ui/format.js';
 import { useUserStore } from '../../stores/user.js';
 

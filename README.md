@@ -54,7 +54,8 @@ pnpm --filter @yanbian/game-common test    # 引擎单元测试 39 项（含模�
 pnpm --filter @yanbian/api-service test    # 钱包集成测试 7 项（并发100扣款/幂等/防重复结算/触发器防篡改）
 node tests/e2e-smoke.mjs                   # 全栈 E2E 28 项（四游戏整局/防作弊路径/断线重连）
 node tests/ui-smoke.mjs                    # 客户端浏览器冒烟 8 项（Playwright）
-node tests/admin-ui-smoke.mjs              # 后台浏览器冒烟 8 项
+node tests/admin-ui-smoke.mjs              # 后台浏览器冒烟 7 项（需 ADMIN_PASSWORD）
+node tests/lobby-shot.mjs                  # 大厅四分辨率截图回归（1920/2560/Android 横屏/手机竖屏）
 node tests/load-ws.mjs 500 0.1             # WS 负载（本机阶梯；生产压测见 docs/09）
 ```
 
@@ -65,6 +66,7 @@ node tests/load-ws.mjs 500 0.1             # WS 负载（本机阶梯；生产�
 - [PHASE 0 竞品研究](COMPETITOR_ANALYSIS.md) ｜ [路线图 PHASE 0–19](docs/08-roadmap.md)
 - [总体架构](docs/01-architecture.md) ｜ [数据库](docs/02-database.md) ｜ [通信协议](docs/03-protocol.md)
 - [钱包账本](docs/04-wallet.md) ｜ [安全与防作弊](docs/06-security.md) ｜ [设计系统](docs/07-design-system.md)
+- [大厅视觉规范](docs/11-lobby-design.md)（Design Token / Icon / 游戏卡 / 动效 / 多分辨率适配）
 - 规则确认表：[延边麻将](docs/05-game-rules/yanbian-mahjong-rules-confirmation.md) ｜ [红十](docs/05-game-rules/hongshi-rules-confirmation.md)
 - 游戏架构：[捕鱼](docs/05-game-rules/fishing-architecture.md) ｜ [水果机](docs/05-game-rules/slots-architecture.md)
 

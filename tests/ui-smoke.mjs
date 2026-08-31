@@ -40,7 +40,7 @@ try {
   await page.screenshot({ path: `${SHOT_DIR}/02-lobby.png` });
 
   // 水果机
-  await page.locator('.card.slot_fruit').click();
+  await page.locator('.poster-card.slot_fruit').click();
   await page.waitForURL('**/#/game/slot', { timeout: 8000 });
   await page.waitForTimeout(1500);
   ok(await page.locator('.spin-btn').isVisible(), '水果机界面加载');
@@ -64,15 +64,15 @@ try {
   await page.waitForURL('**/#/lobby', { timeout: 8000 });
 
   // 签到（活动页）
-  await page.locator('.bottomnav button:nth-child(2)').click();
+  await page.locator('.dock .dock-item:nth-child(2)').click();
   await page.waitForTimeout(800);
   ok(await page.locator('text=每日签到').isVisible(), '活动页签到面板');
   await page.screenshot({ path: `${SHOT_DIR}/05-activity.png` });
-  await page.locator('.bottomnav button:nth-child(1)').click();
+  await page.locator('.dock .dock-item:nth-child(1)').click();
   await page.waitForTimeout(400);
 
   // 麻将匹配（机器人补位后应进桌）
-  await page.locator('.card.mahjong_yanbian').click();
+  await page.locator('.poster-card.mahjong_yanbian').click();
   await page.waitForTimeout(600);
   await page.locator('.stage').first().click();
   await page.waitForURL('**/#/game/mahjong**', { timeout: 8000 });
@@ -84,7 +84,7 @@ try {
   // 捕鱼
   await page.goto(`${BASE}/#/lobby`);
   await page.waitForTimeout(800);
-  await page.locator('.card.fishing').click();
+  await page.locator('.poster-card.fishing').click();
   await page.waitForTimeout(500);
   await page.locator('.stage').first().click();
   await page.waitForURL('**/#/game/fishing**', { timeout: 8000 });

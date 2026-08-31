@@ -8,7 +8,7 @@
     <section v-if="requests.length" class="glass sec">
       <h4>{{ t('friends.requests') }}</h4>
       <div v-for="r in requests" :key="r.id" class="row">
-        <span>{{ avatarEmoji(r.avatar_id) }} {{ r.nickname }} <span class="dim num">({{ r.uid }})</span></span>
+        <span class="person"><AvatarBadge :id="r.avatar_id" :size="30" :ring="false" /> {{ r.nickname }} <span class="dim num">({{ r.uid }})</span></span>
         <div class="acts">
           <button class="btn btn-primary btn-sm" @click="handle(r.id, 'accept')">{{ t('friends.accept') }}</button>
           <button class="btn btn-ghost btn-sm" @click="handle(r.id, 'reject')">{{ t('friends.reject') }}</button>
@@ -20,8 +20,8 @@
       <h4>{{ t('friends.title') }} ({{ friends.length }})</h4>
       <div v-if="friends.length === 0" class="empty">{{ t('common.empty') }}</div>
       <div v-for="f in friends" :key="f.uid" class="row">
-        <span>
-          <span class="stat" :class="{ on: f.online }" />{{ avatarEmoji(f.avatarId) }} {{ f.nickname }}
+        <span class="person">
+          <span class="stat" :class="{ on: f.online }" /><AvatarBadge :id="f.avatarId" :size="30" :ring="false" /> {{ f.nickname }}
           <span class="dim num">({{ f.uid }})</span>
         </span>
         <span class="dim">{{ f.playing ? t('friends.playing') : f.online ? t('friends.online') : t('friends.offline') }}</span>
@@ -35,7 +35,7 @@ import { onActivated, onMounted, ref } from 'vue';
 import { api } from '../../net/api.js';
 import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
-import { avatarEmoji } from '../../ui/format.js';
+import AvatarBadge from '../../ui/AvatarBadge.vue';
 
 interface FriendItem {
   uid: number;
@@ -112,6 +112,11 @@ h4 {
   padding: 10px 0;
   border-top: 1px solid rgba(154, 163, 178, 0.08);
   font-size: 14px;
+}
+.person {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .acts {
   display: flex;

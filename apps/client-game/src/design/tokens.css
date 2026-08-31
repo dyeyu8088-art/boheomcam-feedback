@@ -1,27 +1,47 @@
-/* Design System「玄夜鎏金」——唯一视觉 Token 来源（docs/07-design-system.md） */
+/* Design System「玄夜鎏金」v2 ——唯一视觉 Token 来源（docs/07-design-system.md / docs/11-lobby-design.md） */
 :root {
-  /* 色彩 */
-  --bg-abyss: #0a0e14;
-  --bg-night: #10151f;
-  --bg-charcoal: #161c28;
-  --bg-elevated: #1d2432;
-  --glass: rgba(29, 36, 50, 0.66);
+  /* ── 背景层（三层空间：远景/中景/前景） ── */
+  --bg-abyss: #070c15; /* 远景：深午夜蓝黑（禁用纯黑 #000） */
+  --bg-night: #0b1220; /* 中景 */
+  --bg-charcoal: #111a2b; /* Surface：深石墨蓝 */
+  --bg-elevated: #17223a; /* 浮层 */
+  --bg-emerald: #071410; /* 极深翡翠黑（辅助层） */
+  --glass: rgba(18, 27, 45, 0.62);
+  --glass-strong: rgba(14, 21, 36, 0.86);
+
+  /* ── 金属主色（低饱和香槟金） ── */
   --gold-warm: #c9a063;
   --gold-champagne: #e6cfa3;
+  --gold-pale: #f6e6bd;
   --gold-deep: #8a6b3c;
-  --accent-jade: #3e9b8f;
-  --accent-crimson: #b5495b;
-  --text-primary: #f2ede3;
-  --text-secondary: #9aa3b2;
-  --text-disabled: #5a6272;
-  --line-soft: rgba(201, 160, 99, 0.18);
+  --gold-shadow: #6e5426;
 
-  /* 圆角 / 阴影 */
-  --radius-card: 16px;
+  /* ── 辅助色 ── */
+  --accent-jade: #4bb39c; /* 翡翠绿：在线/胜 */
+  --accent-ice: #7fb8e8; /* 冰蓝：钻石/信息 */
+  --accent-crimson: #b5495b; /* 柔和酒红：危险/负 */
+
+  /* ── 文字四级层级 ── */
+  --text-primary: #f4f0e6; /* 一级：游戏名/主数值 */
+  --text-strong: #dfe4ec; /* 二级：功能名 */
+  --text-secondary: #97a3b8; /* 三级：说明 */
+  --text-disabled: #5d6a80; /* 四级：UID/弱信息 */
+  --line-soft: rgba(201, 160, 99, 0.16);
+  --line-cool: rgba(148, 168, 200, 0.12);
+
+  /* 圆角 / 阴影（材质：内阴影 + 边缘高光 + 环境光） */
+  --radius-card: 18px;
+  --radius-poster: 22px;
   --radius-btn: 12px;
   --radius-modal: 20px;
-  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-lift: 0 18px 44px rgba(0, 0, 0, 0.58);
   --shadow-glow-gold: 0 0 18px rgba(201, 160, 99, 0.35);
+  /* 材质三件套：顶部受光 + 底部内阴影 + 外投影 */
+  --edge-inner:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -14px 26px rgba(0, 0, 0, 0.32);
+  --edge-gold: inset 0 0 0 1px rgba(201, 160, 99, 0.22);
 
   /* 动效 */
   --ease-out: cubic-bezier(0.22, 0.9, 0.32, 1);

@@ -1,9 +1,9 @@
 <template>
   <div class="sl-root">
     <div class="hud-top">
-      <button class="hback" @click="exit">‹</button>
+      <button class="hback" @click="exit"><AppIcon name="back" :size="18" /></button>
       <div class="title">{{ t('game.slot_fruit') }}</div>
-      <div class="hcoins num">◉ {{ fmt(balance) }}</div>
+      <div class="hcoins num"><AppIcon name="coin" :size="16" />{{ fmt(balance) }}</div>
     </div>
 
     <div ref="stageEl" class="stage" />
@@ -13,9 +13,12 @@
       <div v-if="freeSpinsRemaining > 0" class="fs-banner">✨ {{ t('sl.freeSpins', { n: freeSpinsRemaining }) }} ✨</div>
     </transition>
 
-    <!-- 大奖演出 -->
+    <!-- 大奖演出（金币雨 + 滚动数字） -->
     <transition name="pop">
       <div v-if="tierShow" class="tier-overlay" @click="skipTier">
+        <span v-for="n in 18" :key="n" class="rain-coin" :style="coinStyle(n)">
+          <AppIcon name="coin" :size="n % 3 === 0 ? 30 : 22" />
+        </span>
         <div class="tier-text" :class="tierShow">{{ tierLabel }}</div>
         <div class="tier-amount num">{{ fmt(rollingWin) }}</div>
       </div>
@@ -53,13 +56,22 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Application, Container, Graphics } from 'pixi.js';
 import { Ev } from '@yanbian/protocol';
 import { gameSocket } from '../../net/ws.js';
 import { useUserStore } from '../../stores/user.js';
 import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
+import AppIcon from '../../ui/AppIcon.vue';
 import { fmt } from '../../ui/format.js';
+
+function coinStyle(n: number): Record<string, string> {
+  return {
+    left: `${(n * 53) % 100}%`,
+    animationDelay: `${((n * 0.37) % 1.6).toFixed(2)}s`,
+    animationDuration: `${(1.6 + ((n * 0.53) % 1.4)).toFixed(2)}s`,
+  };
+}
 
 const router = useRouter();
 const user = useUserStore();
@@ -77,19 +89,6 @@ const tierLabel = ref('');
 const rollingWin = ref(0);
 let rollTimer = 0;
 
-const SYMBOL_EMOJI: Record<string, string> = {
-  CHERRY: '🍒',
-  LEMON: '🍋',
-  ORANGE: '🍊',
-  GRAPE: '🍇',
-  MELON: '🍉',
-  BELL: '🔔',
-  SEVEN: '7️⃣',
-  CROWN: '👑',
-  WILD: '🌟',
-  SCATTER: '💠',
-}
-
 let app: Application | null = null;
 let reels: Container[] = [];
 let winLineLayer: Graphics | null = null;
@@ -102,18 +101,170 @@ let originY = 0;
 let paytableLines: number[][] = [];
 let destroyed = false;
 
+/** 圆弧折线点集（避免依赖 Graphics.arc 填充行为） */
+function arcPoints(cx: number, cy: number, r: number, a0: number, a1: number, steps = 20): number[] {
+  const pts: number[] = [];
+  for (let i = 0; i <= steps; i += 1) {
+    const a = a0 + ((a1 - a0) * i) / steps;
+    pts.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+  }
+  return pts;
+}
+
+function starPoints(cx: number, cy: number, rOut: number, rIn: number, n = 5, rot = -Math.PI / 2): number[] {
+  const pts: number[] = [];
+  for (let i = 0; i < n * 2; i += 1) {
+    const r = i % 2 === 0 ? rOut : rIn;
+    const a = rot + (Math.PI * i) / n;
+    pts.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+  }
+  return pts;
+}
+
+/** 程序化矢量符号库（原创；任何 DPI 锐利，三端渲染一致） */
+function drawSymbolArt(g: Graphics, sym: string, u: number): void {
+  // u = 符号半幅基准
+  switch (sym) {
+    case 'CHERRY': {
+      g.moveTo(-u * 0.05, -u * 0.85)
+        .quadraticCurveTo(u * 0.5, -u * 0.7, u * 0.42, u * 0.05)
+        .stroke({ color: 0x4c7a3a, width: u * 0.12, cap: 'round' });
+      g.moveTo(-u * 0.05, -u * 0.85)
+        .quadraticCurveTo(-u * 0.55, -u * 0.6, -u * 0.5, u * 0.15)
+        .stroke({ color: 0x4c7a3a, width: u * 0.12, cap: 'round' });
+      g.ellipse(u * 0.28, -u * 0.78, u * 0.34, u * 0.15).fill(0x5b9146);
+      g.circle(u * 0.42, u * 0.35, u * 0.42).fill(0xc22b3a);
+      g.circle(-u * 0.5, u * 0.45, u * 0.38).fill(0xa8202e);
+      g.circle(u * 0.28, u * 0.2, u * 0.13).fill({ color: 0xffffff, alpha: 0.55 });
+      g.circle(-u * 0.6, u * 0.32, u * 0.1).fill({ color: 0xffffff, alpha: 0.4 });
+      break;
+    }
+    case 'LEMON': {
+      g.poly([-u * 0.95, 0, -u * 0.75, -u * 0.16, -u * 0.75, u * 0.16]).fill(0xd9b83a);
+      g.poly([u * 0.95, 0, u * 0.75, -u * 0.16, u * 0.75, u * 0.16]).fill(0xd9b83a);
+      g.ellipse(0, 0, u * 0.8, u * 0.52).fill(0xe8ce52);
+      g.ellipse(0, u * 0.18, u * 0.7, u * 0.3).fill({ color: 0xc7a92e, alpha: 0.45 });
+      g.ellipse(-u * 0.24, -u * 0.2, u * 0.34, u * 0.14).fill({ color: 0xffffff, alpha: 0.45 });
+      break;
+    }
+    case 'ORANGE': {
+      g.circle(0, u * 0.08, u * 0.62).fill(0xe08a3c);
+      g.circle(0, u * 0.22, u * 0.5).fill({ color: 0xc06f26, alpha: 0.4 });
+      g.ellipse(-u * 0.2, -u * 0.12, u * 0.24, u * 0.14).fill({ color: 0xffffff, alpha: 0.42 });
+      g.ellipse(u * 0.22, -u * 0.62, u * 0.3, u * 0.13).fill(0x5b9146);
+      g.circle(0, -u * 0.52, u * 0.06).fill(0x7d5a20);
+      break;
+    }
+    case 'GRAPE': {
+      const berry = (x: number, y: number, r: number, c: number): void => {
+        g.circle(x, y, r).fill(c);
+      };
+      g.moveTo(0, -u * 0.85).lineTo(0, -u * 0.5).stroke({ color: 0x4c7a3a, width: u * 0.1, cap: 'round' });
+      g.ellipse(u * 0.28, -u * 0.72, u * 0.3, u * 0.13).fill(0x5b9146);
+      berry(-u * 0.32, -u * 0.28, u * 0.24, 0x6d4a9e);
+      berry(u * 0.32, -u * 0.28, u * 0.24, 0x6d4a9e);
+      berry(0, -u * 0.34, u * 0.24, 0x7d58b0);
+      berry(-u * 0.48, u * 0.1, u * 0.24, 0x5d3d8a);
+      berry(u * 0.48, u * 0.1, u * 0.24, 0x5d3d8a);
+      berry(0, u * 0.06, u * 0.26, 0x6d4a9e);
+      berry(-u * 0.24, u * 0.44, u * 0.24, 0x54367c);
+      berry(u * 0.24, u * 0.44, u * 0.24, 0x54367c);
+      berry(0, u * 0.72, u * 0.22, 0x4a2f6e);
+      g.circle(-u * 0.08, -u * 0.4, u * 0.08).fill({ color: 0xffffff, alpha: 0.45 });
+      g.circle(-u * 0.55, 0, u * 0.07).fill({ color: 0xffffff, alpha: 0.35 });
+      break;
+    }
+    case 'MELON': {
+      // 西瓜切片：绿皮弧 + 白圈 + 红瓤 + 籽
+      const rind = arcPoints(0, -u * 0.1, u * 0.85, 0.12 * Math.PI, 0.88 * Math.PI);
+      g.poly([...rind]).fill(0x3f7a44);
+      const white = arcPoints(0, -u * 0.1, u * 0.74, 0.14 * Math.PI, 0.86 * Math.PI);
+      g.poly([...white]).fill(0xe9f0dc);
+      const flesh = arcPoints(0, -u * 0.1, u * 0.66, 0.15 * Math.PI, 0.85 * Math.PI);
+      g.poly([...flesh]).fill(0xd6484e);
+      g.circle(-u * 0.26, u * 0.28, u * 0.055).fill(0x2b2320);
+      g.circle(u * 0.02, u * 0.42, u * 0.055).fill(0x2b2320);
+      g.circle(u * 0.28, u * 0.26, u * 0.055).fill(0x2b2320);
+      g.circle(-u * 0.02, u * 0.18, u * 0.055).fill(0x2b2320);
+      break;
+    }
+    case 'BELL': {
+      // 钟体（穹顶 + 喇叭口）
+      const dome = arcPoints(0, -u * 0.05, u * 0.52, Math.PI, 2 * Math.PI);
+      g.poly([...dome, u * 0.62, u * 0.42, -u * 0.62, u * 0.42]).fill(0xe0b44e);
+      g.poly([-u * 0.62, u * 0.42, u * 0.62, u * 0.42, u * 0.5, u * 0.55, -u * 0.5, u * 0.55]).fill(0xb8903a);
+      g.roundRect(-u * 0.09, -u * 0.72, u * 0.18, u * 0.18, u * 0.06).fill(0x8a6b1e);
+      g.circle(0, u * 0.62, u * 0.12).fill(0x8a6b1e);
+      g.ellipse(-u * 0.2, -u * 0.18, u * 0.14, u * 0.26).fill({ color: 0xffffff, alpha: 0.35 });
+      break;
+    }
+    case 'SEVEN': {
+      // 经典红 7（双层拉出立体感）
+      const seven = (dx: number, dy: number, c: number): void => {
+        g.poly([
+          -u * 0.5 + dx, -u * 0.72 + dy,
+          u * 0.52 + dx, -u * 0.72 + dy,
+          u * 0.14 + dx, u * 0.72 + dy,
+          -u * 0.22 + dx, u * 0.72 + dy,
+          u * 0.1 + dx, -u * 0.34 + dy,
+          -u * 0.5 + dx, -u * 0.34 + dy,
+        ]).fill(c);
+      };
+      seven(u * 0.06, u * 0.07, 0x7d1d22);
+      seven(0, 0, 0xd6363c);
+      g.poly([-u * 0.5, -u * 0.72, u * 0.52, -u * 0.72, u * 0.44, -u * 0.56, -u * 0.5, -u * 0.56]).fill({ color: 0xffffff, alpha: 0.3 });
+      break;
+    }
+    case 'CROWN': {
+      g.poly([
+        -u * 0.66, u * 0.34, -u * 0.72, -u * 0.36, -u * 0.32, -u * 0.05, 0, -u * 0.6,
+        u * 0.32, -u * 0.05, u * 0.72, -u * 0.36, u * 0.66, u * 0.34,
+      ]).fill(0xd9b352);
+      g.roundRect(-u * 0.66, u * 0.34, u * 1.32, u * 0.24, u * 0.08).fill(0xb8903a);
+      g.circle(-u * 0.72, -u * 0.42, u * 0.09).fill(0xe8cf82);
+      g.circle(0, -u * 0.68, u * 0.1).fill(0xe8cf82);
+      g.circle(u * 0.72, -u * 0.42, u * 0.09).fill(0xe8cf82);
+      g.circle(-u * 0.34, u * 0.14, u * 0.08).fill(0xc23a4a);
+      g.circle(0, u * 0.1, u * 0.09).fill(0x3d6fa8);
+      g.circle(u * 0.34, u * 0.14, u * 0.08).fill(0x3f8a5a);
+      g.poly([-u * 0.66, u * 0.34, u * 0.66, u * 0.34, u * 0.6, u * 0.42, -u * 0.6, u * 0.42]).fill({ color: 0xffffff, alpha: 0.2 });
+      break;
+    }
+    case 'WILD': {
+      g.circle(0, 0, u * 0.78).fill({ color: 0xc9a063, alpha: 0.16 });
+      g.poly(starPoints(0, 0, u * 0.8, u * 0.36)).fill(0xd9b352);
+      g.poly(starPoints(0, 0, u * 0.52, u * 0.24)).fill(0xf0dcab);
+      g.circle(0, 0, u * 0.12).fill(0xfff6df);
+      break;
+    }
+    case 'SCATTER': {
+      g.circle(0, u * 0.05, u * 0.8).fill({ color: 0x7fb8e8, alpha: 0.14 });
+      g.poly([-u * 0.42, -u * 0.5, u * 0.42, -u * 0.5, u * 0.68, -u * 0.1, 0, u * 0.66, -u * 0.68, -u * 0.1]).fill(0x7fb8e8);
+      g.poly([-u * 0.42, -u * 0.5, -u * 0.14, -u * 0.1, 0, u * 0.66, -u * 0.68, -u * 0.1]).fill(0x5d94c6);
+      g.poly([u * 0.42, -u * 0.5, u * 0.14, -u * 0.1, 0, u * 0.66, u * 0.68, -u * 0.1]).fill(0x9fd0f2);
+      g.poly([-u * 0.14, -u * 0.1, u * 0.14, -u * 0.1, 0, u * 0.66]).fill(0x7fb8e8);
+      g.poly([-u * 0.42, -u * 0.5, u * 0.42, -u * 0.5, u * 0.14, -u * 0.1, -u * 0.14, -u * 0.1]).fill(0xcfe8ff);
+      break;
+    }
+    default:
+      g.circle(0, 0, u * 0.5).fill(0x555f72);
+  }
+}
+
 function makeSymbol(sym: string): Container {
   const c = new Container();
+  const special = sym === 'WILD' || sym === 'SCATTER';
   const card = new Graphics();
-  card.roundRect(-cellW * 0.44, -cellH * 0.44, cellW * 0.88, cellH * 0.88, 12).fill(0x151b28);
-  card.roundRect(-cellW * 0.44, -cellH * 0.44, cellW * 0.88, cellH * 0.88, 12).stroke({
-    color: sym === 'WILD' || sym === 'SCATTER' ? 0xc9a063 : 0x2b3448,
-    width: sym === 'WILD' || sym === 'SCATTER' ? 2 : 1.2,
-  });
+  const w = cellW * 0.88;
+  const h = cellH * 0.88;
+  card.roundRect(-w / 2, -h / 2, w, h, 12).fill(0x161c2b);
+  // 顶部受光面
+  card.roundRect(-w / 2 + 2, -h / 2 + 2, w - 4, h * 0.34, 10).fill({ color: 0xffffff, alpha: 0.045 });
+  card.roundRect(-w / 2, -h / 2, w, h, 12).stroke({ color: special ? 0xc9a063 : 0x2b3448, width: special ? 2 : 1.2 });
   c.addChild(card);
-  const txt = new Text({ text: SYMBOL_EMOJI[sym] ?? sym, style: { fontSize: Math.min(cellW, cellH) * 0.52 } });
-  txt.anchor.set(0.5);
-  c.addChild(txt);
+  const art = new Graphics();
+  drawSymbolArt(art, sym, Math.min(cellW, cellH) * 0.34);
+  c.addChild(art);
   return c;
 }
 
@@ -202,6 +353,8 @@ function drawWinLines(winLines: { lineIndex: number }[]): void {
   });
 }
 
+let reelMaskRef: Graphics | null = null;
+
 function layout(): void {
   if (!app) return;
   const w = app.renderer.width;
@@ -214,6 +367,10 @@ function layout(): void {
     reel.x = originX + cellW * (col + 0.5);
     reel.y = originY;
   });
+  if (reelMaskRef) {
+    reelMaskRef.clear();
+    reelMaskRef.roundRect(originX - 8, originY + cellH - 8, cellW * COLS + 16, cellH * ROWS + 16, 14).fill(0xffffff);
+  }
 }
 
 async function onSpin(): Promise<void> {
@@ -302,21 +459,61 @@ onMounted(async () => {
   glow.position.set(app.renderer.width / 2, app.renderer.height / 2);
   app.stage.addChild(glow);
 
+  const reelStage = new Container();
+  app.stage.addChild(reelStage);
+  const reelMask = new Graphics();
+  app.stage.addChild(reelMask);
+  reelStage.mask = reelMask;
+  reelMaskRef = reelMask;
   for (let col = 0; col < COLS; col += 1) {
     const reel = new Container();
-    app.stage.addChild(reel);
+    reelStage.addChild(reel);
     reels.push(reel);
   }
-  // 框
+  // 机框（金属双框 + 角饰 + 卷轴筒明暗 + 中线指示）
   const frame = new Graphics();
   app.stage.addChild(frame);
   winLineLayer = new Graphics();
   app.stage.addChild(winLineLayer);
   layout();
   const drawFrame = (): void => {
+    const wx = originX - 12;
+    const wy = originY + cellH - 12;
+    const ww = cellW * COLS + 24;
+    const wh = cellH * ROWS + 24;
     frame.clear();
-    frame.roundRect(originX - 10, originY + cellH - 10, cellW * COLS + 20, cellH * ROWS + 20, 18).stroke({ color: 0xc9a063, width: 2, alpha: 0.6 });
-    frame.roundRect(originX - 14, originY + cellH - 14, cellW * COLS + 28, cellH * ROWS + 28, 20).stroke({ color: 0x8a6b3c, width: 1, alpha: 0.35 });
+    // 卷轴筒纵深：窗口上下渐暗（多层 alpha 条模拟圆柱阴影）
+    for (let i = 0; i < 5; i += 1) {
+      const a = 0.3 - i * 0.055;
+      frame.rect(wx + 6, wy + 6 + i * 5, ww - 12, 5).fill({ color: 0x05070c, alpha: a });
+      frame.rect(wx + 6, wy + wh - 11 - i * 5, ww - 12, 5).fill({ color: 0x05070c, alpha: a });
+    }
+    // 金属外框
+    frame.roundRect(wx - 6, wy - 6, ww + 12, wh + 12, 22).stroke({ color: 0x8a6b3c, width: 6, alpha: 0.9 });
+    frame.roundRect(wx - 6, wy - 6, ww + 12, wh + 12, 22).stroke({ color: 0xe6cfa3, width: 1.4, alpha: 0.8 });
+    frame.roundRect(wx, wy, ww, wh, 16).stroke({ color: 0xc9a063, width: 2 });
+    frame.roundRect(wx + 3, wy + 3, ww - 6, wh - 6, 14).stroke({ color: 0x594420, width: 1, alpha: 0.6 });
+    // 列分隔
+    for (let cIdx = 1; cIdx < COLS; cIdx += 1) {
+      const x = originX + cellW * cIdx;
+      frame.moveTo(x, wy + 6).lineTo(x, wy + wh - 6).stroke({ color: 0x2b3448, width: 2, alpha: 0.8 });
+      frame.moveTo(x + 1.4, wy + 6).lineTo(x + 1.4, wy + wh - 6).stroke({ color: 0xffffff, width: 0.8, alpha: 0.05 });
+    }
+    // 角饰铆钉
+    for (const [cx, cy] of [
+      [wx - 2, wy - 2],
+      [wx + ww + 2, wy - 2],
+      [wx - 2, wy + wh + 2],
+      [wx + ww + 2, wy + wh + 2],
+    ] as const) {
+      frame.circle(cx, cy, 5.5).fill(0xc9a063);
+      frame.circle(cx, cy, 5.5).stroke({ color: 0x6e5426, width: 1.2 });
+      frame.circle(cx - 1.4, cy - 1.6, 1.8).fill({ color: 0xffffff, alpha: 0.5 });
+    }
+    // 中央赔付线指示箭头
+    const midY = wy + wh / 2;
+    frame.poly([wx - 16, midY - 8, wx - 4, midY, wx - 16, midY + 8]).fill(0xc9a063);
+    frame.poly([wx + ww + 16, midY - 8, wx + ww + 4, midY, wx + ww + 16, midY + 8]).fill(0xc9a063);
   };
   drawFrame();
   window.addEventListener('resize', () => {
@@ -451,6 +648,26 @@ onBeforeUnmount(() => {
   font-size: 34px;
   font-weight: 800;
   color: #ffe9b0;
+}
+.rain-coin {
+  position: absolute;
+  top: -40px;
+  animation: coin-fall linear infinite;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+@keyframes coin-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(340deg);
+    opacity: 0.9;
+  }
 }
 .console {
   display: flex;

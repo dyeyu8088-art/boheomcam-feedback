@@ -8,6 +8,30 @@
 
     <div class="panel">
       <div class="brand">
+        <svg class="emblem" viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="emGold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f0dcab" />
+              <stop offset="0.5" stop-color="#c9a063" />
+              <stop offset="1" stop-color="#8a6b3c" />
+            </linearGradient>
+            <radialGradient id="emGlow" cx="0.5" cy="0.42" r="0.6">
+              <stop offset="0" stop-color="#c9a063" stop-opacity="0.28" />
+              <stop offset="1" stop-color="#c9a063" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <circle cx="60" cy="60" r="58" fill="url(#emGlow)" />
+          <circle cx="60" cy="60" r="46" fill="none" stroke="url(#emGold)" stroke-width="2.4" />
+          <circle cx="60" cy="60" r="40.5" fill="none" stroke="url(#emGold)" stroke-width="0.8" opacity="0.6" />
+          <!-- 旭日 -->
+          <circle cx="60" cy="46" r="9" fill="none" stroke="url(#emGold)" stroke-width="1.8" />
+          <path d="M60 30 v-5 M74 36 l3.4 -3.4 M46 36 l-3.4 -3.4" stroke="url(#emGold)" stroke-width="1.6" stroke-linecap="round" />
+          <!-- 长白双峰与天池 -->
+          <path d="M22 78 L42 54 L52 66 L64 48 L82 70 L90 62 L98 78" fill="none" stroke="url(#emGold)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M50 78 q10 -7 20 0" fill="none" stroke="url(#emGold)" stroke-width="1.6" stroke-linecap="round" opacity="0.85" />
+          <path d="M30 88 h60" stroke="url(#emGold)" stroke-width="1.2" stroke-linecap="round" opacity="0.55" />
+          <path d="M38 94 h44" stroke="url(#emGold)" stroke-width="1" stroke-linecap="round" opacity="0.35" />
+        </svg>
         <div class="mark">{{ locale === 'ko' ? user.brand.nameKo : user.brand.nameZh }}</div>
         <div class="sub">{{ user.brand.nameEn }}</div>
         <div class="slogan">{{ t('login.slogan') }}</div>
@@ -194,6 +218,16 @@ async function submit(): Promise<void> {
 }
 .brand {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.emblem {
+  width: 108px;
+  height: 108px;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 4px 18px rgba(201, 160, 99, 0.25));
+  animation: float-slow 7s ease-in-out infinite;
 }
 .mark {
   font-size: 44px;

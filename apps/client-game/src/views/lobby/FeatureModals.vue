@@ -7,8 +7,8 @@
       </div>
       <div class="ranklist">
         <div v-for="it in rankItems" :key="it.rank" class="rrow" :class="{ top3: it.rank <= 3 }">
-          <span class="rk num">{{ ['🥇', '🥈', '🥉'][it.rank - 1] ?? it.rank }}</span>
-          <span class="rn">{{ avatarEmoji(it.avatar_id ?? 1) }} {{ it.nickname ?? it.uid }}</span>
+          <span class="rk num" :class="`r${it.rank}`">{{ it.rank }}</span>
+          <span class="rn"><AvatarBadge :id="it.avatar_id ?? 1" :size="28" :ring="it.rank <= 3" /> {{ it.nickname ?? it.uid }}</span>
           <span class="rv num">{{ fmt(it.value) }}</span>
         </div>
         <div v-if="rankItems.length === 0" class="empty">{{ t('common.empty') }}</div>
@@ -31,7 +31,7 @@
             style="margin-top: 10px"
             @click="claimMail(m)"
           >
-            {{ t('mail.claim') }} ({{ m.attachments.map((a: any) => `${a.currency === 'COIN' ? '◉' : '◆'}${fmt(a.amount)}`).join(' ') }})
+            {{ t('mail.claim') }} ({{ m.attachments.map((a: any) => `${fmt(a.amount)} ${a.currency === 'COIN' ? '金币' : '钻石'}`).join(' · ') }})
           </button>
           <div v-else-if="m.claimed_at" class="dim">{{ t('mail.claimed') }}</div>
         </div>
@@ -55,7 +55,8 @@ import { api } from '../../net/api.js';
 import { t, currentLocale } from '../../i18n/index.js';
 import ModalSheet from '../../ui/ModalSheet.vue';
 import { toast } from '../../ui/toast.js';
-import { avatarEmoji, fmt, fmtTime } from '../../ui/format.js';
+import AvatarBadge from '../../ui/AvatarBadge.vue';
+import { fmt, fmtTime } from '../../ui/format.js';
 import { useUserStore } from '../../stores/user.js';
 
 const locale = currentLocale;
@@ -149,11 +150,33 @@ async function claimMail(m: any): Promise<void> {
   background: linear-gradient(90deg, rgba(201, 160, 99, 0.07), transparent);
 }
 .rk {
-  width: 32px;
-  text-align: center;
+  width: 30px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.rk.r1 {
+  background: linear-gradient(180deg, #f0dcab, #8a6b3c);
+  color: #241a08;
+}
+.rk.r2 {
+  background: linear-gradient(180deg, #e3e7ee, #8b95a5);
+  color: #1d232e;
+}
+.rk.r3 {
+  background: linear-gradient(180deg, #dfa876, #8a5a30);
+  color: #2a1808;
 }
 .rn {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .rv {
   color: var(--gold-champagne);

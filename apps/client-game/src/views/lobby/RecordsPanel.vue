@@ -28,7 +28,7 @@
           <span class="dim">{{ detail.round ? fmtTime(detail.round.started_at) : '' }}</span>
         </div>
         <div v-for="p in detail.players" :key="p.user_id" class="drow">
-          <span>{{ avatarEmoji(p.avatar_id) }} {{ p.nickname }}</span>
+          <span class="person"><AvatarBadge :id="p.avatar_id" :size="26" :ring="false" /> {{ p.nickname }}</span>
           <span class="num" :class="p.score_change > 0 ? 'win' : p.score_change < 0 ? 'lose' : ''">{{ fmtSigned(p.score_change) }}</span>
         </div>
       </div>
@@ -41,7 +41,8 @@ import { onActivated, onMounted, ref } from 'vue';
 import { api } from '../../net/api.js';
 import { t } from '../../i18n/index.js';
 import ModalSheet from '../../ui/ModalSheet.vue';
-import { avatarEmoji, fmtSigned, fmtTime } from '../../ui/format.js';
+import AvatarBadge from '../../ui/AvatarBadge.vue';
+import { fmtSigned, fmtTime } from '../../ui/format.js';
 
 const ranges = [
   { key: 'today', label: 'records.today' },
@@ -167,6 +168,11 @@ async function openDetail(it: RecItem): Promise<void> {
 .drow.head {
   color: var(--gold-champagne);
   font-weight: 700;
+}
+.person {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .dim {
   color: var(--text-disabled);
