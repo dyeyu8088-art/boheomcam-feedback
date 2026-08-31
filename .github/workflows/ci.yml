@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, "claude/**", "feature/**", "release/**", "hotfix/**"]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: yanbian
+          POSTGRES_PASSWORD: yanbian_dev
+          POSTGRES_DB: yanbian
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U yanbian" --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6380:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install
+      - name: Type check (all packages)
+        run: pnpm -r build
+      - name: Engine unit tests
+        run: pnpm --filter @yanbian/game-common test
+      - name: Migrate
+        run: pnpm --filter @yanbian/api-service migrate
+      - name: Wallet integration tests
+        run: pnpm --filter @yanbian/api-service test
+      - name: E2E smoke (full stack)
+        run: |
+          (cd services/api && SERVER_ID=ci-api npx tsx src/main.ts &)
+          (cd services/game && SERVER_ID=ci-game npx tsx src/main.ts &)
+          sleep 6
+          node tests/e2e-smoke.mjs
+      - name: Dependency audit (high+)
+        run: pnpm audit --audit-level high || true

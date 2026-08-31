@@ -40,13 +40,25 @@ scripts/             工具脚本（RTP 模拟、压测、造数）
 ```bash
 pnpm install
 docker compose -f deploy/docker-compose.yml up -d postgres redis   # 基础设施
-pnpm migrate                    # 建库 + 种子
+pnpm migrate                    # 建库+种子；首次运行会打印初始管理员(admin)密码，首登强制改密
 pnpm dev:api                    # REST 服务群 :8080
 pnpm dev:game                   # 游戏服务群(WS) :8090
-pnpm dev:client                 # 游戏客户端 :5173
-pnpm dev:admin                  # 管理后台 :5174（默认管理员见 database/seeds 说明，首登强制改密）
-pnpm test                       # 全部单元/集成测试
+pnpm dev:client                 # 游戏客户端 :5173（H5/PC；APK 打包见 docs/10-deployment.md）
+pnpm dev:admin                  # 管理后台 :5174
 ```
+
+## 测试体系（当前全绿）
+
+```bash
+pnpm --filter @yanbian/game-common test    # 引擎单元测试 39 项（含模糊测试/RTP 收敛/确定性回放）
+pnpm --filter @yanbian/api-service test    # 钱包集成测试 7 项（并发100扣款/幂等/防重复结算/触发器防篡改）
+node tests/e2e-smoke.mjs                   # 全栈 E2E 28 项（四游戏整局/防作弊路径/断线重连）
+node tests/ui-smoke.mjs                    # 客户端浏览器冒烟 8 项（Playwright）
+node tests/admin-ui-smoke.mjs              # 后台浏览器冒烟 8 项
+node tests/load-ws.mjs 500 0.1             # WS 负载（本机阶梯；生产压测见 docs/09）
+```
+
+生产部署 / APK 打包 / RELEASE 检查表：见 [docs/10-deployment.md](docs/10-deployment.md)。
 
 ## 核心文档
 

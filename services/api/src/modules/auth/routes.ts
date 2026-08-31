@@ -11,6 +11,9 @@ interface DeviceBody {
   appVersion?: string;
 }
 
+/** 登录限流阈值（次/分/IP）。压测环境可调高；生产保持默认。 */
+const AUTH_RATE_LIMIT = Number(process.env.AUTH_RATE_LIMIT ?? 20);
+
 function device(body: DeviceBody): auth.DeviceInfo {
   const deviceId = (body.deviceId ?? '').trim();
   if (!deviceId || deviceId.length > 128) throw new ApiError(ErrorCode.VALIDATION, '缺少设备标识');
@@ -24,7 +27,7 @@ function device(body: DeviceBody): auth.DeviceInfo {
 
 export function registerAuthRoutes(app: FastifyInstance): void {
   app.post('/api/v1/auth/guest', async (req) => {
-    if (!(await rateLimit(`auth:${req.ip}`, 20, 60))) throw new ApiError(ErrorCode.RATE_LIMITED, undefined, 429);
+    if (!(await rateLimit(`auth:${req.ip}`, AUTH_RATE_LIMIT, 60))) throw new ApiError(ErrorCode.RATE_LIMITED, undefined, 429);
     const body = req.body as DeviceBody & { guestKey?: string };
     const r = await auth.guestLogin((body.guestKey ?? '').trim(), device(body), req.ip);
     return ok(r);
@@ -38,7 +41,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
   });
 
   app.post('/api/v1/auth/sms/login', async (req) => {
-    if (!(await rateLimit(`auth:${req.ip}`, 20, 60))) throw new ApiError(ErrorCode.RATE_LIMITED, undefined, 429);
+    if (!(await rateLimit(`auth:${req.ip}`, AUTH_RATE_LIMIT, 60))) throw new ApiError(ErrorCode.RATE_LIMITED, undefined, 429);
     const body = req.body as DeviceBody & { phone?: string; code?: string; password?: string };
     const pwd = body.password && body.password.length >= 6 && body.password.length <= 64 ? body.password : null;
     const r = await auth.smsLogin((body.phone ?? '').trim(), (body.code ?? '').trim(), pwd, device(body), req.ip);
@@ -46,7 +49,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
   });
 
   app.post('/api/v1/auth/password/login', async (req) => {
-    if (!(await rateLimit(`auth:${req.ip}`, 20, 60))) throw new ApiError(ErrorCode.RATE_LIMITED, undefined, 429);
+    if (!(await rateLimit(`auth:${req.ip}`, AUTH_RATE_LIMIT, 60))) throw new ApiError(ErrorCode.RATE_LIMITED, undefined, 429);
     const body = req.body as DeviceBody & { phone?: string; password?: string };
     if (!body.password) throw new ApiError(ErrorCode.VALIDATION, '缺少密码');
     const r = await auth.passwordLogin((body.phone ?? '').trim(), body.password, device(body), req.ip);

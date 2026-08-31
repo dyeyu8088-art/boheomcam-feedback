@@ -1,0 +1,18 @@
+# 服务端镜像（api-service 与 game-service 共用；SERVICE 构建参数区分入口）
+FROM node:22-alpine AS base
+RUN corepack enable && corepack prepare pnpm@10 --activate
+WORKDIR /app
+
+COPY pnpm-workspace.yaml package.json tsconfig.base.json ./
+COPY packages ./packages
+COPY services ./services
+COPY database ./database
+COPY scripts ./scripts
+RUN pnpm install --frozen-lockfile=false --prod=false
+
+ARG SERVICE=api
+ENV NODE_ENV=production
+ENV SERVICE_DIR=services/${SERVICE}
+WORKDIR /app/${SERVICE_DIR}
+# tsx 直跑 TS（无 native 依赖；如需 AOT 可切换 tsc 产物）
+CMD ["npx", "tsx", "src/main.ts"]

@@ -1,0 +1,116 @@
+# 生产/预发全栈编排（示例拓扑：nginx + api×2 + game + 前端×2 + pg + redis + 备份 + 监控）
+# 用法: docker compose -f deploy/docker-compose.prod.yml --env-file .env up -d
+# 生产迁移 K8s 时按本文件的服务边界逐一转换为 Deployment/Service。
+services:
+  nginx:
+    image: mirror.gcr.io/library/nginx:1.27-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/gateway.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on: [api, game, client-web, admin-web]
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: { SERVICE: api }
+    environment:
+      NODE_ENV: production
+      SERVER_ID: api-1
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+      ADMIN_INIT_PASSWORD: ${ADMIN_INIT_PASSWORD}
+      SERVICE_ROLES: auth,user,wallet,activity,social,config,admin
+    depends_on: [postgres, redis]
+    deploy:
+      replicas: 2
+    restart: unless-stopped
+
+  game:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: { SERVICE: game }
+    environment:
+      NODE_ENV: production
+      SERVER_ID: game-1
+      NODE_INDEX: "2"
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+    depends_on: [postgres, redis]
+    restart: unless-stopped
+
+  client-web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+      args: { APP: client-game }
+    restart: unless-stopped
+
+  admin-web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+      args: { APP: admin-web }
+    restart: unless-stopped
+
+  postgres:
+    image: mirror.gcr.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: yanbian
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=cp %p /var/lib/postgresql/wal_archive/%f
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - walarchive:/var/lib/postgresql/wal_archive
+    restart: unless-stopped
+
+  redis:
+    image: mirror.gcr.io/library/redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+
+  backup:
+    image: mirror.gcr.io/library/postgres:16-alpine
+    environment:
+      PGPASSWORD: ${PG_PASSWORD}
+    volumes:
+      - ./backup:/backup
+      - backups:/backups
+    entrypoint: ["/bin/sh", "/backup/cron.sh"]
+    depends_on: [postgres]
+    restart: unless-stopped
+
+  prometheus:
+    image: mirror.gcr.io/prom/prometheus:latest
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  walarchive:
+  redisdata:
+  backups:
+  promdata:

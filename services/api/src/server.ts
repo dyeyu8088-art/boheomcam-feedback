@@ -34,10 +34,12 @@ export async function buildServer(): Promise<FastifyInstance> {
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   });
 
+  // 全局 IP 限流阈值（次/分）。压测环境可调高；生产默认 600。
+  const ipRateLimit = Number(process.env.IP_RATE_LIMIT ?? 600);
   app.addHook('onRequest', async (req, reply) => {
     counterInc('api_requests_total', `path="${req.routeOptions.url ?? 'unknown'}"`);
     // 全局 IP 限流（业务级更细的在各路由）
-    const allowed = await rateLimit(`ip:${req.ip}`, 600, 60).catch(() => true);
+    const allowed = await rateLimit(`ip:${req.ip}`, ipRateLimit, 60).catch(() => true);
     if (!allowed) {
       counterInc('api_rate_limited_total');
       await reply.status(429).send({ code: ErrorCode.RATE_LIMITED, msg: ErrorMessage[ErrorCode.RATE_LIMITED], data: {} });

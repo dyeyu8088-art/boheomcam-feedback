@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8080"]
+  # game-service 指标经 api /metrics 汇总或独立暴露（预留）
+# 告警规则（Alertmanager 接入后启用）：
+#  - API 错误率 > 1% / 5min
+#  - 结算 failed 状态出现
+#  - ws_sessions 突降 > 50%
+#  - 节点心跳缺失 > 60s
