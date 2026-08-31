@@ -1,0 +1,21 @@
+{
+  "name": "yanbian-game-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "YANBIAN GAME / 延边娱乐 — 综合在线棋牌游戏平台（延边麻将 / 红十 / 捕鱼 / 水果机）。品牌名称后台可配置。全部游戏资产为虚拟娱乐资产，不可兑换、不可提现。",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "dev:api": "pnpm --filter @yanbian/api-service dev",
+    "dev:game": "pnpm --filter @yanbian/game-service dev",
+    "dev:client": "pnpm --filter @yanbian/client-game dev",
+    "dev:admin": "pnpm --filter @yanbian/admin-web dev",
+    "migrate": "pnpm --filter @yanbian/api-service migrate"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
