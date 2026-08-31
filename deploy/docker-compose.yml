@@ -1,0 +1,37 @@
+# 开发/联调环境基础设施 + 全栈
+# 用法（仅基础设施）: docker compose -f deploy/docker-compose.yml up -d postgres redis
+services:
+  postgres:
+    image: mirror.gcr.io/library/postgres:16-alpine  # 生产替换为官方源
+    container_name: yanbian-postgres
+    environment:
+      POSTGRES_USER: yanbian
+      POSTGRES_PASSWORD: yanbian_dev
+      POSTGRES_DB: yanbian
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yanbian"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: mirror.gcr.io/library/redis:7-alpine  # 生产替换为官方源
+    container_name: yanbian-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
+  redisdata:
