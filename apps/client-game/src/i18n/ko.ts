@@ -143,6 +143,13 @@ export const ko: Record<string, string> = {
   'room.chat.q4': '조용히 게임에 집중합시다',
   'room.chat.q5': '다음에 또 같이 해요',
 
+  'records.empty.title': '아직 전적이 없습니다',
+  'records.empty.hint': '한 판을 마치면 대국 결과와 리플레이가 여기에 표시됩니다.',
+  'friends.empty.title': '아직 친구가 없습니다',
+  'friends.empty.hint': '위에 상대의 UID를 입력해 추가하고 함께 친구방을 열어 보세요.',
+  'me.wallet.empty': '자산 변동 내역이 없습니다',
+  'rank.empty': '순위를 집계하는 중입니다',
+  'mail.empty': '새 메일이 없습니다',
   'mj.chi': '치',
   'mj.peng': '펑',
   'mj.gang': '깡',

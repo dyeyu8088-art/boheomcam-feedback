@@ -157,6 +157,13 @@ export const zh: Record<string, string> = {
   'room.chat.q5': '下次再来跟你们玩',
 
   // 麻将
+  'records.empty.title': '还没有战绩',
+  'records.empty.hint': '完成一局对战后，这里会显示牌局结果与回放。',
+  'friends.empty.title': '还没有好友',
+  'friends.empty.hint': '在上方输入对方 UID 即可添加，一起开好友房。',
+  'me.wallet.empty': '暂无资产变动',
+  'rank.empty': '榜单还在统计中',
+  'mail.empty': '没有新邮件',
   'mj.chi': '吃',
   'mj.peng': '碰',
   'mj.gang': '杠',

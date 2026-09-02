@@ -2,7 +2,7 @@
   <div class="panel">
     <div class="searchbar">
       <input v-model="searchUid" class="input num" :placeholder="t('friends.search')" inputmode="numeric" />
-      <button class="btn btn-primary btn-sm" :disabled="!searchUid" @click="doSearch">{{ t('friends.add') }}</button>
+      <button class="btn btn-primary add-btn" :disabled="!searchUid" @click="doSearch">{{ t('friends.add') }}</button>
     </div>
 
     <section v-if="requests.length" class="glass sec">
@@ -18,7 +18,7 @@
 
     <section class="glass sec">
       <h4>{{ t('friends.title') }} ({{ friends.length }})</h4>
-      <div v-if="friends.length === 0" class="empty">{{ t('common.empty') }}</div>
+      <EmptyState v-if="friends.length === 0" :title="t('friends.empty.title')" :hint="t('friends.empty.hint')" />
       <div v-for="f in friends" :key="f.uid" class="row">
         <span class="person">
           <span class="stat" :class="{ on: f.online }" /><AvatarBadge :id="f.avatarId" :size="30" :ring="false" /> {{ f.nickname }}
@@ -36,6 +36,7 @@ import { api } from '../../net/api.js';
 import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
 import AvatarBadge from '../../ui/AvatarBadge.vue';
+import EmptyState from '../../ui/EmptyState.vue';
 
 interface FriendItem {
   uid: number;
@@ -87,8 +88,9 @@ async function handle(id: number, action: string): Promise<void> {
 
 <style scoped>
 .panel {
-  max-width: 640px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: min(900px, 92vw);
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -142,5 +144,18 @@ h4 {
   color: var(--text-disabled);
   text-align: center;
   padding: 16px;
+}
+/* 添加按钮：此前 btn-sm 宽度不足，「添加」两字被折成两行 */
+.add-btn {
+  flex-shrink: 0;
+  min-width: 92px;
+  padding: 12px 20px;
+  white-space: nowrap;
+}
+.sec {
+  border-radius: var(--radius-card);
+  box-shadow:
+    var(--edge-inner),
+    var(--shadow-card);
 }
 </style>

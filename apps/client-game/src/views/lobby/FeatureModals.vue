@@ -11,13 +11,13 @@
           <span class="rn"><AvatarBadge :id="it.avatar_id ?? 1" :size="28" :ring="it.rank <= 3" /> {{ it.nickname ?? it.uid }}</span>
           <span class="rv num">{{ fmt(it.value) }}</span>
         </div>
-        <div v-if="rankItems.length === 0" class="empty">{{ t('common.empty') }}</div>
+        <EmptyState v-if="rankItems.length === 0" :title="t('rank.empty')" />
       </div>
     </ModalSheet>
 
     <!-- 邮件 -->
     <ModalSheet v-model="showMail" :title="t('mail.title')" width="460px">
-      <div v-if="mails.length === 0" class="empty">{{ t('common.empty') }}</div>
+      <EmptyState v-if="mails.length === 0" :title="t('mail.empty')" />
       <div v-for="m in mails" :key="m.mail_id" class="mail" :class="{ unread: !m.read_at }">
         <div class="mhead" @click="readMail(m)">
           <span class="mtitle">{{ m.title }}</span>
@@ -44,7 +44,7 @@
         <div class="atitle">{{ locale === 'ko' && a.title_ko ? a.title_ko : a.title }}</div>
         <div class="abody">{{ locale === 'ko' && a.body_ko ? a.body_ko : a.body }}</div>
       </div>
-      <div v-if="announcements.length === 0" class="empty">{{ t('common.empty') }}</div>
+      <EmptyState v-if="announcements.length === 0" :title="t('common.empty')" />
     </ModalSheet>
   </div>
 </template>
@@ -56,6 +56,7 @@ import { t, currentLocale } from '../../i18n/index.js';
 import ModalSheet from '../../ui/ModalSheet.vue';
 import { toast } from '../../ui/toast.js';
 import AvatarBadge from '../../ui/AvatarBadge.vue';
+import EmptyState from '../../ui/EmptyState.vue';
 import { fmt, fmtTime } from '../../ui/format.js';
 import { useUserStore } from '../../stores/user.js';
 

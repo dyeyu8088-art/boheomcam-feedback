@@ -1,6 +1,7 @@
 <template>
   <div class="panel">
-    <section class="glass hero">
+    <div class="col-l">
+      <section class="glass hero">
       <AvatarBadge :id="me?.avatarId ?? 1" :size="64" />
       <div class="hinfo">
         <div class="hn">
@@ -29,10 +30,11 @@
         <div class="k">{{ t('me.winRate') }}</div>
       </div>
     </section>
+    </div>
 
     <section class="glass sec">
       <h4>{{ t('me.wallet') }}</h4>
-      <div v-if="txs.length === 0" class="empty">{{ t('common.empty') }}</div>
+      <EmptyState v-if="txs.length === 0" :title="t('me.wallet.empty')" />
       <div v-for="tx in txs" :key="tx.transaction_id" class="row">
         <div>
           <div class="tt">{{ tx.description ?? tx.type }}</div>
@@ -60,6 +62,7 @@ import { toast } from '../../ui/toast.js';
 import ModalSheet from '../../ui/ModalSheet.vue';
 import AvatarBadge from '../../ui/AvatarBadge.vue';
 import { fmt, fmtSigned, fmtTime } from '../../ui/format.js';
+import EmptyState from '../../ui/EmptyState.vue';
 
 defineEmits<{ (e: 'logout'): void }>();
 
@@ -93,18 +96,39 @@ async function saveName(): Promise<void> {
 </script>
 
 <style scoped>
+/*
+  面板宽度：flex 子项上的 `margin: 0 auto` 会取消 align-items:stretch，
+  面板会塌成内容宽度，必须显式给 width:100%。
+*/
 .panel {
-  max-width: 640px;
-  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+  width: 100%;
+  max-width: min(1100px, 92vw);
+  margin-inline: auto;
+  align-content: start;
+}
+@media (min-width: 1024px) {
+  .panel {
+    grid-template-columns: 1fr 1.05fr;
+    align-items: start;
+    gap: 22px;
+  }
+}
+.col-l {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 .hero {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
+  gap: 18px;
+  padding: 24px;
+  border-radius: var(--radius-card);
+  box-shadow:
+    var(--edge-inner),
+    var(--shadow-card);
 }
 .hn {
   font-size: 18px;
@@ -135,11 +159,15 @@ async function saveName(): Promise<void> {
   gap: 10px;
 }
 .stat {
-  padding: 12px 6px;
+  padding: 18px 6px;
   text-align: center;
+  border-radius: var(--radius-card);
+  box-shadow:
+    var(--edge-inner),
+    var(--shadow-card);
 }
 .v {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 800;
 }
 .v.gold {
@@ -157,12 +185,21 @@ async function saveName(): Promise<void> {
   margin-top: 4px;
 }
 .sec {
-  padding: 16px;
+  padding: 20px 22px 22px;
+  border-radius: var(--radius-card);
+  box-shadow:
+    var(--edge-inner),
+    var(--shadow-card);
 }
 h4 {
-  margin: 0 0 8px;
-  font-size: 15px;
-  color: var(--gold-champagne);
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: linear-gradient(180deg, #fff8e6 6%, #e6cfa3 56%, #b3924f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 .row {
   display: flex;

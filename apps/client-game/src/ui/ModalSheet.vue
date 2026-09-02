@@ -6,9 +6,11 @@
           <div class="sheet glass" :style="{ maxWidth: width }">
             <header v-if="title">
               <h3>{{ title }}</h3>
-              <button class="x" :aria-label="'close'" @click="close">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5" /></svg>
-        </button>
+              <button class="x" aria-label="close" @click="close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+                  <path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5" />
+                </svg>
+              </button>
             </header>
             <div class="body"><slot /></div>
           </div>
@@ -39,23 +41,34 @@ void props;
 .sheet {
   width: 100%;
   max-width: 420px;
-  max-height: 84vh;
+  /* 桌面上 84vh 会让弹窗几乎顶满屏，加一个绝对上限 */
+  max-height: min(84vh, 760px);
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-modal);
-  box-shadow: var(--shadow-card);
+  background: linear-gradient(168deg, rgba(23, 34, 58, 0.96), rgba(11, 17, 29, 0.97));
+  border: 1px solid rgba(201, 160, 99, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.1),
+    inset 0 -16px 30px rgba(0, 0, 0, 0.34),
+    0 26px 60px rgba(0, 0, 0, 0.62);
 }
 header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px 10px;
+  padding: 16px 18px 12px 20px;
+  border-bottom: 1px solid rgba(201, 160, 99, 0.12);
 }
 h3 {
   margin: 0;
   font-size: 17px;
-  color: var(--gold-champagne);
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: linear-gradient(180deg, #fff8e6 6%, #e6cfa3 56%, #b3924f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 .x {
   display: flex;
@@ -81,7 +94,7 @@ h3 {
   background: rgba(201, 160, 99, 0.1);
 }
 .body {
-  padding: 6px 20px 20px;
+  padding: 14px 20px 20px;
   overflow-y: auto;
 }
 </style>

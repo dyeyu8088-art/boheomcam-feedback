@@ -8,7 +8,9 @@
     <div v-if="loading" class="list">
       <div v-for="n in 4" :key="n" class="skeleton" style="height: 64px" />
     </div>
-    <div v-else-if="items.length === 0" class="empty glass">{{ t('common.empty') }}</div>
+    <div v-else-if="items.length === 0" class="glass empty-wrap">
+      <EmptyState :title="t('records.empty.title')" :hint="t('records.empty.hint')" />
+    </div>
     <div v-else class="list">
       <div v-for="it in items" :key="it.round_id" class="rec glass" @click="openDetail(it)">
         <div class="left">
@@ -43,6 +45,7 @@ import { t } from '../../i18n/index.js';
 import ModalSheet from '../../ui/ModalSheet.vue';
 import AvatarBadge from '../../ui/AvatarBadge.vue';
 import { fmtSigned, fmtTime } from '../../ui/format.js';
+import EmptyState from '../../ui/EmptyState.vue';
 
 const ranges = [
   { key: 'today', label: 'records.today' },
@@ -93,30 +96,53 @@ async function openDetail(it: RecItem): Promise<void> {
 </script>
 
 <style scoped>
+/*
+  面板宽度：flex 子项上的 `margin: 0 auto` 会取消 align-items:stretch，
+  面板会塌成内容宽度，必须显式给 width:100%。
+*/
 .panel {
-  max-width: 640px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: min(1080px, 92vw);
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
+/* 时间筛选：紧凑胶囊组而非四条通栏按钮 */
 .filters {
   display: flex;
   gap: 8px;
+  align-self: center;
+  padding: 5px;
+  border-radius: 999px;
+  background: linear-gradient(160deg, rgba(20, 30, 50, 0.7), rgba(11, 17, 29, 0.62));
+  border: 1px solid var(--line-cool);
+  box-shadow: var(--edge-inner);
+  margin-bottom: 6px;
 }
 .filters button {
-  flex: 1;
-  padding: 8px 0;
-  border-radius: 10px;
-  border: 1px solid var(--line-soft);
-  background: var(--bg-charcoal);
+  min-width: 84px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: none;
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 13px;
+  font-weight: 600;
+  transition:
+    color 160ms var(--ease-out),
+    background 160ms var(--ease-out);
+}
+.filters button:hover {
+  color: var(--text-strong);
 }
 .filters button.on {
-  color: var(--gold-champagne);
-  border-color: var(--gold-warm);
+  color: #241a08;
+  background: linear-gradient(180deg, #f6e6bd, #c9a063 66%, #a8874e);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 4px 12px rgba(201, 160, 99, 0.28);
 }
 .list {
   display: flex;
@@ -127,8 +153,19 @@ async function openDetail(it: RecItem): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 16px 20px;
   cursor: pointer;
+  border-radius: var(--radius-card);
+  box-shadow:
+    var(--edge-inner),
+    var(--shadow-card);
+  transition:
+    border-color 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
+}
+.rec:hover {
+  transform: translateX(3px);
+  border-color: rgba(201, 160, 99, 0.4);
 }
 .gname {
   font-weight: 700;
@@ -149,10 +186,11 @@ async function openDetail(it: RecItem): Promise<void> {
 .lose {
   color: var(--accent-crimson);
 }
-.empty {
-  text-align: center;
-  padding: 40px;
-  color: var(--text-disabled);
+.empty-wrap {
+  border-radius: var(--radius-card);
+  box-shadow:
+    var(--edge-inner),
+    var(--shadow-card);
 }
 .detail {
   display: flex;

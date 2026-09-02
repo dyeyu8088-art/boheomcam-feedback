@@ -27,7 +27,7 @@
       <div class="sec-head">
         <h4>{{ t('tasks.title') }}</h4>
       </div>
-      <div v-if="tasks.length === 0" class="empty">{{ t('common.empty') }}</div>
+      <EmptyState v-if="tasks.length === 0" :title="t('common.empty')" />
       <div v-for="task in tasks" :key="task.taskId" class="task">
         <div class="tinfo">
           <div class="tname">{{ locale === 'ko' && task.nameKo ? task.nameKo : task.name }}</div>
@@ -58,6 +58,7 @@ import { toast } from '../../ui/toast.js';
 import AppIcon from '../../ui/AppIcon.vue';
 import { fmt } from '../../ui/format.js';
 import { useUserStore } from '../../stores/user.js';
+import EmptyState from '../../ui/EmptyState.vue';
 
 interface SignData {
   todaySigned: boolean;
@@ -123,103 +124,180 @@ async function claim(task: TaskData): Promise<void> {
 </script>
 
 <style scoped>
+/*
+  面板宽度：flex 子项上的 `margin: 0 auto` 会取消 align-items:stretch，
+  导致面板塌成内容宽度（1920 下只有 341px）。必须显式给 width:100%。
+*/
 .panel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  max-width: 640px;
-  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+  width: 100%;
+  max-width: min(1180px, 92vw);
+  margin-inline: auto;
+  align-content: start;
+}
+@media (min-width: 1024px) {
+  .panel {
+    /* 桌面：签到与任务并排，消除中央窄条 */
+    grid-template-columns: 1fr 1.12fr;
+    align-items: start;
+    gap: 22px;
+  }
 }
 .sec {
-  padding: 16px;
+  padding: 20px 22px 22px;
+  border-radius: var(--radius-card);
+  box-shadow:
+    var(--edge-inner),
+    var(--shadow-card);
 }
 .sec-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 h4 {
   margin: 0;
-  font-size: 16px;
-  color: var(--gold-champagne);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: linear-gradient(180deg, #fff8e6 6%, #e6cfa3 56%, #b3924f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 .streak {
   font-size: 12px;
   color: var(--text-secondary);
 }
+
+/* ══ 签到 ══ */
 .sign-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 18px;
 }
 .sign-cell {
-  background: var(--bg-night);
-  border: 1px solid rgba(154, 163, 178, 0.12);
-  border-radius: 10px;
-  padding: 8px 2px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 84px;
+  padding: 10px 4px;
   text-align: center;
+  border-radius: 12px;
+  background: linear-gradient(168deg, rgba(23, 34, 58, 0.9), rgba(11, 17, 29, 0.92));
+  border: 1px solid var(--line-cool);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.3);
+  transition:
+    border-color 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+/* 第 7 天为周奖励，视觉权重最高 */
+.sign-cell:last-child {
+  background: linear-gradient(168deg, rgba(46, 36, 18, 0.92), rgba(20, 15, 8, 0.94));
+  border-color: rgba(201, 160, 99, 0.34);
 }
 .sign-cell.done {
-  border-color: var(--accent-jade);
-  opacity: 0.65;
+  border-color: rgba(75, 179, 156, 0.45);
+}
+.sign-cell.done::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 11px;
+  height: 6px;
+  border-left: 2px solid var(--accent-jade);
+  border-bottom: 2px solid var(--accent-jade);
+  transform: rotate(-45deg);
+}
+.sign-cell.done .r,
+.sign-cell.done .d {
+  opacity: 0.5;
 }
 .sign-cell.next {
-  border-color: var(--gold-warm);
-  box-shadow: var(--shadow-glow-gold);
+  border-color: rgba(201, 160, 99, 0.75);
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 20px rgba(0, 0, 0, 0.42),
+    0 0 20px rgba(201, 160, 99, 0.24);
 }
 .d {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-secondary);
+  letter-spacing: 0.02em;
 }
 .r {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--gold-champagne);
-  margin-top: 4px;
 }
 .wide {
   width: 100%;
+  padding: 13px 22px;
 }
+
+/* ══ 任务 ══ */
 .task {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 0;
+  gap: 14px;
+  padding: 13px 0;
   border-top: 1px solid rgba(154, 163, 178, 0.08);
+}
+.task:first-of-type {
+  border-top: none;
 }
 .tinfo {
   flex: 1;
+  min-width: 0;
 }
 .tname {
-  font-size: 14px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-strong);
 }
 .tbar {
-  height: 4px;
-  background: var(--bg-night);
-  border-radius: 2px;
-  margin-top: 6px;
+  position: relative;
+  height: 6px;
+  background: rgba(6, 10, 18, 0.85);
+  border-radius: 3px;
+  margin-top: 8px;
   overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 .tfill {
   height: 100%;
-  background: linear-gradient(90deg, var(--gold-deep), var(--gold-warm));
-  border-radius: 2px;
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold-warm) 60%, var(--gold-pale));
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(201, 160, 99, 0.45);
   transition: width 0.4s var(--ease-out);
 }
 .tprog {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-disabled);
-  margin-top: 3px;
+  margin-top: 5px;
 }
 .treward {
-  font-size: 12px;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--gold-champagne);
   white-space: nowrap;
 }
 .empty {
   color: var(--text-disabled);
   text-align: center;
-  padding: 18px;
+  padding: 24px;
 }
 </style>
