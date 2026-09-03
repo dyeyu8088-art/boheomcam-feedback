@@ -28,6 +28,8 @@
         <div class="p-art"><GameCardArt :game="g.gameId" :layout="artLayout(g.gameId)" /></div>
         <div class="p-scrim" />
         <div class="p-sheen" />
+        <div class="p-frame" />
+        <i v-for="c in ['tl', 'tr', 'bl', 'br']" :key="c" class="p-corner" :class="c" />
 
         <div class="p-tags">
           <span v-if="g.gameId === 'mahjong_yanbian'" class="p-tag rec">{{ t('lobby.recommend') }}</span>
@@ -485,10 +487,12 @@ function joinRoom(): void {
   overflow: hidden;
   cursor: pointer;
   isolation: isolate;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(201, 160, 99, 0.22);
   box-shadow:
-    var(--edge-inner),
-    var(--shadow-card);
+    inset 0 1px 0 rgba(255, 244, 214, 0.14),
+    inset 0 -18px 30px rgba(0, 0, 0, 0.36),
+    0 22px 50px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(0, 0, 0, 0.5);
   transition:
     transform 200ms var(--ease-out),
     box-shadow 200ms var(--ease-out),
@@ -496,12 +500,13 @@ function joinRoom(): void {
   animation: rise-in 460ms var(--ease-out) both;
 }
 .poster-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(201, 160, 99, 0.42);
+  transform: translateY(-7px);
+  border-color: rgba(246, 230, 189, 0.55);
   box-shadow:
-    var(--edge-inner),
-    var(--shadow-lift),
-    0 0 26px rgba(201, 160, 99, 0.18);
+    inset 0 1px 0 rgba(255, 244, 214, 0.2),
+    inset 0 -18px 30px rgba(0, 0, 0, 0.36),
+    0 30px 64px rgba(0, 0, 0, 0.7),
+    0 0 34px rgba(201, 160, 99, 0.28);
 }
 .poster-card:active {
   transform: translateY(-2px) scale(0.985);
@@ -518,8 +523,53 @@ function joinRoom(): void {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(4, 8, 14, 0.24) 0%, transparent 34%, rgba(4, 8, 14, 0.68) 74%, rgba(3, 6, 11, 0.92) 100%);
+    linear-gradient(180deg, rgba(4, 8, 14, 0.22) 0%, transparent 30%, transparent 56%, rgba(4, 8, 14, 0.72) 76%, rgba(3, 6, 11, 0.95) 100%);
   pointer-events: none;
+}
+/* 内嵌金框：渐变描边（遮罩法）+ 内侧暗线，让卡片读成一件“镶金的实物” */
+.p-frame {
+  position: absolute;
+  inset: 9px;
+  border-radius: calc(var(--radius-poster) - 8px);
+  border: 1px solid transparent;
+  background: linear-gradient(158deg, rgba(246, 230, 189, 0.8), rgba(201, 160, 99, 0.24) 34%, rgba(201, 160, 99, 0.16) 66%, rgba(246, 230, 189, 0.7)) border-box;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+.p-corner {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  z-index: 2;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: 26px 26px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Cpath d='M3 15V8a5 5 0 0 1 5-5h7' fill='none' stroke='%23f3dfae' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M8 8l3-3 3 3-3 3z' fill='%23f3dfae'/%3E%3Cpath d='M3 22v-3M22 3h-3' stroke='%23c9a063' stroke-width='1.2' stroke-linecap='round' opacity='.7'/%3E%3C/svg%3E");
+  filter: drop-shadow(0 0 4px rgba(201, 160, 99, 0.6));
+}
+.p-corner.tl {
+  top: 6px;
+  left: 6px;
+}
+.p-corner.tr {
+  top: 6px;
+  right: 6px;
+  transform: scaleX(-1);
+}
+.p-corner.bl {
+  bottom: 6px;
+  left: 6px;
+  transform: scaleY(-1);
+}
+.p-corner.br {
+  bottom: 6px;
+  right: 6px;
+  transform: scale(-1);
 }
 .p-sheen {
   position: absolute;
@@ -568,27 +618,31 @@ function joinRoom(): void {
 }
 .p-title {
   margin: 0;
-  font-size: 23px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  background: linear-gradient(180deg, #ffffff 6%, #efe6d4 52%, #c9b48c 100%);
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  line-height: 1.1;
+  background: linear-gradient(180deg, #fffaf0 0%, #f6e6bd 30%, #d9b46a 52%, #f3dfae 66%, #a8863f 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+  /* background-clip:text 下 text-shadow 会盖住字面，改用 drop-shadow 叠出浮雕 + 辉光 */
+  filter: drop-shadow(0 1px 0 rgba(58, 38, 8, 0.95)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.72)) drop-shadow(0 0 9px rgba(201, 160, 99, 0.26));
 }
 .hero .p-title {
-  font-size: 32px;
-  letter-spacing: 0.08em;
+  font-size: 38px;
+  letter-spacing: 0.14em;
 }
 .hero .p-sub {
-  font-size: 13px;
+  font-size: 13.5px;
 }
 .p-sub {
-  margin: 5px 0 0;
+  margin: 7px 0 0;
   font-size: 12px;
-  color: var(--text-secondary);
-  letter-spacing: 0.01em;
+  color: var(--gold-champagne);
+  opacity: 0.78;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 .p-foot {
   display: flex;
@@ -696,6 +750,37 @@ function joinRoom(): void {
 @media (max-width: 720px) {
   .posters {
     gap: 12px;
+  }
+  .p-sub {
+    letter-spacing: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .p-frame {
+    inset: 7px;
+    border-radius: calc(var(--radius-poster) - 6px);
+  }
+  .p-corner {
+    width: 20px;
+    height: 20px;
+    background-size: 20px 20px;
+  }
+  .p-corner.tl,
+  .p-corner.tr {
+    top: 4px;
+  }
+  .p-corner.bl,
+  .p-corner.br {
+    bottom: 4px;
+  }
+  .p-corner.tl,
+  .p-corner.bl {
+    left: 4px;
+  }
+  .p-corner.tr,
+  .p-corner.br {
+    right: 4px;
   }
   .p-body {
     padding: 12px 13px 12px;
@@ -811,6 +896,17 @@ function joinRoom(): void {
   .p-tag {
     font-size: 9.5px;
     padding: 2px 7px;
+  }
+  .p-corner {
+    width: 20px;
+    height: 20px;
+    background-size: 20px 20px;
+  }
+  .p-sub {
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 /* 极窄横屏（如 667×375）：功能卡回到可横滑 */
