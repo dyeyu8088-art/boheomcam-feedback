@@ -1,0 +1,37 @@
+/*
+  自托管开源字体（全部 SIL OFL 1.1，已子集化，许可证见 public/fonts/OFL-*.txt，清单见 THIRD_PARTY_ASSETS.md）
+  - YB Display ZH  : ZCOOL XiaoWei   —— 中文游戏名 / 品牌字标（衬线展示体，轻奢东方）
+  - YB Display KO  : Nanum Myeongjo  —— 韩文游戏名 / 品牌字标（明朝体，与小薇体同为衬线气质）
+  - YB Calligraphy : Ma Shan Zheng   —— 毛笔楷书：门风 / 牌面点缀 / 海报主视觉
+  - YB Brand       : Cinzel          —— 拉丁品牌字（YANBIAN GAME），古典大写衬线
+*/
+@font-face {
+  font-family: 'YB Display ZH';
+  src: url('/fonts/zcool-xiaowei-titles.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'YB Display KO';
+  src: url('/fonts/nanum-myeongjo-titles.woff2') format('woff2');
+  font-weight: 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'YB Calligraphy';
+  src: url('/fonts/mashanzheng-tiles.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'YB Brand';
+  src: url('/fonts/cinzel-brand.woff2') format('woff2');
+  font-weight: 400 900;
+  font-display: swap;
+}
+:root {
+  --font-display-zh: 'YB Display ZH', 'Noto Serif CJK SC', 'Songti SC', 'SimSun', serif;
+  --font-display-ko: 'YB Display KO', 'Nanum Myeongjo', 'Noto Serif KR', 'Apple SD Gothic Neo', serif;
+  --font-calligraphy: 'YB Calligraphy', 'Noto Serif CJK SC', 'Songti SC', serif;
+  --font-brand: 'YB Brand', 'Cinzel', 'Times New Roman', serif;
+}

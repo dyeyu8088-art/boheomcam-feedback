@@ -32,7 +32,7 @@
           <path d="M30 88 h60" stroke="url(#emGold)" stroke-width="1.2" stroke-linecap="round" opacity="0.55" />
           <path d="M38 94 h44" stroke="url(#emGold)" stroke-width="1" stroke-linecap="round" opacity="0.35" />
         </svg>
-        <div class="mark">{{ locale === 'ko' ? user.brand.nameKo : user.brand.nameZh }}</div>
+        <div class="mark" :class="{ ko: locale === 'ko' }">{{ locale === 'ko' ? user.brand.nameKo : user.brand.nameZh }}</div>
         <div class="sub">{{ user.brand.nameEn }}</div>
         <div class="slogan">{{ t('login.slogan') }}</div>
       </div>
@@ -238,6 +238,13 @@ async function submit(): Promise<void> {
   background-clip: text;
   color: transparent;
   text-shadow: 0 6px 30px rgba(201, 160, 99, 0.25);
+  font-family: var(--font-display-zh);
+  font-weight: 400;
+}
+.mark.ko {
+  font-family: var(--font-display-ko);
+  font-weight: 800;
+  letter-spacing: 0.18em;
 }
 .sub {
   margin-top: 4px;
@@ -245,6 +252,10 @@ async function submit(): Promise<void> {
   letter-spacing: 0.55em;
   color: var(--text-secondary);
   padding-left: 0.55em;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  color: var(--gold-warm);
+  opacity: 0.8;
 }
 .slogan {
   margin-top: 14px;

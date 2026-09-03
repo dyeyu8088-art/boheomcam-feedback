@@ -138,40 +138,28 @@
 
       <!-- 左侧：五萬 -->
       <g transform="translate(88 200) rotate(-14)" filter="url(#mjShadow)">
-        <rect x="0" y="9" width="58" height="80" rx="9" fill="url(#mjSide)" />
-        <rect x="0" y="0" width="58" height="80" rx="9" fill="url(#mjFace)" />
-        <rect x="1" y="1" width="56" height="78" rx="8" fill="none" stroke="#fff" stroke-opacity="0.7" stroke-width="1" />
-        <rect x="0" y="0" width="58" height="80" rx="9" fill="none" stroke="#b5a784" stroke-width="1" />
-        <text x="29" y="35" text-anchor="middle" font-size="25" font-weight="800" fill="url(#mjBlue)" font-family="'Noto Serif CJK SC','Songti SC','SimSun',serif">五</text>
-        <text x="29" y="63" text-anchor="middle" font-size="23" font-weight="800" fill="url(#mjRed)" font-family="'Noto Serif CJK SC','Songti SC','SimSun',serif">萬</text>
+        <rect x="0" y="9" width="58" height="78" rx="8" fill="url(#mjSide)" />
+        <image href="/assets/mahjong/Front.svg" x="0" y="0" width="58" height="77.3" />
+        <image href="/assets/mahjong/Man5.svg" x="0" y="0" width="58" height="77.3" />
+        <rect x="0.6" y="0.6" width="56.8" height="76" rx="7.5" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="1" />
+        <path d="M5 8 Q22 2 42 5" stroke="#fff" stroke-opacity="0.55" stroke-width="2.4" stroke-linecap="round" fill="none" />
       </g>
       <!-- 右侧：五筒 -->
       <g transform="translate(266 194) rotate(13)" filter="url(#mjShadow)">
-        <rect x="0" y="9" width="58" height="80" rx="9" fill="url(#mjSide)" />
-        <rect x="0" y="0" width="58" height="80" rx="9" fill="url(#mjFace)" />
-        <rect x="1" y="1" width="56" height="78" rx="8" fill="none" stroke="#fff" stroke-opacity="0.7" stroke-width="1" />
-        <rect x="0" y="0" width="58" height="80" rx="9" fill="none" stroke="#b5a784" stroke-width="1" />
-        <g fill="url(#mjBlue)" stroke="#0e2440" stroke-width="0.6">
-          <circle cx="19" cy="25" r="7" /><circle cx="39" cy="25" r="7" />
-          <circle cx="19" cy="45" r="7" /><circle cx="39" cy="45" r="7" />
-          <circle cx="29" cy="64" r="7" />
-        </g>
-        <g fill="#fff" opacity="0.35">
-          <circle cx="16.5" cy="22.5" r="2" /><circle cx="36.5" cy="22.5" r="2" />
-          <circle cx="16.5" cy="42.5" r="2" /><circle cx="36.5" cy="42.5" r="2" />
-          <circle cx="26.5" cy="61.5" r="2" />
-        </g>
+        <rect x="0" y="9" width="58" height="78" rx="8" fill="url(#mjSide)" />
+        <image href="/assets/mahjong/Front.svg" x="0" y="0" width="58" height="77.3" />
+        <image href="/assets/mahjong/Pin5.svg" x="0" y="0" width="58" height="77.3" />
+        <rect x="0.6" y="0.6" width="56.8" height="76" rx="7.5" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="1" />
+        <path d="M5 8 Q22 2 42 5" stroke="#fff" stroke-opacity="0.55" stroke-width="2.4" stroke-linecap="round" fill="none" />
       </g>
 
       <!-- 主视觉：中（更大、更立体、带鎏金轮廓光） -->
       <g transform="translate(166 146) rotate(-3)" filter="url(#mjShadow)">
-        <rect x="0" y="12" width="88" height="120" rx="12" fill="url(#mjSide)" />
-        <rect x="0" y="0" width="88" height="120" rx="12" fill="url(#mjFace)" />
-        <rect x="1.5" y="1.5" width="85" height="117" rx="11" fill="none" stroke="#fff" stroke-opacity="0.8" stroke-width="1.2" />
-        <rect x="0" y="0" width="88" height="120" rx="12" fill="none" stroke="#b5a784" stroke-width="1.2" />
-        <rect x="0" y="0" width="88" height="120" rx="12" fill="none" stroke="#f3dfae" stroke-opacity="0.55" stroke-width="2.2" filter="url(#mjGlow)" />
-        <text x="45.5" y="86" text-anchor="middle" font-size="66" font-weight="800" fill="#5c1410" opacity="0.35" font-family="'Noto Serif CJK SC','Songti SC','SimSun',serif">中</text>
-        <text x="44" y="84" text-anchor="middle" font-size="66" font-weight="800" fill="url(#mjRed)" font-family="'Noto Serif CJK SC','Songti SC','SimSun',serif">中</text>
+        <rect x="0" y="12" width="88" height="117" rx="11" fill="url(#mjSide)" />
+        <image href="/assets/mahjong/Front.svg" x="0" y="0" width="88" height="117.3" />
+        <image href="/assets/mahjong/Chun.svg" x="0" y="0" width="88" height="117.3" />
+        <rect x="1" y="1" width="86" height="115.3" rx="10.5" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1.2" />
+        <rect x="0" y="0" width="88" height="117.3" rx="11" fill="none" stroke="#f3dfae" stroke-opacity="0.6" stroke-width="2.2" filter="url(#mjGlow)" />
         <path d="M6 10 Q30 2 60 6" stroke="#fff" stroke-opacity="0.7" stroke-width="3" stroke-linecap="round" fill="none" />
       </g>
 
@@ -321,31 +309,20 @@
       <!-- 主视觉光晕 -->
       <ellipse cx="212" cy="196" rx="104" ry="70" fill="url(#hsHero)" filter="url(#hsBloom)" />
 
-      <!-- 红桃 10 -->
+      <!-- 红桃 10 / 方块 10（Vector Playing Cards，公共领域） -->
       <g transform="translate(140 132) rotate(-10)" filter="url(#hsShadow)">
-        <rect x="0" y="0" width="84" height="118" rx="9" fill="url(#hsCard)" />
-        <rect x="1.2" y="1.2" width="81.6" height="115.6" rx="8" fill="none" stroke="#fff" stroke-opacity="0.8" stroke-width="1" />
-        <rect x="0" y="0" width="84" height="118" rx="9" fill="none" stroke="#c3b9a1" stroke-width="1" />
-        <text x="10" y="24" font-size="19" font-weight="800" fill="#c22b3a" font-family="system-ui,sans-serif">10</text>
-        <path d="M16 30 c-3.5 -2.8 -5 -4.9 -5 -6.8 a2.4 2.4 0 0 1 4.9 -0.7 a2.4 2.4 0 0 1 4.9 0.7 c0 1.9 -1.5 4 -5 6.8 z" fill="#c22b3a" transform="translate(-2 0)" />
-        <path d="M42 86 c-17 -13.6 -24 -23.8 -24 -32.8 a11.9 11.9 0 0 1 23.8 -3.4 a11.9 11.9 0 0 1 23.8 3.4 c0 9 -7 19.2 -23.8 32.8 z" fill="url(#hsPip)" />
-        <path d="M30 52 q6 -8 14 -6" stroke="#fff" stroke-opacity="0.35" stroke-width="2.4" stroke-linecap="round" fill="none" />
-        <g transform="rotate(180 42 59)">
-          <text x="10" y="24" font-size="19" font-weight="800" fill="#c22b3a" font-family="system-ui,sans-serif">10</text>
-        </g>
+        <rect x="0" y="0" width="84" height="122" rx="7" fill="#fdfbf5" />
+        <image href="/assets/cards/10H.svg" x="0" y="0" width="84" height="122" />
+        <rect x="0.6" y="0.6" width="82.8" height="120.8" rx="6.5" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1" />
+        <rect x="0" y="0" width="84" height="122" rx="7" fill="none" stroke="#c3b9a1" stroke-width="0.8" />
+        <path d="M6 10 Q26 3 48 6" stroke="#fff" stroke-opacity="0.5" stroke-width="2.4" stroke-linecap="round" fill="none" />
       </g>
-      <!-- 方块 10 -->
       <g transform="translate(212 138) rotate(11)" filter="url(#hsShadow)">
-        <rect x="0" y="0" width="84" height="118" rx="9" fill="url(#hsCard)" />
-        <rect x="1.2" y="1.2" width="81.6" height="115.6" rx="8" fill="none" stroke="#fff" stroke-opacity="0.8" stroke-width="1" />
-        <rect x="0" y="0" width="84" height="118" rx="9" fill="none" stroke="#c3b9a1" stroke-width="1" />
-        <text x="10" y="24" font-size="19" font-weight="800" fill="#c22b3a" font-family="system-ui,sans-serif">10</text>
-        <path d="M14 34 L19 27 L24 34 L19 41 z" fill="#c22b3a" transform="translate(-2 -2)" />
-        <path d="M42 30 L66 60 L42 90 L18 60 z" fill="url(#hsPip)" />
-        <path d="M30 52 L42 38" stroke="#fff" stroke-opacity="0.4" stroke-width="2.4" stroke-linecap="round" />
-        <g transform="rotate(180 42 59)">
-          <text x="10" y="24" font-size="19" font-weight="800" fill="#c22b3a" font-family="system-ui,sans-serif">10</text>
-        </g>
+        <rect x="0" y="0" width="84" height="122" rx="7" fill="#fdfbf5" />
+        <image href="/assets/cards/10D.svg" x="0" y="0" width="84" height="122" />
+        <rect x="0.6" y="0.6" width="82.8" height="120.8" rx="6.5" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1" />
+        <rect x="0" y="0" width="84" height="122" rx="7" fill="none" stroke="#c3b9a1" stroke-width="0.8" />
+        <path d="M6 10 Q26 3 48 6" stroke="#fff" stroke-opacity="0.5" stroke-width="2.4" stroke-linecap="round" fill="none" />
       </g>
 
       <!-- 筹码堆 ×2 -->

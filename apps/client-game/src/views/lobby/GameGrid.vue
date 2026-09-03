@@ -37,7 +37,7 @@
         </div>
 
         <div class="p-body">
-          <h3 class="p-title">{{ locale === 'ko' ? g.nameKo : g.name }}</h3>
+          <h3 class="p-title" :class="{ ko: locale === 'ko' }">{{ locale === 'ko' ? g.nameKo : g.name }}</h3>
           <p class="p-sub">{{ t(`game.${g.gameId}.desc`) }}</p>
           <div class="p-foot">
             <span class="p-online num"><i class="dot" />{{ t('lobby.online', { n: g.online }) }}</span>
@@ -449,10 +449,16 @@ function joinRoom(): void {
     padding: 24px 26px 22px;
   }
   .p-title {
-    font-size: 29px;
+    font-size: 36px;
   }
   .hero .p-title {
-    font-size: 41px;
+    font-size: 54px;
+  }
+  .p-title.ko {
+    font-size: 31px;
+  }
+  .hero .p-title.ko {
+    font-size: 44px;
   }
   .p-sub {
     font-size: 14px;
@@ -618,9 +624,11 @@ function joinRoom(): void {
 }
 .p-title {
   margin: 0;
-  font-size: 25px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
+  /* 站酷小薇（OFL）：衬线展示体，只有 Regular 一档，靠字号与金属渐变撑重量，禁止合成粗体 */
+  font-family: var(--font-display-zh);
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
   line-height: 1.1;
   background: linear-gradient(180deg, #fffaf0 0%, #f6e6bd 30%, #d9b46a 52%, #f3dfae 66%, #a8863f 100%);
   -webkit-background-clip: text;
@@ -630,8 +638,18 @@ function joinRoom(): void {
   filter: drop-shadow(0 1px 0 rgba(58, 38, 8, 0.95)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.72)) drop-shadow(0 0 9px rgba(201, 160, 99, 0.26));
 }
 .hero .p-title {
+  font-size: 46px;
+  letter-spacing: 0.16em;
+}
+.p-title.ko {
+  font-family: var(--font-display-ko);
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: 0.04em;
+}
+.hero .p-title.ko {
   font-size: 38px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.06em;
 }
 .hero .p-sub {
   font-size: 13.5px;
@@ -787,8 +805,13 @@ function joinRoom(): void {
   }
   .p-title,
   .hero .p-title {
-    font-size: 18px;
-    letter-spacing: 0.04em;
+    font-size: 22px;
+    letter-spacing: 0.06em;
+  }
+  .p-title.ko,
+  .hero .p-title.ko {
+    font-size: 19px;
+    letter-spacing: 0.02em;
   }
   .p-sub,
   .hero .p-sub {
@@ -871,12 +894,17 @@ function joinRoom(): void {
     padding: 11px 13px 11px;
   }
   .p-title {
-    font-size: 17px;
-    letter-spacing: 0.04em;
+    font-size: 21px;
+    letter-spacing: 0.06em;
   }
   .hero .p-title {
-    font-size: 22px;
-    letter-spacing: 0.06em;
+    font-size: 27px;
+    letter-spacing: 0.08em;
+  }
+  .p-title.ko,
+  .hero .p-title.ko {
+    font-size: 18px;
+    letter-spacing: 0.02em;
   }
   .p-sub,
   .hero .p-sub {

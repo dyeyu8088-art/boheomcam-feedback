@@ -1,17 +1,11 @@
 <template>
-  <div class="pcard" :class="[{ back, selected, red: isRed, identity }, `s${size}`]">
-    <template v-if="!back">
-      <div class="corner tl">
-        <span class="r">{{ rankSym }}</span>
-        <span class="s">{{ suitSym }}</span>
-      </div>
-      <div class="pip">{{ suitSym }}</div>
-      <div class="corner br">
-        <span class="r">{{ rankSym }}</span>
-        <span class="s">{{ suitSym }}</span>
-      </div>
-      <div v-if="identity" class="idmark">十</div>
-    </template>
+  <!--
+    扑克牌：牌面使用 Vector Playing Cards（Byron Knoll，公共领域，见 THIRD_PARTY_ASSETS.md）。
+    数字牌为 SVG（5–13KB），J/Q/K 为本项目光栅化的 WebP（60–74KB）。牌背为本项目原创 CSS。
+  -->
+  <div class="pcard" :class="[{ back, selected, identity }, `s${size}`]">
+    <img v-if="!back" class="face" :src="src" :alt="label" draggable="false" decoding="async" />
+    <span v-if="identity && !back" class="idmark">十</span>
   </div>
 </template>
 
@@ -25,13 +19,16 @@ const props = withDefaults(defineProps<{ card?: number; back?: boolean; selected
   size: 'md',
 });
 
-const SUITS = ['♦', '♣', '♥', '♠'];
-const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+/** 花色顺序与引擎一致：0 方块 1 梅花 2 红桃 3 黑桃 */
+const SUIT_CODE = ['D', 'C', 'H', 'S'];
+const SUIT_NAME = ['方块', '梅花', '红桃', '黑桃'];
+const RANK_CODE = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const suit = computed(() => Math.floor(props.card / 13));
 const rank = computed(() => (props.card % 13) + 1);
-const suitSym = computed(() => SUITS[suit.value]);
-const rankSym = computed(() => RANKS[rank.value - 1]);
 const isRed = computed(() => suit.value === 0 || suit.value === 2);
+const isFace = computed(() => rank.value >= 11);
+const src = computed(() => `/assets/cards/${RANK_CODE[rank.value - 1]}${SUIT_CODE[suit.value]}.${isFace.value ? 'webp' : 'svg'}`);
+const label = computed(() => `${SUIT_NAME[suit.value]}${RANK_CODE[rank.value - 1]}`);
 /** 红十身份牌：红桃10 / 方块10 */
 const identity = computed(() => rank.value === 10 && isRed.value);
 </script>
@@ -41,32 +38,51 @@ const identity = computed(() => rank.value === 10 && isRed.value);
   --w: 52px;
   position: relative;
   width: var(--w);
-  height: calc(var(--w) * 1.42);
-  border-radius: calc(var(--w) * 0.12);
-  background: linear-gradient(180deg, #fdfbf5 0%, #f1ece0 100%);
-  box-shadow: 0 calc(var(--w) * 0.06) calc(var(--w) * 0.14) rgba(0, 0, 0, 0.45);
-  color: #232733;
+  height: calc(var(--w) * 1.45);
+  border-radius: calc(var(--w) * 0.075);
+  background: #fdfbf5;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 calc(var(--w) * 0.06) calc(var(--w) * 0.14) rgba(0, 0, 0, 0.45);
   flex-shrink: 0;
+  overflow: hidden;
   transition: transform var(--dur-micro) var(--ease-out);
 }
-.pcard.red {
-  color: #b03030;
+.face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 .pcard.selected {
   transform: translateY(calc(var(--w) * -0.3));
   box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
     0 calc(var(--w) * 0.2) calc(var(--w) * 0.28) rgba(0, 0, 0, 0.5),
     var(--shadow-glow-gold);
 }
+/* 牌背：原创 —— 深蓝金格 + 中央纹章 */
 .pcard.back {
   background:
-    radial-gradient(circle at 50% 50%, rgba(230, 207, 163, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(230, 207, 163, 0.14) 0%, transparent 58%),
+    repeating-linear-gradient(45deg, rgba(201, 160, 99, 0.16) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-45deg, rgba(201, 160, 99, 0.16) 0 1px, transparent 1px 7px),
     linear-gradient(160deg, #273349 0%, #161d2c 100%);
-  border: 1px solid rgba(201, 160, 99, 0.25);
+  border: 1px solid rgba(201, 160, 99, 0.35);
+  box-shadow:
+    inset 0 0 0 calc(var(--w) * 0.06) rgba(11, 17, 29, 0.9),
+    inset 0 0 0 calc(var(--w) * 0.075) rgba(201, 160, 99, 0.35),
+    0 calc(var(--w) * 0.06) calc(var(--w) * 0.14) rgba(0, 0, 0, 0.45);
 }
 .pcard.identity {
   outline: 2px solid var(--gold-warm);
   outline-offset: -2px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 calc(var(--w) * 0.06) calc(var(--w) * 0.14) rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(201, 160, 99, 0.45);
 }
 .smd {
   --w: 52px;
@@ -77,47 +93,17 @@ const identity = computed(() => rank.value === 10 && isRed.value);
 .sxs {
   --w: 26px;
 }
-.corner {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1;
-}
-.corner.tl {
-  top: calc(var(--w) * 0.07);
-  left: calc(var(--w) * 0.09);
-}
-.corner.br {
-  bottom: calc(var(--w) * 0.07);
-  right: calc(var(--w) * 0.09);
-  transform: rotate(180deg);
-}
-.r {
-  font-size: calc(var(--w) * 0.26);
-  font-weight: 800;
-}
-.s {
-  font-size: calc(var(--w) * 0.22);
-}
-.pip {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(var(--w) * 0.5);
-  opacity: 0.85;
-}
 .idmark {
   position: absolute;
   right: calc(var(--w) * 0.08);
-  top: calc(var(--w) * 0.34);
+  top: calc(var(--w) * 0.62);
   font-size: calc(var(--w) * 0.2);
   font-weight: 800;
-  color: var(--gold-deep);
-  background: rgba(201, 160, 99, 0.25);
+  line-height: 1;
+  color: #241a08;
+  background: linear-gradient(180deg, #f6e6bd, #c9a063);
   border-radius: 4px;
-  padding: 1px 3px;
+  padding: 2px 3px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 </style>

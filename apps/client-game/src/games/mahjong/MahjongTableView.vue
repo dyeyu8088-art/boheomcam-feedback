@@ -734,6 +734,7 @@ function copyRoomNo(): void {
 }
 /* 门风徽章：金属方章 */
 .wind-badge {
+  font-family: var(--font-calligraphy);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -877,7 +878,8 @@ function copyRoomNo(): void {
 }
 .cmp-wind {
   position: absolute;
-  font-size: clamp(13px, 1.5vh, 18px);
+  font-family: var(--font-calligraphy);
+  font-size: clamp(15px, 1.8vh, 22px);
   font-weight: 800;
   color: var(--gold-champagne);
   opacity: 0.72;

@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## [0.2.1] - 2026-09-03 GitHub 开源素材接入（PHASE 19 美术精修 · 续）
+
+### 素材来源与合规（新增 `THIRD_PARTY_ASSETS.md`）
+- 只接入 GitHub 上许可证明确允许商业使用的开源素材：CC0 / 公共领域 / SIL OFL 1.1；
+  每项素材目录内保留原始许可证文件，并在清单中登记来源 URL、许可证与落地位置
+- 仍然不含任何竞品 APK 提取资源、商标、Logo、游戏名称、受版权保护的音乐 / 角色 / 美术图；
+  背景、牌桌、鱼类、炮台、水果机符号、图标、头像纹章、牌背保持本项目原创
+- 免费材质站（polyhaven / ambientcg）在本环境网络策略下不可达，绒面 / 木纹继续使用程序化纹理
+
+### 麻将牌面：riichi-mahjong-tiles（FluffyStuff，CC0）
+- `public/assets/mahjong/`：37 张 svgo 优化后的 SVG（Front 牌体 + 万/筒/索/风/箭 花色叠层）
+- `games/mahjong/MjTile.vue` 重写：`Front.svg` + 花色 SVG 两层 `<img>` 合成，`kind 0–33` 与引擎映射
+  （0–8 万 → Man，9–17 条 → Sou，18–26 筒 → Pin，27–33 東南西北中發白 → Ton/Nan/Shaa/Pei/Chun/Hatsu/Haku）；
+  牌高比 1.34，保留 2.5D 绿色侧面、抛光斜切高光、原创雪晶菱格牌背（riichi 的红色牌背不采用）
+- 大厅麻将海报的「中 / 伍萬 / 五筒」三张主牌改用同一套真实牌面
+
+### 扑克牌：Vector Playing Cards（Byron Knoll，公共领域）
+- `public/assets/cards/`：40 张数字牌 SVG（5–13 KB）+ 12 张 J/Q/K 花牌（原 SVG 245–760 KB，
+  用 Chromium 光栅化为 480×672 WebP，60–74 KB）；小丑牌不使用
+- `games/hongshi/PlayCard.vue` 重写：`SUIT_CODE = [D, C, H, S]` 与引擎花色顺序（方块/梅花/红桃/黑桃）对齐，
+  按牌面选择 `.svg` / `.webp`；牌高比 1.45；保留原创牌背（藏青 + 金色菱格）、红十金色描边与「十」角标
+- 大厅红十海报的双主牌改用真实 10♥ / 10♦
+
+### 展示字体（Google Fonts，SIL OFL 1.1，自托管子集）
+- 新增 `design/fonts.css`（由 `tokens.css` 引入）：`YB Display ZH`（ZCOOL XiaoWei，11.8 KB）、
+  `YB Display KO`（Nanum Myeongjo ExtraBold，4.1 KB）、`YB Calligraphy`（Ma Shan Zheng，11.2 KB）、
+  `YB Brand`（Cinzel，25.3 KB）；`pyftsubset` 只保留实际用到的字形，`font-display: swap`
+- 游戏名、登录页字标、大厅品牌字改为宋体气质的展示字体（中文 400 / 韩文 800），
+  `YANBIAN GAME` 改为 Cinzel；麻将罗盘门风与座位门风章改为毛笔楷书
+- 字号随语言切换：`.p-title.ko` / `.b-cn.ko` / `.mark.ko` 单独标定，2K / 手机 / 横屏短屏各有断点
+
+### 修复
+- 中文语言包 `game.mahjong_yanbian.desc` 混入韩文（`규칙 확인 완료`），改为「地道延边玩法 · 自定规则」
+  （规则未确认项保持配置化，不在文案里宣称“规则已确认”）
+
+### 验证
+- `vue-tsc` 通过；`vite build` 通过（`public/` 素材与字体原样进入 `dist/`）
+- `tests/ui-smoke.mjs` 8/8；`tests/lobby-shot.mjs` 四分辨率、`tests/table-shot.mjs` 四张牌桌截图人工复核：
+  牌面 / 扑克 / 字体在 1920、2560、960×540 横屏、手机竖屏均正确渲染
+
 ## [0.2.0] - 2026-08-31 大厅商业级美术重制（PHASE 19 美术精修）
 
 ### 设计系统「玄夜鎏金」v2

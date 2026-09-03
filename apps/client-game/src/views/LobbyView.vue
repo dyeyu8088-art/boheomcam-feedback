@@ -35,7 +35,7 @@
           <path d="M13 31 h18" stroke="url(#bmG)" stroke-width="1" stroke-linecap="round" opacity="0.6" />
         </svg>
         <div class="b-text">
-          <span class="b-cn">{{ locale === 'ko' ? user.brand.nameKo : user.brand.nameZh }}</span>
+          <span class="b-cn" :class="{ ko: locale === 'ko' }">{{ locale === 'ko' ? user.brand.nameKo : user.brand.nameZh }}</span>
           <span class="b-en">{{ user.brand.nameEn }}</span>
         </div>
       </div>
@@ -259,21 +259,32 @@ async function logout(): Promise<void> {
   gap: 3px;
 }
 .b-cn {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.32em;
-  padding-left: 0.32em;
+  font-family: var(--font-display-zh);
+  font-size: 21px;
+  font-weight: 400;
+  letter-spacing: 0.34em;
+  padding-left: 0.34em;
   background: linear-gradient(180deg, #f7ead0 10%, #d3ac6d 62%, #a07f43 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   line-height: 1;
 }
+.b-cn.ko {
+  font-family: var(--font-display-ko);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.22em;
+  padding-left: 0.22em;
+}
 .b-en {
-  font-size: 8.5px;
-  letter-spacing: 0.42em;
-  padding-left: 0.42em;
-  color: var(--text-disabled);
+  font-family: var(--font-brand);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.4em;
+  padding-left: 0.4em;
+  color: var(--gold-warm);
+  opacity: 0.75;
   line-height: 1;
 }
 @media (max-width: 1180px) {
@@ -515,10 +526,13 @@ async function logout(): Promise<void> {
     height: 52px;
   }
   .b-cn {
-    font-size: 22px;
+    font-size: 27px;
+  }
+  .b-cn.ko {
+    font-size: 23px;
   }
   .b-en {
-    font-size: 11px;
+    font-size: 12px;
   }
   .assets {
     gap: 14px;

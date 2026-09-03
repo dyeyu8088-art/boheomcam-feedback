@@ -26,7 +26,10 @@
 规则：金色仅用于「可交互强调 + 标题 + 描边」，面积占比 < 10%；大面积一律深色；输赢用 玉青/绛红 而非红绿荧光。
 
 ### 字体 / 字号
-- 中文：system-ui 优先（PingFang SC / MiSans / Noto Sans CJK），标题可选思源宋体变体做品牌字（后台可配）。
+- 正文：system-ui 优先（PingFang SC / MiSans / Noto Sans CJK / Noto Sans KR）。
+- 展示字体（自托管 OFL 子集，`design/fonts.css`）：中文标题 ZCOOL XiaoWei `--font-display-zh`、
+  韩文标题 Nanum Myeongjo `--font-display-ko`、书法（门风 / 牌面）Ma Shan Zheng `--font-calligraphy`、
+  拉丁字标 Cinzel `--font-brand`；详细字号表见 docs/11 §1.2，许可证见 `THIRD_PARTY_ASSETS.md`。
 - 数字（金币/倒计时）：等宽变体 `font-variant-numeric: tabular-nums`。
 - 字阶（px @375 宽基准，rem 缩放）：display 28 / h1 22 / h2 18 / body 15 / caption 13 / micro 11。行高 1.4–1.6。
 
@@ -86,14 +89,19 @@
 - 座位牌：胶囊玻璃 + 金色描边，含头像、门风金属方章、`×N` 手牌数、分数、倒计时环；
   轮到该家时描边转金并加 20px 金色外发光。
 - 手牌托盘 `my-hand`：与桌沿同材质的胡桃木条盘（顶部受光 + 底部内阴影 + 上下双向投影）。
-- 牌 `MjTile`：象牙面左上受光 / 右下转暗 + 122° 抛光斜切高光 + 底部绿色侧面构成 2.5D；
-  牌背为延边雪晶菱格暗纹（原创）。
+- 牌 `MjTile`：牌面 = riichi-mahjong-tiles（CC0）`Front.svg` 牌体 + 花色叠层两张 `<img>` 合成，
+  `kind 0–33` 按引擎顺序映射到 Man/Sou/Pin/Ton/Nan/Shaa/Pei/Chun/Hatsu/Haku；牌高比 1.34；
+  122° 抛光斜切高光 + 底部绿色侧面构成 2.5D；牌背为延边雪晶菱格暗纹（原创，不用 riichi 红色牌背）。
+- 罗盘门风与座位门风章使用毛笔楷书 `--font-calligraphy`。
 
 **红十专属**
 
 - 出牌区 `play-zone`：四家最近一手围绕中心底盘的四边排布（下=自己、右、上、左），
   视线不再被拉到桌角；中心底盘在无人出牌时显示长白山纹章水印。
 - 座位牌与手牌托盘沿用同一材质语言，配色换为酒红。
+- 牌 `PlayCard`：牌面 = Vector Playing Cards（公共领域），数字牌 SVG、J/Q/K 为 480×672 WebP；
+  `SUIT_CODE = [D, C, H, S]` 与引擎花色顺序（方块/梅花/红桃/黑桃）对齐；牌高比 1.45；
+  牌背（藏青 + 金色菱格）、红十金色描边与「十」角标为原创。
 
 **横屏短屏（`max-height: 640px`）**：左右两家的竖排暗牌会超出可视高度，改为只保留座位牌上的
 `×N` 计数；自己的座位牌上移到托盘之上，避免压住第一张手牌。

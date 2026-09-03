@@ -47,7 +47,7 @@ export const zh: Record<string, string> = {
   'lobby.rounds': '局数',
   'lobby.password.optional': '房间密码（可选）',
   'game.mahjong_yanbian': '延边麻将',
-  'game.mahjong_yanbian.desc': '地道延边玩法 · 규칙 확인 완료',
+  'game.mahjong_yanbian.desc': '地道延边玩法 · 自定规则',
   'game.hongshi': '红十',
   'game.hongshi.desc': '红十配对 · 双上加倍',
   'game.fishing': '捕鱼',

@@ -75,8 +75,22 @@ Token 定义在 `apps/client-game/src/design/tokens.css`（设计系统「玄夜
 | L4 弱信息 | 10.5–12px / 400–700 | `--text-secondary` `#97A3B8` / `--text-disabled` `#5D6A80` | 卡片副标题、UID、在线人数 |
 
 - 数字统一 `.num { font-variant-numeric: tabular-nums }`，避免跳数抖动。
-- 中韩双语共用一套字号；字族 `system-ui / PingFang SC / MiSans / Noto Sans CJK SC / Noto Sans KR`。
-- 游戏名使用金属渐变文字（`background-clip: text`，白→米→暗金三段），不是纯色。
+- 正文 / 功能文本字族 `system-ui / PingFang SC / MiSans / Noto Sans CJK SC / Noto Sans KR`。
+- 游戏名使用金属渐变文字（`background-clip: text`，白→米→暗金三段），不是纯色，
+  外加三层 `drop-shadow`（深棕描边 → 黑色离地投影 → 金色柔光）。
+
+**展示字体（自托管子集，`design/fonts.css`，许可证见 `THIRD_PARTY_ASSETS.md`）**
+
+| Token | 字体 | 用途 | 字重 / 尺寸 |
+| --- | --- | --- | --- |
+| `--font-display-zh` | ZCOOL XiaoWei（OFL） | 中文游戏名、登录字标、大厅品牌字 | 400；卡片 30px / 旗舰 46px / 2K 36·54 / ≤720 22 / 横屏短屏 21·27 |
+| `--font-display-ko` | Nanum Myeongjo ExtraBold（OFL） | 韩文游戏名 / 品牌字（`.ko` 修饰类） | 800；比中文小 2–4px（26 / 2K 31·44 / ≤720 19） |
+| `--font-calligraphy` | Ma Shan Zheng（OFL） | 麻将罗盘门风、座位门风章、海报书法字 | 400 |
+| `--font-brand` | Cinzel（OFL） | `YANBIAN GAME` 拉丁字标 | 600，字距 `.4em` |
+
+- 子集只包含实际用到的字形（游戏名 / 品牌 / 牌面汉字 + ASCII），每个 4–25 KB，`font-display: swap`；
+  新增用到展示字体的文案，必须同步更新 `THIRD_PARTY_ASSETS.md` 里的 `pyftsubset --text` 并重新生成。
+- 语言切换只换字族与字号，不换布局：`.p-title.ko` / `.b-cn.ko` / `.mark.ko`。
 
 ### 1.3 材质与光影（不是简单 box-shadow）
 
@@ -257,8 +271,11 @@ grid-auto-rows: clamp(330px, 60vh, 600px);   /* 2K: clamp(330px, 62vh, 780px) */
 
 | 卡 | 场景 | 主体 | 关键细节 |
 | --- | --- | --- | --- |
-| **延边麻将**（旗舰・宽构图） | 翡翠牌桌 + 东方屏风 + 黄铜吊灯 | 立体「中」牌 + 五萬 + 五筒 | 椭圆绒面桌 + 金色桌沿 + 七张 2.5D 牌墙（顶面斜切 + 正面 + 桌面投影）+ 骰子 + 筹码 + 长白山极淡轮廓 + 屏风立柱 |
-| **红十** | 酒红绒桌 + 会所拱券 + 黄铜吊灯光锥 | 红桃 10 + 方块 10 双主牌 | 扇形背牌（金色对角纹）+ 三层筹码堆 + 两条慢速烟雾（22s/28s 反向） |
+| **延边麻将**（旗舰・宽构图） | 翡翠牌桌 + 东方屏风 + 黄铜吊灯 | 立体「中」牌 + 伍萬 + 五筒（riichi-mahjong-tiles 真实牌面，CC0） | 椭圆绒面桌 + 金色桌沿 + 七张 2.5D 牌墙（顶面斜切 + 正面 + 桌面投影）+ 骰子 + 筹码 + 长白山极淡轮廓 + 屏风立柱 |
+| **红十** | 酒红绒桌 + 会所拱券 + 黄铜吊灯光锥 | 红桃 10 + 方块 10 双主牌（Vector Playing Cards 真实牌面，公共领域） | 扇形背牌（金色对角纹）+ 三层筹码堆 + 两条慢速烟雾（22s/28s 反向） |
+
+- 主牌用 `<image href="/assets/mahjong/Front.svg">` + 花色叠层 / `<image href="/assets/cards/10H.svg">` 嵌入场景，
+  侧面、投影、光照仍由场景滤镜（`*Shadow` / `*Glow`）完成，素材只提供牌面本身。
 | **捕鱼** | 深海 + 海面焦散 + 双道光柱 | 金龙鱼（Boss 级） | 四排裁切鳞甲、双叶尾鳍带鳍骨、背/腹/胸鳍、鳃盖双弧、龙须、**背脊轮廓光**（金属逆光的关键）、**金色渔网**罩住鱼身后半（网格 + 网绳 + 网坠 + 收口绳）、六枚爆金、海床剪影 + 珊瑚 + 上升气泡 |
 | **黄金水果** | 黑金转轮机 + 12 道慢转放射流光 | 樱桃 / 红 7 / BAR 三符号 | 金属机框渐变 + 筒身上下压暗 + 列分隔 + 顶部三灯 + 拉杆红球 + 六枚币粒 + 两点星芒 |
 
@@ -380,14 +397,16 @@ bottom: calc(var(--safe-bottom) + 18px);   /* Dock */
 
 | 元素 | 规格 |
 | --- | --- |
-| 字标 | `延边娱乐` 17px/700，字距 `.32em`，金属三段渐变文字；下方 `YANBIAN GAME` 8.5px，字距 `.42em`，`--text-disabled` |
+| 字标 | `延边娱乐` 21px/400 `--font-display-zh`（韩文 18px/800 `--font-display-ko`），字距 `.34em`，金属三段渐变文字；下方 `YANBIAN GAME` 9.5px/600 `--font-brand`（Cinzel），字距 `.4em`，`--gold-warm` 75% |
 | 标志 | 44×44 SVG：双同心金环 + 长白山双峰折线 + 峰侧圆（雪/日）+ 底部横线；`drop-shadow` 金色柔光 |
 | 地域符号 | 长白山轮廓（背景山脊 + 麻将卡内极淡轮廓 + 头像纹章 0 号）、雪线、松林剪影、朝鲜族窗棂菱格纹（背景 `bdWeave` + 麻将屏风 `mjScreen`） |
 | 可配置 | 品牌名（中/韩/英）由后台 `brand` 配置下发，前端 `user.brand` 读取，不硬编码 |
 | `≤1180px` | 字标隐藏，避免与玩家容器/资产胶囊挤压 |
 
-**原创性**：全部 Logo / UI / Icon / 头像 / 背景 / 麻将桌 / 鱼类 / 炮台 / 水果机符号 / 动画均为本项目
-矢量绘制（SVG / Pixi Graphics），无第三方素材、无竞品资源提取、无反编译内容。
+**原创性与素材边界**：Logo / UI / Icon / 头像纹章 / 背景 / 牌桌 / 牌背 / 鱼类 / 炮台 / 水果机符号 / 动画
+均为本项目矢量绘制（SVG / Pixi Graphics），无竞品资源提取、无反编译内容。
+仅麻将牌面（CC0）、扑克牌面（公共领域）与四款展示字体（OFL）来自 GitHub 开源仓库，
+许可证文件随素材入库，来源与合规说明见 [`THIRD_PARTY_ASSETS.md`](../THIRD_PARTY_ASSETS.md)。
 
 ---
 

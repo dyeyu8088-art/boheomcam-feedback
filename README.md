@@ -68,6 +68,7 @@ node tests/load-ws.mjs 500 0.1             # WS 负载（本机阶梯；生产�
 - [总体架构](docs/01-architecture.md) ｜ [数据库](docs/02-database.md) ｜ [通信协议](docs/03-protocol.md)
 - [钱包账本](docs/04-wallet.md) ｜ [安全与防作弊](docs/06-security.md) ｜ [设计系统](docs/07-design-system.md)
 - [大厅视觉规范](docs/11-lobby-design.md)（Design Token / Icon / 游戏卡 / 动效 / 多分辨率适配）
+- [第三方开源素材清单](THIRD_PARTY_ASSETS.md)（麻将牌面 CC0 / 扑克牌公共领域 / 四款 OFL 字体，含许可证与复现命令）
 - 规则确认表：[延边麻将](docs/05-game-rules/yanbian-mahjong-rules-confirmation.md) ｜ [红十](docs/05-game-rules/hongshi-rules-confirmation.md)
 - 游戏架构：[捕鱼](docs/05-game-rules/fishing-architecture.md) ｜ [水果机](docs/05-game-rules/slots-architecture.md)
 
@@ -77,3 +78,5 @@ node tests/load-ws.mjs 500 0.1             # WS 负载（本机阶梯；生产�
 - 规则配置化：地区差异规则不硬编码，走规则包版本（rule_version）+ 对局快照。
 - 账本不可篡改：交易/分录/调账只增不改，触发器拒绝 UPDATE/DELETE。
 - 每 PHASE：Build → Run → Test → Review → 修复 → 复测 → 更新 README/CHANGELOG。
+- 素材合规：只接入许可证允许商业使用的开源素材（CC0 / 公共领域 / OFL），许可证文件随素材入库并登记到
+  [THIRD_PARTY_ASSETS.md](THIRD_PARTY_ASSETS.md)；禁止竞品 APK 提取资源、商标、Logo、受版权保护的音乐 / 美术。

@@ -1,0 +1,2 @@
+Vector Playing Cards — Byron Knoll (public domain), repackaged by notpeter/Vector-Playing-Cards (public domain / WTFPL).
+Source: https://github.com/notpeter/Vector-Playing-Cards
