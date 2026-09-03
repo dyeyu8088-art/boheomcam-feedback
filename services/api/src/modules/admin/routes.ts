@@ -109,11 +109,23 @@ export function registerAdminRoutes(app: FastifyInstance): void {
     const redis = getRedis();
     const totalOnline = Number((await redis.get('online:total')) ?? 0);
     const perGame: Record<string, number> = {};
-    for (const g of ['mahjong_yanbian', 'hongshi', 'fishing', 'slot_fruit']) {
+    for (const g of ['mahjong_yanbian', 'hongshi', 'fishing', 'slot_fruit', 'roulette', 'stock_updown']) {
       perGame[g] = Number((await redis.get(`online:game:${g}`)) ?? 0);
     }
     void online;
+    // 单人 / 共享回合类游戏（水果机 / 轮盘 / 股票）不走 game_rounds，单独统计今日回合与投入产出
+    const arcade = await Promise.all([
+      query(`SELECT COUNT(*)::int AS n, COALESCE(SUM(total_bet),0)::bigint AS bet, COALESCE(SUM(total_win),0)::bigint AS payout FROM slot_rounds WHERE created_at >= date_trunc('day', now())`),
+      query(`SELECT COUNT(*)::int AS n, COALESCE(SUM(total_bet),0)::bigint AS bet, COALESCE(SUM(total_payout),0)::bigint AS payout FROM roulette_rounds WHERE opened_at >= date_trunc('day', now()) AND settled_at IS NOT NULL`),
+      query(`SELECT COUNT(*)::int AS n, COALESCE(SUM(total_bet),0)::bigint AS bet, COALESCE(SUM(total_payout),0)::bigint AS payout FROM stock_rounds WHERE opened_at >= date_trunc('day', now()) AND settled_at IS NOT NULL`),
+    ]);
+    const arcadeToday = {
+      slot_fruit: arcade[0].rows[0],
+      roulette: arcade[1].rows[0],
+      stock_updown: arcade[2].rows[0],
+    };
     return ok({
+      arcadeToday,
       totalUsers: users.rows[0]!.total,
       todayNewUsers: users.rows[0]!.today,
       dau: dau.rows[0]!.dau,
@@ -315,6 +327,59 @@ export function registerAdminRoutes(app: FastifyInstance): void {
     const r = await query(
       `SELECT round_id, room_id, game_id, stage_id, rule_version, result_summary, started_at, ended_at
        FROM game_rounds ${cond} ORDER BY started_at DESC LIMIT $1 OFFSET $2`,
+      params,
+    );
+    return ok({ page, items: r.rows });
+  });
+
+  // ── 街机类记录（水果机 Jackpot / 轮盘回合 / 股票回合）────
+  app.get('/api/admin/v1/arcade/jackpots', { preHandler: requireAdmin }, async (req) => {
+    need(req, 'record.view');
+    const [pools, hits] = await Promise.all([
+      query(`SELECT game_id, tier, pool, seed, contrib_bp, hit_chance_ppm, updated_at FROM slot_jackpots ORDER BY game_id, pool DESC`),
+      query(`SELECT h.round_id, h.user_id, h.tier, h.amount, h.created_at FROM slot_jackpot_hits h ORDER BY h.created_at DESC LIMIT 50`),
+    ]);
+    return ok({ pools: pools.rows, hits: hits.rows });
+  });
+
+  app.get('/api/admin/v1/arcade/roulette/rounds', { preHandler: requireAdmin }, async (req) => {
+    need(req, 'record.view');
+    const q = req.query as { page?: string; roundId?: string };
+    const page = Math.max(1, Number(q.page ?? 1));
+    if (q.roundId) {
+      const bets = await query(
+        `SELECT bet_id, user_id, bet_type, selection, amount, payout, created_at FROM roulette_bets WHERE round_id=$1 ORDER BY bet_id`,
+        [Number(q.roundId)],
+      );
+      return ok({ items: bets.rows });
+    }
+    const r = await query(
+      `SELECT round_id, table_id, opened_at, lock_at, result, rng_audit, total_bet, total_payout, settled_at, server_id,
+              (SELECT COUNT(DISTINCT user_id)::int FROM roulette_bets b WHERE b.round_id = r.round_id) AS players
+       FROM roulette_rounds r ORDER BY opened_at DESC LIMIT $1 OFFSET $2`,
+      [50, (page - 1) * 50],
+    );
+    return ok({ page, items: r.rows });
+  });
+
+  app.get('/api/admin/v1/arcade/stock/rounds', { preHandler: requireAdmin }, async (req) => {
+    need(req, 'record.view');
+    const q = req.query as { page?: string; instrument?: string; roundId?: string };
+    const page = Math.max(1, Number(q.page ?? 1));
+    if (q.roundId) {
+      const bets = await query(
+        `SELECT bet_id, user_id, bet_type, selection, amount, odds_bp, payout, created_at FROM stock_bets WHERE round_id=$1 ORDER BY bet_id`,
+        [Number(q.roundId)],
+      );
+      return ok({ items: bets.rows });
+    }
+    const cond = q.instrument ? 'WHERE instrument=$3' : '';
+    const params: unknown[] = [50, (page - 1) * 50];
+    if (q.instrument) params.push(q.instrument);
+    const r = await query(
+      `SELECT round_id, instrument, opened_at, lock_at, settle_at, opening_price, settlement_price, direction, rng_audit, total_bet, total_payout, settled_at, server_id,
+              (SELECT COUNT(DISTINCT user_id)::int FROM stock_bets b WHERE b.round_id = r.round_id) AS players
+       FROM stock_rounds r ${cond} ORDER BY opened_at DESC LIMIT $1 OFFSET $2`,
       params,
     );
     return ok({ page, items: r.rows });

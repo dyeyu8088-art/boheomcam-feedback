@@ -8,10 +8,11 @@
 import { ApiError, ErrorCode, Ev } from '@yanbian/protocol';
 import { STOCK_V1, StockBetError, changePct, directionOf, evaluateBet, normalizeBet, type StockBet, type StockConfig } from '@yanbian/game-common/stock';
 import { getLogger, getRedis, loadEnv, nextId, query, withTx } from '@yanbian/server-core';
-import { getBalances, postTransactionInTx, SYS } from '@yanbian/wallet';
+import { getBalances } from '@yanbian/wallet';
 import { hub, type GameSession } from '../hub.js';
 import { loadRule } from '../configs.js';
 import { bumpExp, bumpTask, bumpTournament } from '../settlement.js';
+import { settleBetInTx, settlePayoutInTx, settleRefundInTx } from '../gameSettlement.js';
 import { SimulatedMarketProvider, type MarketDataProvider } from '../market/MarketDataProvider.js';
 
 const log = getLogger('stock');
@@ -120,18 +121,15 @@ async function settleRoundById(roundId: number, instrument: string, openingPrice
     let balance: number | null = null;
     await withTx(async (c) => {
       for (let i = 0; i < list.length; i += 1) await c.query(`UPDATE stock_bets SET payout=$2 WHERE bet_id=$1`, [list[i]!.betId, payouts[i]!]);
-      if (userPayout > 0) {
-        const win = await postTransactionInTx(c, {
-          idempotencyKey: `stock:win:${roundId}:${uid}`,
-          userId: uid,
-          currency: 'COIN',
-          type: 'GAME_WIN',
-          amount: userPayout,
-          systemAccount: SYS.STOCK_POOL,
-          gameId: 'stock_updown',
-          roundId,
-          description: `股票涨跌派彩 ${instrument} ${direction}`,
-        });
+      const win = await settlePayoutInTx(c, {
+        gameType: 'stock_updown',
+        userId: uid,
+        roundId,
+        payout: userPayout,
+        gameResult: { instrument, openingPrice, settlementPrice, direction, bets: list.length },
+        description: `股票涨跌派彩 ${instrument} ${direction}`,
+      });
+      if (win) {
         balance = win.balanceAfter;
       } else {
         const b = await c.query('SELECT balance FROM wallet_accounts WHERE user_id=$1 AND currency=$2', [uid, 'COIN']);
@@ -200,19 +198,7 @@ async function recover(): Promise<void> {
     }
     const bets = await query(`SELECT user_id, SUM(amount)::bigint AS total FROM stock_bets WHERE round_id=$1 GROUP BY user_id`, [roundId]);
     for (const b of bets.rows) {
-      await withTx((c) =>
-        postTransactionInTx(c, {
-          idempotencyKey: `stock:refund:${roundId}:${b.user_id}`,
-          userId: Number(b.user_id),
-          currency: 'COIN',
-          type: 'GAME_REFUND',
-          amount: Number(b.total),
-          systemAccount: SYS.STOCK_POOL,
-          gameId: 'stock_updown',
-          roundId,
-          description: '股票涨跌未结算退款',
-        }),
-      );
+      await withTx((c) => settleRefundInTx(c, { gameType: 'stock_updown', userId: Number(b.user_id), roundId, amount: Number(b.total), description: '股票涨跌未结算退款' }));
     }
     await query(`UPDATE stock_rounds SET settled_at=now(), rng_audit = rng_audit || '{"void":true}'::jsonb WHERE round_id=$1`, [roundId]);
     log.warn({ roundId, refunds: bets.rowCount }, 'stock round voided on recovery');
@@ -319,19 +305,9 @@ export async function bet(session: GameSession, data: Record<string, unknown>, r
   if (balances.COIN < nb.amount) throw new ApiError(ErrorCode.INSUFFICIENT_BALANCE);
 
   const roundId = r.roundId;
-  const key = `stock:bet:${uid}:${requestId}`;
+  const key = `stock_updown:bet:${uid}:${requestId}`;
   const res = await withTx(async (c) => {
-    const tx = await postTransactionInTx(c, {
-      idempotencyKey: key,
-      userId: uid,
-      currency: 'COIN',
-      type: 'GAME_BET',
-      amount: -nb.amount,
-      systemAccount: SYS.STOCK_POOL,
-      gameId: 'stock_updown',
-      roundId,
-      description: `股票涨跌下注 ${instrument} ${nb.type}`,
-    });
+    const tx = await settleBetInTx(c, { gameType: 'stock_updown', userId: uid, roundId, amount: nb.amount, requestId, description: `股票涨跌下注 ${instrument} ${nb.type}` });
     if (tx.duplicated) {
       const prev = await c.query(`SELECT bet_id, bet_type, selection, amount, odds_bp FROM stock_bets WHERE idempotency_key=$1`, [key]);
       const row = prev.rows[0];

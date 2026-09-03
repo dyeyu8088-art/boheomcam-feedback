@@ -82,7 +82,7 @@ async function load(): Promise<void> {
   barChart?.setOption({
     grid: { left: 90, right: 20, top: 12, bottom: 28 },
     xAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef0f3' } } },
-    yAxis: { type: 'category', data: games.map(([g]) => ({ mahjong_yanbian: '延边麻将', hongshi: '红十', fishing: '捕鱼', slot_fruit: '黄金水果' })[g] ?? g) },
+    yAxis: { type: 'category', data: games.map(([g]) => ({ mahjong_yanbian: '延边麻将', hongshi: '红十', fishing: '捕鱼', slot_fruit: '黄金水果', roulette: '幸运轮盘', stock_updown: '股市风云' })[g] ?? g) },
     tooltip: {},
     series: [{ type: 'bar', data: games.map(([, n]) => n), barWidth: 18, itemStyle: { color: GOLD, borderRadius: [0, 6, 6, 0] } }],
   });

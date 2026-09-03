@@ -46,6 +46,8 @@
           @click="useSkill(s.skillId)"
         >
           <img class="sk-icon" :src="skillIcon(s.skillId)" alt="" draggable="false" />
+          <!-- 技能图标烙有中文；其它语言叠加程序文字名称 -->
+          <span v-if="!zh" class="sk-name">{{ t(`fs.skill.${s.skillId}`) }}</span>
           <span v-if="cooldownLeft(s.skillId) > 0" class="sk-cd"><b class="num">{{ Math.ceil(cooldownLeft(s.skillId) / 1000) }}</b></span>
           <span class="sk-cost num" :class="{ item: itemQty(s) > 0 }">
             <template v-if="itemQty(s) > 0">×{{ itemQty(s) }}</template>
@@ -76,7 +78,7 @@ import { FISH_TYPES, SKILLS, frozenOverlapMs, pathById, pointOnPath, type Freeze
 import { gameSocket } from '../../net/ws.js';
 import { api } from '../../net/api.js';
 import { useUserStore } from '../../stores/user.js';
-import { t } from '../../i18n/index.js';
+import { currentLocale, t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
 import { fmt } from '../../ui/format.js';
 import { asset, pixiTextures, release } from '../../assets/assets.js';
@@ -112,6 +114,7 @@ const inventory = ref<Record<string, number>>({});
 const nowTick = ref(Date.now());
 const skillList: SkillConfig[] = SKILLS;
 
+const zh = computed(() => currentLocale.value === 'zh');
 const exitArt = asset('common', 'btnExitRound');
 const autoArt = asset('fishing', 'btnAutoFire');
 const bossPortrait = asset('fishing', 'bossCaishenFishRound');
@@ -1034,6 +1037,21 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.sk-name {
+  position: absolute;
+  left: 50%;
+  bottom: 24%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff3c4;
+  white-space: nowrap;
+  text-shadow:
+    0 0 2px #000,
+    0 0 3px #000,
+    0 1px 2px #000;
+  pointer-events: none;
+}
 .fs-root {
   position: relative;
   height: 100%;

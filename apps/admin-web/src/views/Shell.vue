@@ -41,6 +41,7 @@ const all = [
   { path: '/users', title: '用户管理', icon: 'users', perm: 'user.view' },
   { path: '/wallet', title: '金币流水 / 结算', icon: 'wallet', perm: 'wallet.view' },
   { path: '/rooms', title: '房间 / 战绩', icon: 'rooms', perm: 'room.view' },
+  { path: '/arcade', title: '街机 / 奖池', icon: 'rooms', perm: 'record.view' },
   { path: '/configs', title: '游戏 / 配置', icon: 'configs', perm: 'config.view' },
   { path: '/ops', title: '公告 / 邮件', icon: 'ops', perm: 'announce.manage' },
   { path: '/risk', title: '风控 / 封禁', icon: 'risk', perm: 'risk.view' },

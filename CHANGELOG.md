@@ -86,6 +86,15 @@
   高低 / 数字 / 区间侧注、本局投注与锁定赔率、近期结果、结算面板 + `RewardAnimation`；1920 / 960×540@2x 适配
 - 测试：E2E 新增 12 项（进场 / tick / 锁定赔率 / 服务端参考价 / 幂等 / 非法数字 / 未知品种 / 结算 / 派彩一致 / 余额一致 / 锁盘拒投），合计 55；
   UI 冒烟 +1（10 项）；`tests/stock-shot.mjs`；`docs/05-game-rules/stock-architecture.md`
+
+### P9 验收：统一结算服务 / 后台可见性 / 全量回归
+- `services/game/src/gameSettlement.ts`（GameSettlementService）：统一 `settleBetInTx / settlePayoutInTx / settleRefundInTx / settle()`，
+  幂等 key 规范 `<game>:bet:<uid>:<requestId>` / `<game>:win:<roundId>:<uid>` / `<game>:refund:<roundId>:<uid>`，
+  各游戏对手资金池映射 `GAME_POOL`；轮盘与股票宿主全部改经该服务过账（水果机 / 捕鱼 / 牌桌沿用同一钱包原语与 key 规范）
+- 后台：`GET /api/admin/v1/arcade/jackpots`（四档奖池 + 最近命中）、`/arcade/roulette/rounds`、`/arcade/stock/rounds`（含按 roundId 查注单）；
+  仪表盘在线人数与今日回合统计加入轮盘 / 股票 / 水果机（`arcadeToday`）；后台前端新增「街机 / 奖池」页
+- 捕鱼技能图标（烙中文）在非中文环境叠加程序文字名称
+- 全量回归：game-common 单测 59 / api · game · client · admin 类型检查 / E2E 55 / UI 冒烟 10 / 后台冒烟 7
 - 测试：E2E 新增 10 项（进桌 / 扣款 / 幂等 / 非法号 / 超额 / 锁盘开奖 / 开奖后拒投 / 派彩一致 / 余额一致 / 历史），合计 43；
   新增 `tests/roulette-shot.mjs`；UI 冒烟 +1（9 项）；`docs/05-game-rules/roulette-architecture.md`
 

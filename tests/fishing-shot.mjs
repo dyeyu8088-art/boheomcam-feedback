@@ -6,11 +6,13 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 for (const v of [
   { name: 'pc', width: 1920, height: 1080, scale: 1 },
   { name: 'land', width: 960, height: 540, scale: 2 },
-]) {
+].filter((x) => !process.env.SIZE || x.name === process.env.SIZE)) {
   const page = await browser.newPage({ viewport: { width: v.width, height: v.height }, deviceScaleFactor: v.scale });
+  // LOCALE=ko：验证非中文环境下烙字素材的程序文字叠加
+  if (process.env.LOCALE) await page.addInitScript((l) => localStorage.setItem('locale', l), process.env.LOCALE);
   page.on('pageerror', (e) => console.error('  [pageerror]', e.message));
   await page.goto(BASE, { waitUntil: 'networkidle' });
-  await page.locator('button:has-text("游客快速开始")').click();
+  await page.locator('.login-guest, button:has-text("游客快速开始"), button:has-text("게스트")').first().click();
   await page.waitForURL('**/#/lobby', { timeout: 10000 });
   await page.waitForTimeout(800);
   await page.locator('.gcard.fishing').click();
@@ -23,8 +25,9 @@ for (const v of [
   await page.waitForTimeout(300);
   await page.locator('.skill').first().click();
   await page.waitForTimeout(700);
-  await page.screenshot({ path: `${SHOT_DIR}/fishing-${v.name}.png` });
-  console.log(`shot: fishing-${v.name}.png`);
+  const suffix = process.env.LOCALE ? `-${process.env.LOCALE}` : '';
+  await page.screenshot({ path: `${SHOT_DIR}/fishing-${v.name}${suffix}.png` });
+  console.log(`shot: fishing-${v.name}${suffix}.png`);
   await page.close();
 }
 await browser.close();

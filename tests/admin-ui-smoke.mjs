@@ -64,6 +64,15 @@ try {
   await page.locator('.el-menu-item:has-text("操作日志")').click();
   await page.waitForTimeout(1200);
   ok(await page.locator('text=审计日志与账本').isVisible(), '审计页加载');
+
+  // 街机 / 奖池：水果机四档奖池 + 轮盘 / 股票回合
+  await page.locator('.el-menu-item:has-text("街机")').click();
+  await page.waitForTimeout(1500);
+  ok((await page.locator('.el-table__row').count()) >= 4, '街机页：Jackpot 四档奖池');
+  await page.locator('.el-tabs__item:has-text("轮盘回合")').click();
+  await page.waitForTimeout(1500);
+  ok((await page.locator('.el-table__row').count()) > 0, '街机页：轮盘回合列表');
+  await page.screenshot({ path: `${SHOT_DIR}/13-admin-arcade.png` });
 } catch (e) {
   failed += 1;
   console.error('  ✗ 异常:', e.message);

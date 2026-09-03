@@ -17,6 +17,7 @@ const routes = [
       { path: 'users', component: () => import('./views/UsersPage.vue'), meta: { perm: 'user.view', title: '用户管理' } },
       { path: 'wallet', component: () => import('./views/WalletPage.vue'), meta: { perm: 'wallet.view', title: '金币流水' } },
       { path: 'rooms', component: () => import('./views/RoomsPage.vue'), meta: { perm: 'room.view', title: '房间/战绩' } },
+      { path: 'arcade', component: () => import('./views/ArcadePage.vue'), meta: { perm: 'record.view', title: '街机记录' } },
       { path: 'configs', component: () => import('./views/ConfigsPage.vue'), meta: { perm: 'config.view', title: '游戏配置' } },
       { path: 'ops', component: () => import('./views/OpsPage.vue'), meta: { perm: 'announce.manage', title: '公告/邮件' } },
       { path: 'risk', component: () => import('./views/RiskPage.vue'), meta: { perm: 'risk.view', title: '风控' } },

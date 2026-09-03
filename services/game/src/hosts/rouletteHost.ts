@@ -21,10 +21,11 @@ import {
 } from '@yanbian/game-common/roulette';
 import { secureRng } from '@yanbian/game-common';
 import { getLogger, getRedis, loadEnv, nextId, query, withTx } from '@yanbian/server-core';
-import { getBalances, postTransactionInTx, SYS } from '@yanbian/wallet';
+import { getBalances } from '@yanbian/wallet';
 import { hub, type GameSession } from '../hub.js';
 import { loadRule } from '../configs.js';
 import { bumpExp, bumpTask, bumpTournament } from '../settlement.js';
+import { settleBetInTx, settlePayoutInTx, settleRefundInTx } from '../gameSettlement.js';
 
 const log = getLogger('roulette');
 
@@ -156,18 +157,15 @@ async function settleRoundById(roundId: number, result: number, notify: boolean)
       for (let i = 0; i < list.length; i += 1) {
         await c.query(`UPDATE roulette_bets SET payout=$2 WHERE bet_id=$1`, [list[i]!.betId, s.payouts[i]!]);
       }
-      if (s.totalPayout > 0) {
-        const win = await postTransactionInTx(c, {
-          idempotencyKey: `roulette:win:${roundId}:${uid}`,
-          userId: uid,
-          currency: 'COIN',
-          type: 'GAME_WIN',
-          amount: s.totalPayout,
-          systemAccount: SYS.ROULETTE_POOL,
-          gameId: 'roulette',
-          roundId,
-          description: `轮盘中奖 ${result}`,
-        });
+      const win = await settlePayoutInTx(c, {
+        gameType: 'roulette',
+        userId: uid,
+        roundId,
+        payout: s.totalPayout,
+        gameResult: { result, color: colorOf(result), bets: list.length },
+        description: `轮盘中奖 ${result}`,
+      });
+      if (win) {
         balance = win.balanceAfter;
       } else {
         const b = await c.query('SELECT balance FROM wallet_accounts WHERE user_id=$1 AND currency=$2', [uid, 'COIN']);
@@ -247,19 +245,7 @@ async function recover(): Promise<void> {
     if (row.result === null || row.result === undefined) {
       const bets = await query(`SELECT user_id, SUM(amount)::bigint AS total FROM roulette_bets WHERE round_id=$1 GROUP BY user_id`, [roundId]);
       for (const b of bets.rows) {
-        await withTx((c) =>
-          postTransactionInTx(c, {
-            idempotencyKey: `roulette:refund:${roundId}:${b.user_id}`,
-            userId: Number(b.user_id),
-            currency: 'COIN',
-            type: 'GAME_REFUND',
-            amount: Number(b.total),
-            systemAccount: SYS.ROULETTE_POOL,
-            gameId: 'roulette',
-            roundId,
-            description: '轮盘未开奖退款',
-          }),
-        );
+        await withTx((c) => settleRefundInTx(c, { gameType: 'roulette', userId: Number(b.user_id), roundId, amount: Number(b.total), description: '轮盘未开奖退款' }));
       }
       await query(`UPDATE roulette_rounds SET settled_at=now(), rng_audit = rng_audit || '{"void":true}'::jsonb WHERE round_id=$1`, [roundId]);
       log.warn({ roundId, refunds: bets.rowCount }, 'roulette round voided on recovery');
@@ -356,17 +342,7 @@ export async function bet(session: GameSession, data: Record<string, unknown>, r
   const roundId = r.roundId;
   const key = `roulette:bet:${uid}:${requestId}`;
   const res = await withTx(async (c) => {
-    const tx = await postTransactionInTx(c, {
-      idempotencyKey: key,
-      userId: uid,
-      currency: 'COIN',
-      type: 'GAME_BET',
-      amount: -total,
-      systemAccount: SYS.ROULETTE_POOL,
-      gameId: 'roulette',
-      roundId,
-      description: `轮盘下注 ${bets.length} 注`,
-    });
+    const tx = await settleBetInTx(c, { gameType: 'roulette', userId: uid, roundId, amount: total, requestId, description: `轮盘下注 ${bets.length} 注` });
     if (tx.duplicated) {
       const prev = await c.query(`SELECT bet_id, bet_type, selection, amount FROM roulette_bets WHERE idempotency_key LIKE $1 ORDER BY bet_id`, [`${key}:%`]);
       return { duplicated: true, balance: tx.balanceAfter, rows: prev.rows as { bet_id: string; bet_type: string; selection: string; amount: string }[] };

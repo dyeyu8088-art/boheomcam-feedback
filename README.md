@@ -1,6 +1,6 @@
 # YANBIAN GAME / 延边娱乐 — 综合在线棋牌游戏平台
 
-> 商业级多端游戏平台：**延边麻将 · 红十 · 捕鱼 · 水果机**
+> 商业级多端游戏平台：**延边麻将 · 红十 · 捕鱼 · 黄金水果（水果机）· 幸运轮盘 · 股市风云（模拟行情）**
 > 同一账号覆盖 Android APK / 手机 H5 / PC Web，另含 Web 运营管理后台。
 > 品牌名称/LOGO/主色后台可配置（白标能力）。
 >
@@ -54,7 +54,7 @@ pnpm --filter @yanbian/game-common test    # 引擎单元测试 39 项（含模�
 pnpm --filter @yanbian/api-service test    # 钱包集成测试 7 项（并发100扣款/幂等/防重复结算/触发器防篡改）
 node tests/e2e-smoke.mjs                   # 全栈 E2E 55 项（四游戏整局/防作弊路径/断线重连）
 node tests/ui-smoke.mjs                    # 客户端浏览器冒烟 10 项（Playwright）
-node tests/admin-ui-smoke.mjs              # 后台浏览器冒烟 7 项（需 ADMIN_PASSWORD）
+node tests/admin-ui-smoke.mjs              # 后台浏览器冒烟 9 项（需 ADMIN_PASSWORD）
 node tests/lobby-shot.mjs                  # 大厅四分辨率截图回归（1920/2560/Android 横屏/手机竖屏）
 node tests/table-shot.mjs                  # 麻将/红十牌桌截图回归（1920×1080 / 960×540@2x）
 node tests/fishing-shot.mjs                # 捕鱼截图回归（开火 + 技能）
