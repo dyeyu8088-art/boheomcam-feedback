@@ -59,6 +59,23 @@
 - 测试：`tests/table-shot.mjs` 选择器更新并支持 `ONLY` / `SIZE`；新增 `tests/settle-shot.mjs`（喊话 / 胡牌 / 结算面板截图）；
   UI 冒烟 8/8
 
+### P7 幸运轮盘（新游戏，欧式单零）
+- `game-common/roulette`：配置（筹码 / 限额 / 阶段时长 / 赔率，可由 `game_rules` 覆盖）、`WHEEL_ORDER`、
+  引擎（`validateBet / normalizeBets / betWins / betPayout / drawResult / settleBets`）；单测 8 项（含 37 结果总返还 = 36×，RTP 97.3%）
+- `rouletteHost`：单桌共享回合循环（下注 30 s → 锁盘即 CSPRNG 开奖并落库 rng_audit → 转盘 9 s → 结算 6 s）；
+  下注单事务扣款 + 注单落库（幂等 `roulette:bet:<uid>:<requestId>`）、单点 / 单局限额、余额预检、锁盘前 250 ms 拒投；
+  结算以数据库注单为准，派彩幂等 `roulette:win:<roundId>:<uid>`；崩溃恢复（已开奖补结算 / 未开奖退款作废）；
+  VIP 经验、任务、赛事指标；在线人数 `online:game:roulette`；`games.roulette` 迁移 `007` 上线
+- 协议：`roulette.enter / state / bet → bet.ok / spin / result / history / leave`（`docs/03-protocol.md`）
+- 客户端 `RouletteView`：Canvas 顶视转盘（球在轮盘坐标系运动，必停服务端号码；财神立绘居中）、程序绘制投注台
+  （0 / 1–36 / 三列 / 三打 / 1-18 / 单双 / 红黑）、素材筹码落桌 + 程序金额、撤销 / 清除 / 重复 / 自动 / 确认（成品按钮 + 双语程序说明）、
+  服务端时间校正倒计时、近期开奖、本局结果面板 + `RewardAnimation`；1920 / 960×540@2x 适配
+- 明确不接入：`table_layout`（缩略图，投注台改程序绘制）；横幅裁掉 JACKPOT 缎带（轮盘无奖池）
+- 修复（网关）：`message` 监听器原先在两次 await 之后才挂上，open 后立即发送的帧会被静默丢弃（快客户端 / 重连竞态）；
+  现改为连接建立时同步挂上并缓冲，握手完成后按序回放；seq 非递增被拒时输出 warn 日志
+- 测试：E2E 新增 10 项（进桌 / 扣款 / 幂等 / 非法号 / 超额 / 锁盘开奖 / 开奖后拒投 / 派彩一致 / 余额一致 / 历史），合计 43；
+  新增 `tests/roulette-shot.mjs`；UI 冒烟 +1（9 项）；`docs/05-game-rules/roulette-architecture.md`
+
 ## [0.2.1] - 2026-09-03 GitHub 开源素材接入（PHASE 19 美术精修 · 续）
 
 ### 素材来源与合规（新增 `THIRD_PARTY_ASSETS.md`）

@@ -10,7 +10,8 @@
     "./mahjong": "./src/mahjong/index.ts",
     "./hongshi": "./src/hongshi/index.ts",
     "./fishing": "./src/fishing/index.ts",
-    "./slot": "./src/slot/index.ts"
+    "./slot": "./src/slot/index.ts",
+    "./roulette": "./src/roulette/index.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

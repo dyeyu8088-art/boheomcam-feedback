@@ -52,7 +52,7 @@
 
 ### 2.3 事件命名空间
 
-`sys.* auth.* lobby.* match.* room.* chat.* mahjong.* hongshi.* fishing.* slot.*`
+`sys.* auth.* lobby.* match.* room.* chat.* mahjong.* hongshi.* fishing.* slot.* roulette.*`
 
 核心事件（完整清单见 packages/protocol/src/events.ts，三端共享常量）：
 
@@ -60,7 +60,8 @@
 - 麻将：`mahjong.deal(私发) / mahjong.draw(私发) / mahjong.drawPublic(他人摸牌仅计数) / mahjong.discard / mahjong.actionAsk(可吃碰杠胡窗口) / mahjong.action(chi|peng|gang|hu|pass) / mahjong.trustee / mahjong.roundEnd / mahjong.settle`
 - 红十：`hongshi.deal / hongshi.play / hongshi.pass / hongshi.hint / hongshi.trustee / hongshi.roundEnd / hongshi.settle`
 - 捕鱼：`fishing.enter / fishing.waveStart(鱼群波次脚本) / fishing.spawn / fishing.fire → fishing.fireOk{bulletId} / fishing.hit → fishing.hitResult / fishing.playerState / fishing.bossWarning / fishing.leave`
-- 水果机：`slot.enter / slot.spin → slot.spinResult / slot.history`
+- 水果机：`slot.enter / slot.spin → slot.spinResult / slot.history / slot.jackpot(广播奖池) / slot.ticket`
+- 轮盘：`roulette.enter → roulette.enter.ok{config, round, myBets, history, balance} / roulette.state(阶段广播) / roulette.bet{bets[]} → roulette.bet.ok{accepted, balance} / roulette.spin{result, wheelIndex, spinMs} / roulette.result{myBets, myPayout, balance, history} / roulette.history / roulette.leave`
 - 结算通用：`game.roundResult{roundId, results[], balances[]}`
 
 ### 2.4 断线恢复快照（room.sync）

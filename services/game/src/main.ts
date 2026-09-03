@@ -2,6 +2,7 @@
 import { getLogger, getPool, initIdGenerator, loadEnv, query, getRedis } from '@yanbian/server-core';
 import { startGateway, wireUserBus } from './gateway.js';
 import { startMatchLoop } from './matchmaker.js';
+import { startRouletteLoop } from './hosts/rouletteHost.js';
 import { roomManager } from './room.js';
 
 const log = getLogger('game-main');
@@ -14,6 +15,7 @@ async function main(): Promise<void> {
   startGateway(env.gamePort);
   wireUserBus();
   startMatchLoop();
+  await startRouletteLoop();
 
   await query(
     `INSERT INTO server_nodes (node_id, kind, roles) VALUES ($1,'game',$2)

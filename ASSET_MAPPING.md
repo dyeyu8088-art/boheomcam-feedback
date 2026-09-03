@@ -120,16 +120,16 @@
 
 | 素材文件 | 游戏 | 界面 | 组件 | 功能 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| roulette/table/table_layout.png | 轮盘 | GameScene | `RouletteTable` | 下注区底图，命中区域按坐标映射 → `placeBet(area)` | 🔧 |
-| roulette/wheel/wheel_hero.png | 轮盘 | 大厅卡 / 待机 | `GameEntryCard` | 装饰（转动轮盘为程序绘制顶视图，停在服务端号码） | 🔧 |
-| roulette/chips/roulette_chip_10 … _1m.png | 轮盘 | 筹码栏 | `BetChip` | `selectChip(n)`；落桌筹码飞行动画 | 🔧 |
-| roulette/buttons/btn_spin.png | 轮盘 | 控制台 | `GameButton art` | `confirmBets()` 提交下注 → 服务端锁盘开奖 | 🔧 |
-| roulette/buttons/btn_repeat.png | 轮盘 | 控制台 | `GameButton art` | `repeatLast()` | 🔧 |
-| roulette/buttons/btn_close.png | 轮盘 | 控制台 | `GameButton art` | `clearBets()` | 🔧 |
-| roulette/buttons/btn_auto.png | 轮盘 | 控制台 | `GameButton art` | `toggleAuto()`（自动重复上局） | 🔧 |
-| common/buttons/btn_arrow_left.png | 轮盘 | 控制台 | `GameButton art` | `undoBet()` | 🔧 |
-| roulette/ui/jackpot_banner.png | 轮盘 | 顶部 | `JackpotBar` | 幸运号码奖池（数字程序绘制） | 🔧 |
-| roulette/character/caishen_ingot_splash.png / caishen_round.png | 轮盘 | 场景 / 大奖 | `Mascot` | 立绘 / 中奖演出 | 🔧 |
+| roulette/table/table_layout.png | 轮盘 | GameScene | `RouletteTable` | `RouletteTable` | 220×52 缩略图不足以承载交互，投注台改为程序绘制布局（红黑格 / 打 / 列 / 外围） | 📦 |
+| roulette/wheel/wheel_hero.png | 轮盘 | 大厅卡 / 待机 | `GameEntryCard` | `GameEntryCard` | 大厅海报；牌桌转盘为 Canvas 程序绘制顶视图，停在服务端号码 | ✅ |
+| roulette/chips/roulette_chip_10 … _1m.png | 轮盘 | 筹码栏 | `BetChip` | `selectChip(n)`；落桌筹码飞行动画 | ✅ |
+| roulette/buttons/btn_spin.png | 轮盘 | 控制台 | `GameButton art` | `RouletteView .confirm` | 确认下注（提交暂存清单 → 服务端锁盘开奖） | ✅ |
+| roulette/buttons/btn_repeat.png | 轮盘 | 控制台 | `GameButton art` | `repeatLast()` | ✅ |
+| roulette/buttons/btn_close.png | 轮盘 | 控制台 | `GameButton art` | `clearBets()` | ✅ |
+| roulette/buttons/btn_auto.png | 轮盘 | 控制台 | `GameButton art` | `toggleAuto()`（自动重复上局） | ✅ |
+| common/buttons/btn_arrow_left.png | 轮盘 | 控制台 | `GameButton art` | `undoBet()` | ✅ |
+| roulette/ui/jackpot_banner.png | 轮盘 | 顶部 | `JackpotBar` | `RouletteView .banner` | 标题横幅（zh；裁掉 JACKPOT 缎带，轮盘无奖池）；ko 用程序文字 | ✅ |
+| roulette/character/caishen_ingot_splash.png / caishen_round.png | 轮盘 | 场景 / 大奖 | `Mascot` | `RouletteView` | 转盘中心立绘（round）/ 中奖结果面板（splash） | ✅ |
 
 ## 6. 股票涨跌（stock_game）
 

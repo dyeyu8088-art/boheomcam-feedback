@@ -114,6 +114,80 @@ async function makeUser(tag) {
   return r.data;
 }
 
+// ── 轮盘 ───────────────────────────────────────────────
+const RL_RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+function rlPayout(result, bets) {
+  let total = 0;
+  for (const b of bets) {
+    const win =
+      b.type === 'red' ? RL_RED.has(result) : b.type === 'black' ? result !== 0 && !RL_RED.has(result) : b.type === 'straight' ? Number(b.selection) === result : false;
+    if (win) total += b.amount * (b.type === 'straight' ? 36 : 2);
+  }
+  return total;
+}
+async function testRoulette() {
+  console.log('▶ 轮盘（共享回合 / 锁盘开奖 / 幂等 / 限额）');
+  const u = await makeUser('rl');
+  const c = new Client(u.accessToken, 'rl');
+  await c.connect();
+  let enter;
+  try {
+    enter = await c.call('roulette.enter');
+  } catch (e) {
+    console.error('  [debug] roulette.enter failed:', e.message, JSON.stringify(c.everything).slice(0, 1500));
+    throw e;
+  }
+  assert(enter.data.config?.chips?.length === 11 && enter.data.round?.roundId, '进入轮盘返回配置与当前回合');
+  let r = enter.data.round;
+  for (let i = 0; i < 20 && !(r.phase === 'betting' && r.lockAt - Date.now() > 6000); i += 1) {
+    const st = await c.once('roulette.state', 60000);
+    r = st.data;
+  }
+  const bal0 = enter.data.balance;
+  const placed = [
+    { type: 'red', selection: '', amount: 100 },
+    { type: 'straight', selection: '7', amount: 10 },
+  ];
+  const ok = await c.call('roulette.bet', { bets: placed }, 'roulette.bet.ok');
+  assert(ok.data.accepted?.length === 2 && ok.data.balance === bal0 - 110, '下注成功并扣款 110');
+  const rid = `rq-rl-dup-${Date.now()}`;
+  c.send('roulette.bet', { bets: [{ type: 'black', selection: '', amount: 50 }] }, rid);
+  const a = await c.once('roulette.bet.ok');
+  c.send('roulette.bet', { bets: [{ type: 'black', selection: '', amount: 50 }] }, rid);
+  const b = await c.once('roulette.bet.ok');
+  assert(a.data.balance === b.data.balance && a.data.roundId === b.data.roundId, '重复 requestId 不重复扣款（网关响应缓存 / 钱包幂等）');
+  placed.push({ type: 'black', selection: '', amount: 50 });
+  let rejected = false;
+  try {
+    await c.call('roulette.bet', { bets: [{ type: 'straight', selection: '37', amount: 10 }] }, 'roulette.bet.ok', 3000);
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, '非法单号 37 被拒绝');
+  let rejected2 = false;
+  try {
+    await c.call('roulette.bet', { bets: [{ type: 'red', selection: '', amount: 1e9 }] }, 'roulette.bet.ok', 3000);
+  } catch {
+    rejected2 = true;
+  }
+  assert(rejected2, '超过限额 / 余额的投注被拒绝');
+  const spin = await c.once('roulette.spin', 60000);
+  assert(spin.data.result >= 0 && spin.data.result <= 36 && spin.data.roundId === ok.data.roundId, `锁盘开奖（${spin.data.result}）`);
+  let rejected3 = false;
+  try {
+    await c.call('roulette.bet', { bets: [{ type: 'red', selection: '', amount: 10 }] }, 'roulette.bet.ok', 3000);
+  } catch {
+    rejected3 = true;
+  }
+  assert(rejected3, '开奖后下注被拒绝');
+  const res = await c.once('roulette.result', 30000);
+  const exp = rlPayout(res.data.result, placed);
+  assert(res.data.myPayout === exp && res.data.myBet === 160, `结算派彩与赔率一致（派彩 ${res.data.myPayout}）`);
+  assert(res.data.balance === b.data.balance + exp, '结算后余额 = 下注后余额 + 派彩');
+  assert(res.data.history?.[0] === res.data.result, '历史记录已更新');
+  c.close();
+}
+
 // ── 水果机 ─────────────────────────────────────────────
 async function testSlot() {
   console.log('▶ 水果机');
@@ -344,7 +418,13 @@ async function testReconnect() {
 
 const t0 = Date.now();
 try {
+  if (process.env.ONLY === 'roulette') {
+    await testRoulette();
+    console.log(`\nE2E 结果: ${passed} 通过 / ${failed} 失败`);
+    process.exit(failed ? 1 : 0);
+  }
   await testSlot();
+  await testRoulette();
   await testFishing();
   await testMahjong();
   await testHongshi();

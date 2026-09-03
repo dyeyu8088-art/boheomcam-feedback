@@ -13,6 +13,7 @@ import { mahjongHost } from './hosts/mahjongHost.js';
 import { hongshiHost } from './hosts/hongshiHost.js';
 import { fishingHost } from './hosts/fishingHost.js';
 import { slotHost } from './hosts/slotHost.js';
+import * as rouletteHost from './hosts/rouletteHost.js';
 import { loadMahjongRule, loadHongshiRule, gameOnline } from './configs.js';
 
 const log = getLogger('gateway');
@@ -44,6 +45,7 @@ async function handleMessage(session: GameSession, raw: string): Promise<void> {
   if (msg.event !== Ev.SysPing) {
     if (msg.seq <= session.lastSeq) {
       counterInc('ws_seq_rejected_total');
+      log.warn({ uid: session.uid, event: msg.event, seq: msg.seq, lastSeq: session.lastSeq }, 'ws frame rejected: seq not increasing');
       return;
     }
     session.lastSeq = msg.seq;
@@ -159,6 +161,7 @@ async function handleMessage(session: GameSession, raw: string): Promise<void> {
         if (room) await roomManager.removePlayer(room, session.uid, 'leave');
         if (fishingHost.isIn(session.uid)) await fishingHost.leave(session);
         slotHost.leave(session);
+        rouletteHost.leave(session);
         reply('room.leave.ok', {});
         return;
       }
@@ -242,6 +245,27 @@ async function handleMessage(session: GameSession, raw: string): Promise<void> {
         return;
       }
 
+      // ── 轮盘 ───────────────────────────────
+      case Ev.RlEnter: {
+        if (!(await gameOnline('roulette'))) throw new ApiError(ErrorCode.MAINTENANCE, '游戏维护中');
+        reply('roulette.enter.ok', await rouletteHost.enter(session));
+        return;
+      }
+      case Ev.RlBet: {
+        if (!msg.requestId) throw new ApiError(ErrorCode.VALIDATION, '缺少 requestId');
+        reply(Ev.RlBetOk, await rouletteHost.bet(session, (msg.data ?? {}) as Record<string, unknown>, msg.requestId));
+        return;
+      }
+      case Ev.RlHistory: {
+        reply('roulette.history.ok', rouletteHost.historyOf());
+        return;
+      }
+      case Ev.RlLeave: {
+        rouletteHost.leave(session);
+        reply('roulette.leave.ok', {});
+        return;
+      }
+
       default: {
         // 桌面游戏动作（mahjong.* / hongshi.* / game.trustee）
         if (msg.event.startsWith('mahjong.') || msg.event.startsWith('hongshi.') || msg.event === 'game.trustee') {
@@ -291,6 +315,29 @@ export function startGateway(port: number): WebSocketServer {
       const deviceId = (payload.dev as string) ?? '';
       const session = hub.attach(uid, deviceId, socket);
       counterInc('ws_connects_total');
+
+      // 监听器必须在任何 await 之前挂上：客户端在 open 后立即发送的帧否则会被静默丢弃（快客户端 / 重连竞态）
+      const pending: string[] = [];
+      let ready = false;
+      socket.on('message', (buf) => {
+        const raw = buf.toString();
+        if (raw.length > 16384) {
+          socket.close(4400, 'message too large');
+          return;
+        }
+        if (!ready) {
+          if (pending.length < 64) pending.push(raw);
+          return;
+        }
+        void handleMessage(session, raw);
+      });
+      socket.on('close', () => {
+        hub.markOffline(uid, socket);
+      });
+      socket.on('error', () => {
+        /* close 事件处理 */
+      });
+
       await getRedis().set(`online:${uid}`, '1', 'EX', 120).catch(() => undefined);
 
       // 重连恢复
@@ -304,20 +351,9 @@ export function startGateway(port: number): WebSocketServer {
       });
       if (room) room.host.onReconnect(room, uid);
 
-      socket.on('message', (buf) => {
-        const raw = buf.toString();
-        if (raw.length > 16384) {
-          socket.close(4400, 'message too large');
-          return;
-        }
-        void handleMessage(session, raw);
-      });
-      socket.on('close', () => {
-        hub.markOffline(uid, socket);
-      });
-      socket.on('error', () => {
-        /* close 事件处理 */
-      });
+      // 按到达顺序回放握手期间缓冲的帧
+      ready = true;
+      for (const raw of pending.splice(0)) await handleMessage(session, raw);
     })();
   });
 
@@ -353,6 +389,7 @@ export function startGateway(port: number): WebSocketServer {
     }
     if (fishingHost.isIn(s.uid)) void fishingHost.leave(s);
     slotHost.leave(s);
+    rouletteHost.leave(s);
     cancelMatch(s.uid);
   };
 

@@ -13,6 +13,7 @@ const routes = [
   { path: '/game/hongshi', component: () => import('./games/hongshi/HongshiTableView.vue') },
   { path: '/game/fishing', component: () => import('./games/fishing/FishingView.vue') },
   { path: '/game/slot', component: () => import('./games/slot/SlotView.vue') },
+  { path: '/game/roulette', component: () => import('./games/roulette/RouletteView.vue') },
 ];
 
 export const router = createRouter({

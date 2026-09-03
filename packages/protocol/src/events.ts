@@ -90,6 +90,16 @@ export const Ev = {
   SlHistory: 'slot.history',
   SlJackpot: 'slot.jackpot',
   SlTicket: 'slot.ticket',
+
+  // 轮盘（单桌共享回合；下注/开奖/派彩全部服务端）
+  RlEnter: 'roulette.enter',
+  RlState: 'roulette.state',
+  RlBet: 'roulette.bet',
+  RlBetOk: 'roulette.bet.ok',
+  RlSpin: 'roulette.spin',
+  RlResult: 'roulette.result',
+  RlHistory: 'roulette.history',
+  RlLeave: 'roulette.leave',
 } as const;
 
 export type EventName = (typeof Ev)[keyof typeof Ev];
