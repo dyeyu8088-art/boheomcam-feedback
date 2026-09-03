@@ -1037,19 +1037,21 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* 非中文：用实底小牌盖住图标上烙的中文，显示程序文字 */
 .sk-name {
   position: absolute;
   left: 50%;
-  bottom: 24%;
+  bottom: 21%;
   transform: translateX(-50%);
-  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(8, 12, 26, 0.94);
+  border: 1px solid rgba(255, 226, 138, 0.55);
+  font-size: 10px;
   font-weight: 900;
-  color: #fff3c4;
+  line-height: 1.3;
+  color: #ffe9a6;
   white-space: nowrap;
-  text-shadow:
-    0 0 2px #000,
-    0 0 3px #000,
-    0 1px 2px #000;
   pointer-events: none;
 }
 .fs-root {

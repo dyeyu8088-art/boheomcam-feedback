@@ -93,7 +93,9 @@
   各游戏对手资金池映射 `GAME_POOL`；轮盘与股票宿主全部改经该服务过账（水果机 / 捕鱼 / 牌桌沿用同一钱包原语与 key 规范）
 - 后台：`GET /api/admin/v1/arcade/jackpots`（四档奖池 + 最近命中）、`/arcade/roulette/rounds`、`/arcade/stock/rounds`（含按 roundId 查注单）；
   仪表盘在线人数与今日回合统计加入轮盘 / 股票 / 水果机（`arcadeToday`）；后台前端新增「街机 / 奖池」页
-- 捕鱼技能图标（烙中文）在非中文环境叠加程序文字名称
+- 捕鱼技能图标（烙中文）在非中文环境用实底小牌叠加程序文字名称
+- 捕鱼精灵去底：鱼 / Boss / 炮台原切片带有素材表的水面 / 白底（Boss 在场上显示为矩形），
+  用 OpenCV GrabCut（蓝色鱼 / Boss / 炮台）与色相键控（暖色鱼）重新去底并羽化，原图备份于 scratchpad
 - 全量回归：game-common 单测 59 / api · game · client · admin 类型检查 / E2E 55 / UI 冒烟 10 / 后台冒烟 7
 - 测试：E2E 新增 10 项（进桌 / 扣款 / 幂等 / 非法号 / 超额 / 锁盘开奖 / 开奖后拒投 / 派彩一致 / 余额一致 / 历史），合计 43；
   新增 `tests/roulette-shot.mjs`；UI 冒烟 +1（9 项）；`docs/05-game-rules/roulette-architecture.md`
