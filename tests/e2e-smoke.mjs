@@ -188,6 +188,25 @@ async function testFishing() {
     }
   }
   assert(tooFast > 0, '超频射击被限流');
+
+  // 技能：服务端判定 + 幂等 + 冷却
+  const sk = await c.call('fishing.skill', { skill: 'LIGHTNING', dirDeg: -90 }, 'fishing.skill.ok');
+  assert(sk.data.cost === 200 && typeof sk.data.cooldownUntilMs === 'number' && Array.isArray(sk.data.kills), '闪电技能由服务端结算（费用 20 发 × 炮倍）');
+  const rid = `rq-fish-replay-${Date.now()}`;
+  const p1 = c.once('fishing.skill.ok');
+  c.send('fishing.skill', { skill: 'MISSILE' }, rid);
+  const r1 = await p1;
+  const p2 = c.once('fishing.skill.ok');
+  c.send('fishing.skill', { skill: 'MISSILE' }, rid);
+  const r2 = await p2;
+  assert(r1.data.balance === r2.data.balance && r1.data.cooldownUntilMs === r2.data.cooldownUntilMs, '技能同 requestId 重放不重复扣费 / 派奖');
+  let cdRejected = false;
+  try {
+    await c.call('fishing.skill', { skill: 'LIGHTNING' }, 'fishing.skill.ok', 3000);
+  } catch {
+    cdRejected = true;
+  }
+  assert(cdRejected, '技能冷却期内再次使用被拒绝');
   await c.call('fishing.leave', {});
   c.close();
 }

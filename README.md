@@ -52,7 +52,7 @@ pnpm dev:admin                  # 管理后台 :5174
 ```bash
 pnpm --filter @yanbian/game-common test    # 引擎单元测试 39 项（含模糊测试/RTP 收敛/确定性回放）
 pnpm --filter @yanbian/api-service test    # 钱包集成测试 7 项（并发100扣款/幂等/防重复结算/触发器防篡改）
-node tests/e2e-smoke.mjs                   # 全栈 E2E 28 项（四游戏整局/防作弊路径/断线重连）
+node tests/e2e-smoke.mjs                   # 全栈 E2E 31 项（四游戏整局/防作弊路径/断线重连）
 node tests/ui-smoke.mjs                    # 客户端浏览器冒烟 8 项（Playwright）
 node tests/admin-ui-smoke.mjs              # 后台浏览器冒烟 7 项（需 ADMIN_PASSWORD）
 node tests/lobby-shot.mjs                  # 大厅四分辨率截图回归（1920/2560/Android 横屏/手机竖屏）

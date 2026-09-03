@@ -126,3 +126,39 @@ export const WAVE_TEMPLATES: WaveTemplate[] = [
 
 export const fishTypeById = new Map(FISH_TYPES.map((f) => [f.typeId, f]));
 export const fishingStageById = new Map(FISHING_STAGES.map((s) => [s.stageId, s]));
+
+/* ───────── 技能与 Boss ───────── */
+export type SkillId = 'LIGHTNING' | 'MISSILE' | 'LASER' | 'NUKE' | 'FREEZE' | 'LOCK';
+
+export interface SkillConfig {
+  skillId: SkillId;
+  /** 费用 = costBullets × bulletBaseCost × 当前炮倍（无道具时以金币支付） */
+  costBullets: number;
+  /** 最多命中目标数（0 = 无直接伤害） */
+  maxTargets: number;
+  cooldownMs: number;
+  /** 背包道具 id（有则优先消耗道具） */
+  itemId: string;
+  /** 持续型技能时长 */
+  durationMs?: number;
+}
+
+export const SKILLS: SkillConfig[] = [
+  { skillId: 'LIGHTNING', costBullets: 20, maxTargets: 6, cooldownMs: 8000, itemId: 'skill_lightning' },
+  { skillId: 'MISSILE', costBullets: 30, maxTargets: 1, cooldownMs: 6000, itemId: 'skill_missile' },
+  { skillId: 'LASER', costBullets: 50, maxTargets: 8, cooldownMs: 12000, itemId: 'skill_laser' },
+  { skillId: 'NUKE', costBullets: 100, maxTargets: 40, cooldownMs: 30000, itemId: 'skill_nuke' },
+  { skillId: 'FREEZE', costBullets: 80, maxTargets: 0, cooldownMs: 20000, itemId: 'skill_freeze', durationMs: 8000 },
+  { skillId: 'LOCK', costBullets: 5, maxTargets: 0, cooldownMs: 2000, itemId: '', durationMs: 12000 },
+];
+export const skillById = new Map(SKILLS.map((s) => [s.skillId, s]));
+
+/**
+ * Boss 血量（以金币伤害计）：= 赔率 × 子弹基础成本 × 场次最高炮倍。
+ * 每发子弹造成 cost × [0.6,1.4] 的伤害，期望正好 1 发 = cost，
+ * 因此击杀 Boss 的总投入期望 ≈ maxHp，总奖励 = maxHp × targetRtp 按伤害占比分配 → 全场 RTP 不变。
+ */
+export function bossMaxHp(type: FishTypeConfig, stage: FishingStageConfig): number {
+  const topMult = stage.multipliers[stage.multipliers.length - 1] ?? 1;
+  return Math.round(type.baseOdds * stage.bulletBaseCost * topMult);
+}

@@ -293,4 +293,23 @@ export const zh: Record<string, string> = {
   'game.roulette.desc': '0–36 · 多种投注',
   'game.stock_updown': '股市风云',
   'game.stock_updown.desc': '看涨看跌 · 模拟行情',
+
+  // ── 捕鱼技能 / Boss ──
+  'fs.shot': '发',
+  'fs.skill.LIGHTNING': '闪电',
+  'fs.skill.MISSILE': '导弹',
+  'fs.skill.LASER': '激光',
+  'fs.skill.NUKE': '核弹',
+  'fs.skill.FREEZE': '冰冻',
+  'fs.skill.LOCK': '锁定',
+  'fs.lockOn': '已锁定',
+  'fs.frozen': '冰冻中',
+  'fs.bossHp': 'Boss 血量',
+  'fs.bossDead': 'Boss 击杀！',
+  'fs.bossReward': 'Boss 分奖',
+  'fs.skillCd': '冷却中',
+  'fs.noTarget': '屏幕内没有目标',
+  'fs.players': '同桌玩家',
+  'fs.boss.whale': '座头鲸',
+  'fs.boss.dragonKing': '财神鱼',
 };

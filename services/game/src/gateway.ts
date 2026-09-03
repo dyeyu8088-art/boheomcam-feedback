@@ -208,6 +208,12 @@ async function handleMessage(session: GameSession, raw: string): Promise<void> {
         reply(Ev.FsHitResult, r);
         return;
       }
+      case Ev.FsSkill: {
+        if (!msg.requestId) throw new ApiError(ErrorCode.VALIDATION, '缺少 requestId');
+        const r = await fishingHost.skill(session, msg.data as Record<string, unknown>, msg.requestId);
+        reply('fishing.skill.ok', r);
+        return;
+      }
       case Ev.FsLeave: {
         await fishingHost.leave(session);
         reply('fishing.leave.ok', {});

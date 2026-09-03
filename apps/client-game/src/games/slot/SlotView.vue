@@ -458,7 +458,7 @@ async function exit(): Promise<void> {
 onMounted(async () => {
   if (gameSocket.status !== 'open') await gameSocket.connect();
   app = new Application();
-  await app.init({ resizeTo: stageEl.value!, background: 0x0c0a12, antialias: true, resolution: Math.min(2, window.devicePixelRatio) });
+  await app.init({ resizeTo: stageEl.value!, background: 0x0c0a12, antialias: true, resolution: Math.min(2, window.devicePixelRatio), autoDensity: true });
   stageEl.value!.appendChild(app.canvas);
 
   // 背景：放射流光 + 金色光晕（机台后方的演出光）

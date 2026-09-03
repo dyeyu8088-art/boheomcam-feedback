@@ -275,4 +275,23 @@ export const ko: Record<string, string> = {
   'game.roulette.desc': '0–36 · 다양한 베팅',
   'game.stock_updown': '주가 예측',
   'game.stock_updown.desc': '상승·하락 예측 · 모의 시세',
+
+  // ── 捕鱼技能 / Boss ──
+  'fs.shot': '발',
+  'fs.skill.LIGHTNING': '번개',
+  'fs.skill.MISSILE': '미사일',
+  'fs.skill.LASER': '레이저',
+  'fs.skill.NUKE': '핵폭탄',
+  'fs.skill.FREEZE': '빙결',
+  'fs.skill.LOCK': '조준',
+  'fs.lockOn': '조준 완료',
+  'fs.frozen': '빙결 중',
+  'fs.bossHp': '보스 체력',
+  'fs.bossDead': '보스 처치!',
+  'fs.bossReward': '보스 보상',
+  'fs.skillCd': '쿨타임',
+  'fs.noTarget': '화면에 목표가 없습니다',
+  'fs.players': '같은 방 플레이어',
+  'fs.boss.whale': '혹등고래',
+  'fs.boss.dragonKing': '재신어',
 };

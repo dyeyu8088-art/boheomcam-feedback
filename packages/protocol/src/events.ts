@@ -74,6 +74,14 @@ export const Ev = {
   FsFishKilled: 'fishing.fishKilled',
   FsPlayerFire: 'fishing.playerFire',
   FsLeave: 'fishing.leave',
+  FsSkill: 'fishing.skill',
+  FsSkillUsed: 'fishing.skillUsed',
+  FsBossHp: 'fishing.bossHp',
+  FsBossDead: 'fishing.bossDead',
+  FsBossReward: 'fishing.bossReward',
+  FsFrozen: 'fishing.frozen',
+  FsPlayerJoined: 'fishing.playerJoined',
+  FsPlayerLeft: 'fishing.playerLeft',
 
   // 水果机
   SlEnter: 'slot.enter',
