@@ -27,7 +27,7 @@ const suit = computed(() => Math.floor(props.card / 13));
 const rank = computed(() => (props.card % 13) + 1);
 const isRed = computed(() => suit.value === 0 || suit.value === 2);
 const isFace = computed(() => rank.value >= 11);
-const src = computed(() => `/assets/cards/${RANK_CODE[rank.value - 1]}${SUIT_CODE[suit.value]}.${isFace.value ? 'webp' : 'svg'}`);
+const src = computed(() => `/assets/red10/cards/${RANK_CODE[rank.value - 1]}${SUIT_CODE[suit.value]}.${isFace.value ? 'webp' : 'svg'}`);
 const label = computed(() => `${SUIT_NAME[suit.value]}${RANK_CODE[rank.value - 1]}`);
 /** 红十身份牌：红桃10 / 方块10 */
 const identity = computed(() => rank.value === 10 && isRed.value);

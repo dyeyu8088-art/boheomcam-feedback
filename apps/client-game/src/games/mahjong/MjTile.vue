@@ -5,7 +5,7 @@
   -->
   <div class="tile" :class="[`s${size}`, { back, selected, disabled }]">
     <template v-if="!back">
-      <img class="layer" src="/assets/mahjong/Front.svg" alt="" draggable="false" decoding="async" />
+      <img class="layer" src="/assets/mahjong/tiles/Front.svg" alt="" draggable="false" decoding="async" />
       <img class="layer face" :src="faceSrc" :alt="label" draggable="false" decoding="async" />
       <span class="gloss" />
     </template>
@@ -29,7 +29,7 @@ const HONOR_CN = ['東', '南', '西', '北', '中', '發', '白'];
 const suit = computed(() => (props.kind < 27 ? Math.floor(props.kind / 9) : 3));
 const rank = computed(() => (props.kind < 27 ? (props.kind % 9) + 1 : props.kind - 26));
 const faceSrc = computed(() =>
-  suit.value < 3 ? `/assets/mahjong/${SUIT_FILE[suit.value]}${rank.value}.svg` : `/assets/mahjong/${HONOR_FILE[rank.value - 1]}.svg`,
+  suit.value < 3 ? `/assets/mahjong/tiles/${SUIT_FILE[suit.value]}${rank.value}.svg` : `/assets/mahjong/tiles/${HONOR_FILE[rank.value - 1]}.svg`,
 );
 const label = computed(() => (suit.value < 3 ? `${CN[rank.value - 1]}${SUIT_CN[suit.value]}` : HONOR_CN[rank.value - 1]!));
 </script>

@@ -139,16 +139,16 @@
       <!-- 左侧：五萬 -->
       <g transform="translate(88 200) rotate(-14)" filter="url(#mjShadow)">
         <rect x="0" y="9" width="58" height="78" rx="8" fill="url(#mjSide)" />
-        <image href="/assets/mahjong/Front.svg" x="0" y="0" width="58" height="77.3" />
-        <image href="/assets/mahjong/Man5.svg" x="0" y="0" width="58" height="77.3" />
+        <image href="/assets/mahjong/tiles/Front.svg" x="0" y="0" width="58" height="77.3" />
+        <image href="/assets/mahjong/tiles/Man5.svg" x="0" y="0" width="58" height="77.3" />
         <rect x="0.6" y="0.6" width="56.8" height="76" rx="7.5" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="1" />
         <path d="M5 8 Q22 2 42 5" stroke="#fff" stroke-opacity="0.55" stroke-width="2.4" stroke-linecap="round" fill="none" />
       </g>
       <!-- 右侧：五筒 -->
       <g transform="translate(266 194) rotate(13)" filter="url(#mjShadow)">
         <rect x="0" y="9" width="58" height="78" rx="8" fill="url(#mjSide)" />
-        <image href="/assets/mahjong/Front.svg" x="0" y="0" width="58" height="77.3" />
-        <image href="/assets/mahjong/Pin5.svg" x="0" y="0" width="58" height="77.3" />
+        <image href="/assets/mahjong/tiles/Front.svg" x="0" y="0" width="58" height="77.3" />
+        <image href="/assets/mahjong/tiles/Pin5.svg" x="0" y="0" width="58" height="77.3" />
         <rect x="0.6" y="0.6" width="56.8" height="76" rx="7.5" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="1" />
         <path d="M5 8 Q22 2 42 5" stroke="#fff" stroke-opacity="0.55" stroke-width="2.4" stroke-linecap="round" fill="none" />
       </g>
@@ -156,8 +156,8 @@
       <!-- 主视觉：中（更大、更立体、带鎏金轮廓光） -->
       <g transform="translate(166 146) rotate(-3)" filter="url(#mjShadow)">
         <rect x="0" y="12" width="88" height="117" rx="11" fill="url(#mjSide)" />
-        <image href="/assets/mahjong/Front.svg" x="0" y="0" width="88" height="117.3" />
-        <image href="/assets/mahjong/Chun.svg" x="0" y="0" width="88" height="117.3" />
+        <image href="/assets/mahjong/tiles/Front.svg" x="0" y="0" width="88" height="117.3" />
+        <image href="/assets/mahjong/tiles/Chun.svg" x="0" y="0" width="88" height="117.3" />
         <rect x="1" y="1" width="86" height="115.3" rx="10.5" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1.2" />
         <rect x="0" y="0" width="88" height="117.3" rx="11" fill="none" stroke="#f3dfae" stroke-opacity="0.6" stroke-width="2.2" filter="url(#mjGlow)" />
         <path d="M6 10 Q30 2 60 6" stroke="#fff" stroke-opacity="0.7" stroke-width="3" stroke-linecap="round" fill="none" />
@@ -312,14 +312,14 @@
       <!-- 红桃 10 / 方块 10（Vector Playing Cards，公共领域） -->
       <g transform="translate(140 132) rotate(-10)" filter="url(#hsShadow)">
         <rect x="0" y="0" width="84" height="122" rx="7" fill="#fdfbf5" />
-        <image href="/assets/cards/10H.svg" x="0" y="0" width="84" height="122" />
+        <image href="/assets/red10/cards/10H.svg" x="0" y="0" width="84" height="122" />
         <rect x="0.6" y="0.6" width="82.8" height="120.8" rx="6.5" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1" />
         <rect x="0" y="0" width="84" height="122" rx="7" fill="none" stroke="#c3b9a1" stroke-width="0.8" />
         <path d="M6 10 Q26 3 48 6" stroke="#fff" stroke-opacity="0.5" stroke-width="2.4" stroke-linecap="round" fill="none" />
       </g>
       <g transform="translate(212 138) rotate(11)" filter="url(#hsShadow)">
         <rect x="0" y="0" width="84" height="122" rx="7" fill="#fdfbf5" />
-        <image href="/assets/cards/10D.svg" x="0" y="0" width="84" height="122" />
+        <image href="/assets/red10/cards/10D.svg" x="0" y="0" width="84" height="122" />
         <rect x="0.6" y="0.6" width="82.8" height="120.8" rx="6.5" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1" />
         <rect x="0" y="0" width="84" height="122" rx="7" fill="none" stroke="#c3b9a1" stroke-width="0.8" />
         <path d="M6 10 Q26 3 48 6" stroke="#fff" stroke-opacity="0.5" stroke-width="2.4" stroke-linecap="round" fill="none" />

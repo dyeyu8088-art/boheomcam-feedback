@@ -6,11 +6,12 @@
 
 | 用途 | 素材 | 来源 | 许可证 | 落地位置 |
 | --- | --- | --- | --- | --- |
-| 麻将牌面（万 / 筒 / 索 / 风 / 箭 / 牌背） | riichi-mahjong-tiles（Regular 套） | https://github.com/FluffyStuff/riichi-mahjong-tiles | **CC0 1.0（公共领域）** | `apps/client-game/public/assets/mahjong/*.svg` + `LICENSE.md` |
-| 扑克牌（52 张） | Vector Playing Cards（Byron Knoll 原作，notpeter 整理） | https://github.com/notpeter/Vector-Playing-Cards | **公共领域 / WTFPL** | `apps/client-game/public/assets/cards/*.svg`（数字牌）+ `*.webp`（J/Q/K 由本项目光栅化）+ `LICENSE.txt` |
+| 麻将牌面（万 / 筒 / 索 / 风 / 箭 / 牌背） | riichi-mahjong-tiles（Regular 套） | https://github.com/FluffyStuff/riichi-mahjong-tiles | **CC0 1.0（公共领域）** | `apps/client-game/public/assets/mahjong/tiles/*.svg` + `LICENSE.md` |
+| 扑克牌（52 张） | Vector Playing Cards（Byron Knoll 原作，notpeter 整理） | https://github.com/notpeter/Vector-Playing-Cards | **公共领域 / WTFPL** | `apps/client-game/public/assets/red10/cards/*.svg`（数字牌）+ `*.webp`（J/Q/K 由本项目光栅化）+ `LICENSE.txt` |
 | 中文展示字体（游戏名 / 品牌） | ZCOOL XiaoWei（站酷小薇体） | https://github.com/google/fonts/tree/main/ofl/zcoolxiaowei | **SIL OFL 1.1** | `apps/client-game/public/fonts/zcool-xiaowei-titles.woff2`（子集）+ `OFL-zcoolxiaowei.txt` |
 | 中文书法字体（牌面 / 门风 / 主视觉） | Ma Shan Zheng（马善政毛笔楷书） | https://github.com/google/fonts/tree/main/ofl/mashanzheng | **SIL OFL 1.1** | `apps/client-game/public/fonts/mashanzheng-tiles.woff2`（子集）+ `OFL-mashanzheng.txt` |
 | 韩文展示字体（游戏名 / 品牌） | Nanum Myeongjo ExtraBold | https://github.com/google/fonts/tree/main/ofl/nanummyeongjo | **SIL OFL 1.1** | `apps/client-game/public/fonts/nanum-myeongjo-titles.woff2`（子集）+ `OFL-nanummyeongjo.txt` |
+| 新版 UI / 角色 / 鱼类 / 符号（六张素材表拆分，343 文件） | 用户提供的 AI 生成素材（无第三方版权主张；含财神鱼原创角色） | 用户上传（2026-09-03） | **项目自有素材** | `apps/client-game/public/assets/{common,lobby,fishing,slots,roulette,stock_game,mahjong,red10}/…`（切图脚本：`tools/assets/`；清单：`assets-manifest.json`） |
 | 拉丁品牌字体（YANBIAN GAME） | Cinzel | https://github.com/google/fonts/tree/main/ofl/cinzel | **SIL OFL 1.1** | `apps/client-game/public/fonts/cinzel-brand.woff2`（子集）+ `OFL-cinzel.txt` |
 
 ## 合规说明
@@ -31,3 +32,9 @@ git clone --depth 1 https://github.com/notpeter/Vector-Playing-Cards.git
 pip install fonttools brotli
 pyftsubset ZCOOLXiaoWei-Regular.ttf --text='延边麻将红十捕鱼黄金水果娱乐' --unicodes='U+0020-007E' --flavor=woff2 --output-file=zcool-xiaowei-titles.woff2
 ```
+
+## 自有 AI 生成素材的处理说明
+
+- 六张素材表由自动分割脚本按不透明核心切块并抠透明；烙有玩家数据 / 金额 / 倒计时的板件在切图阶段抹除数字，运行时由程序绘制文字。
+- 素材表中出现的真实商标（Apple / Tesla / Microsoft / BTC / ETH Logo）**不接入**；带"充值 / TOP-UP / CASHBACK"语义的元素只作虚拟资产活动图使用。
+- 麻将牌面、扑克牌继续使用上表登记的 CC0 / 公共领域全套素材（素材表中的牌面不完整）。
