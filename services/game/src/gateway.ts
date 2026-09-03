@@ -14,6 +14,7 @@ import { hongshiHost } from './hosts/hongshiHost.js';
 import { fishingHost } from './hosts/fishingHost.js';
 import { slotHost } from './hosts/slotHost.js';
 import * as rouletteHost from './hosts/rouletteHost.js';
+import * as stockHost from './hosts/stockHost.js';
 import { loadMahjongRule, loadHongshiRule, gameOnline } from './configs.js';
 
 const log = getLogger('gateway');
@@ -162,6 +163,7 @@ async function handleMessage(session: GameSession, raw: string): Promise<void> {
         if (fishingHost.isIn(session.uid)) await fishingHost.leave(session);
         slotHost.leave(session);
         rouletteHost.leave(session);
+        stockHost.leave(session);
         reply('room.leave.ok', {});
         return;
       }
@@ -263,6 +265,23 @@ async function handleMessage(session: GameSession, raw: string): Promise<void> {
       case Ev.RlLeave: {
         rouletteHost.leave(session);
         reply('roulette.leave.ok', {});
+        return;
+      }
+
+      // ── 股票涨跌 ───────────────────────────
+      case Ev.StEnter: {
+        if (!(await gameOnline('stock_updown'))) throw new ApiError(ErrorCode.MAINTENANCE, '游戏维护中');
+        reply('stock.enter.ok', await stockHost.enter(session));
+        return;
+      }
+      case Ev.StBet: {
+        if (!msg.requestId) throw new ApiError(ErrorCode.VALIDATION, '缺少 requestId');
+        reply(Ev.StBetOk, await stockHost.bet(session, (msg.data ?? {}) as Record<string, unknown>, msg.requestId));
+        return;
+      }
+      case Ev.StLeave: {
+        stockHost.leave(session);
+        reply('stock.leave.ok', {});
         return;
       }
 
@@ -390,6 +409,7 @@ export function startGateway(port: number): WebSocketServer {
     if (fishingHost.isIn(s.uid)) void fishingHost.leave(s);
     slotHost.leave(s);
     rouletteHost.leave(s);
+    stockHost.leave(s);
     cancelMatch(s.uid);
   };
 

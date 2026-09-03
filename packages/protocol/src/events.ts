@@ -100,6 +100,15 @@ export const Ev = {
   RlResult: 'roulette.result',
   RlHistory: 'roulette.history',
   RlLeave: 'roulette.leave',
+
+  // 股票涨跌（服务端模拟行情；开盘 / 结算价由 MarketDataProvider 决定）
+  StEnter: 'stock.enter',
+  StTick: 'stock.tick',
+  StRound: 'stock.round',
+  StBet: 'stock.bet',
+  StBetOk: 'stock.bet.ok',
+  StResult: 'stock.result',
+  StLeave: 'stock.leave',
 } as const;
 
 export type EventName = (typeof Ev)[keyof typeof Ev];

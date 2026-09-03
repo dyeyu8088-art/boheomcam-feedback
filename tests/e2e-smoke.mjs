@@ -188,6 +188,85 @@ async function testRoulette() {
   c.close();
 }
 
+// ── 股票涨跌 ───────────────────────────────────────────
+async function testStock() {
+  console.log('▶ 股票涨跌（模拟行情 / 锁定赔率 / 幂等 / 结算 / 锁盘）');
+  const u = await makeUser('st');
+  const c = new Client(u.accessToken, 'st');
+  await c.connect();
+  const enter = await c.call('stock.enter');
+  assert(
+    enter.data.config?.instruments?.length === 3 && enter.data.rounds?.length === 3 && Object.keys(enter.data.prices ?? {}).length === 3,
+    '进入返回三个虚拟品种 / 回合 / 现价',
+  );
+  const inst = enter.data.config.instruments[0].id;
+  let round = enter.data.rounds.find((r) => r.instrument === inst);
+  for (let i = 0; i < 6 && !(round.lockAt - Date.now() > 6000); i += 1) {
+    const m = await c.once('stock.round', 45000);
+    if (m.data.round.instrument === inst) round = m.data.round;
+  }
+  const tick = await c.once('stock.tick', 5000);
+  assert(typeof tick.data.prices[inst] === 'number', '收到行情 tick');
+  const bal0 = enter.data.balance;
+  const b1 = await c.call('stock.bet', { instrument: inst, type: 'UP', amount: 100 }, 'stock.bet.ok');
+  assert(b1.data.bet.oddsBp === 19000 && b1.data.balance === bal0 - 100 && b1.data.roundId === round.roundId, '看涨下注锁定赔率 1.90 并扣款');
+  const b2 = await c.call('stock.bet', { instrument: inst, type: 'HIGHER', selection: '1', amount: 50 }, 'stock.bet.ok');
+  assert(/^\d+\.\d\d$/.test(b2.data.bet.selection) && b2.data.bet.selection !== '1', 'HIGHER 参考价由服务端现价写入（忽略客户端值）');
+  const b3 = await c.call('stock.bet', { instrument: inst, type: 'LAST_DIGIT', selection: '7', amount: 10 }, 'stock.bet.ok');
+  assert(b3.data.bet.oddsBp === 95000, '末位数字赔率 9.5');
+  const rid = `rq-st-dup-${Date.now()}`;
+  c.send('stock.bet', { instrument: inst, type: 'DOWN', amount: 30 }, rid);
+  const d1 = await c.once('stock.bet.ok');
+  c.send('stock.bet', { instrument: inst, type: 'DOWN', amount: 30 }, rid);
+  const d2 = await c.once('stock.bet.ok');
+  assert(d1.data.balance === d2.data.balance && d1.data.roundId === d2.data.roundId, '重复 requestId 不重复扣款');
+  let rej = false;
+  try {
+    await c.call('stock.bet', { instrument: inst, type: 'FIRST_DIGIT', selection: '12', amount: 10 }, 'stock.bet.ok', 3000);
+  } catch {
+    rej = true;
+  }
+  assert(rej, '非法数字被拒绝');
+  let rej2 = false;
+  try {
+    await c.call('stock.bet', { instrument: 'NOPE', type: 'UP', amount: 10 }, 'stock.bet.ok', 3000);
+  } catch {
+    rej2 = true;
+  }
+  assert(rej2, '未知品种被拒绝');
+  let res = null;
+  for (let i = 0; i < 6; i += 1) {
+    const m = await c.once('stock.result', 60000);
+    if (m.data.roundId === b1.data.roundId) {
+      res = m;
+      break;
+    }
+  }
+  assert(res && ['UP', 'DOWN', 'FLAT'].includes(res.data.direction), `本回合结算（${res?.data.direction} ${res?.data.openingPrice} → ${res?.data.settlementPrice}）`);
+  const bets = res.data.myBets;
+  const sum = bets.reduce((s, b) => s + b.payout, 0);
+  const upBet = bets.find((b) => b.type === 'UP');
+  const expUp = res.data.direction === 'UP' ? 190 : res.data.direction === 'FLAT' ? 100 : 0;
+  assert(sum === res.data.myPayout && upBet?.payout === expUp && res.data.myBet === 190, `派彩与方向一致（派彩 ${res.data.myPayout}）`);
+  assert(res.data.balance === d2.data.balance + res.data.myPayout, '结算后余额 = 下注后余额 + 派彩');
+  // 新回合开盘 → 等到锁盘后下注应被拒
+  let next = null;
+  for (let i = 0; i < 6 && !next; i += 1) {
+    const m = await c.once('stock.round', 45000);
+    if (m.data.round.instrument === inst) next = m.data.round;
+  }
+  const waitMs = next.lockAt - Date.now() + 300;
+  if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
+  let rej3 = false;
+  try {
+    await c.call('stock.bet', { instrument: inst, type: 'UP', amount: 10 }, 'stock.bet.ok', 3000);
+  } catch {
+    rej3 = true;
+  }
+  assert(rej3, '锁盘后下注被拒绝');
+  c.close();
+}
+
 // ── 水果机 ─────────────────────────────────────────────
 async function testSlot() {
   console.log('▶ 水果机');
@@ -418,13 +497,15 @@ async function testReconnect() {
 
 const t0 = Date.now();
 try {
-  if (process.env.ONLY === 'roulette') {
-    await testRoulette();
+  if (process.env.ONLY === 'roulette' || process.env.ONLY === 'stock') {
+    if (process.env.ONLY === 'roulette') await testRoulette();
+    else await testStock();
     console.log(`\nE2E 结果: ${passed} 通过 / ${failed} 失败`);
     process.exit(failed ? 1 : 0);
   }
   await testSlot();
   await testRoulette();
+  await testStock();
   await testFishing();
   await testMahjong();
   await testHongshi();

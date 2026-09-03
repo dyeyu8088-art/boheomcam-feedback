@@ -14,6 +14,7 @@ const routes = [
   { path: '/game/fishing', component: () => import('./games/fishing/FishingView.vue') },
   { path: '/game/slot', component: () => import('./games/slot/SlotView.vue') },
   { path: '/game/roulette', component: () => import('./games/roulette/RouletteView.vue') },
+  { path: '/game/stock', component: () => import('./games/stock/StockView.vue') },
 ];
 
 export const router = createRouter({

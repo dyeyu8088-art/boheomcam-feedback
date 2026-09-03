@@ -135,15 +135,15 @@
 
 | 素材文件 | 游戏 | 界面 | 组件 | 功能 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| stock_game/buttons/btn_up_plate.png + icons/icon_bull.png | 股票 | GameScene | `UpButton` | `placeBet('UP')` | 🔧 |
-| stock_game/buttons/btn_down_plate.png + icons/icon_bear.png | 股票 | GameScene | `DownButton` | `placeBet('DOWN')` | 🔧 |
-| stock_game/icons/icon_arrow_up_green.png | 股票 | 更多投注 | `SideBetButton` | `placeBet('HIGHER')` | 🔧 |
-| stock_game/icons/icon_arrow_down_red.png | 股票 | 更多投注 | `SideBetButton` | `placeBet('LOWER')` | 🔧 |
-| stock_game/icons/icon_digit_first.png | 股票 | 更多投注 | `SideBetButton` | `placeBet('FIRST_DIGIT', d)` | 🔧 |
-| stock_game/icons/icon_digit_last.png | 股票 | 更多投注 | `SideBetButton` | `placeBet('LAST_DIGIT', d)` | 🔧 |
-| stock_game/chips/chip_10 … chip_10k.png | 股票 | 筹码栏 | `BetChip` | `selectChip(n)` | 🔧 |
-| stock_game/character/caishen_scroll.png / caishen_analyst.png | 股票 | 场景 | `Mascot` | 立绘（结算胜利 / 分析师提示） | 🔧 |
-| —（走势图、行情列表、开盘价表、区间弧） | 股票 | GameScene | `PriceChart`（Canvas） | 全部程序绘制，数据来自 `stock.price` 推送 | 🔧 |
+| stock_game/buttons/btn_up_plate.png + icons/icon_bull.png | 股票 | GameScene | `UpButton` | `placeBet('UP')` | ✅ |
+| stock_game/buttons/btn_down_plate.png + icons/icon_bear.png | 股票 | GameScene | `DownButton` | `placeBet('DOWN')` | ✅ |
+| stock_game/icons/icon_arrow_up_green.png | 股票 | 更多投注 | `SideBetButton` | `placeBet('HIGHER')` | ✅ |
+| stock_game/icons/icon_arrow_down_red.png | 股票 | 更多投注 | `SideBetButton` | `placeBet('LOWER')` | ✅ |
+| stock_game/icons/icon_digit_first.png | 股票 | 更多投注 | `SideBetButton` | `placeBet('FIRST_DIGIT', d)` | ✅ |
+| stock_game/icons/icon_digit_last.png | 股票 | 更多投注 | `SideBetButton` | `placeBet('LAST_DIGIT', d)` | ✅ |
+| stock_game/chips/chip_10 … chip_10k.png | 股票 | 筹码栏 | `BetChip` | `selectChip(n)` | ✅ |
+| stock_game/character/caishen_scroll.png / caishen_analyst.png | 股票 | 场景 | `Mascot` | 立绘（结算胜利 / 分析师提示） | ✅ |
+| —（走势图、行情列表、开盘价表、区间弧） | 股票 | GameScene | `PriceChart`（Canvas） | 全部程序绘制，数据来自 `stock.price` 推送 | ✅ |
 
 ## 7. 麻将（mahjong）
 

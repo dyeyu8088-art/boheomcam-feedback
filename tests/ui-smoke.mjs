@@ -73,6 +73,16 @@ try {
   await page.waitForURL('**/#/lobby', { timeout: 8000 });
   await page.waitForTimeout(600);
 
+  // 股票涨跌（服务端模拟行情：进场即有三品种走势与回合）
+  await page.locator('.gcard.stock_updown').click();
+  await page.waitForURL('**/#/game/stock', { timeout: 8000 });
+  await page.waitForTimeout(3000);
+  ok((await page.locator('.inst').count()) === 3 && (await page.locator('.chart').isVisible()), '股票涨跌三品种与走势图加载');
+  await page.screenshot({ path: `${SHOT_DIR}/04c-stock.png` });
+  await page.locator('.hud-top .hback').click();
+  await page.waitForURL('**/#/lobby', { timeout: 8000 });
+  await page.waitForTimeout(600);
+
   // 签到（活动页：右侧功能栏第一项「活动」）
   await page.locator('.side .feat').first().click();
   await page.waitForTimeout(800);

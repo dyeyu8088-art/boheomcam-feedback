@@ -52,7 +52,7 @@
 
 ### 2.3 事件命名空间
 
-`sys.* auth.* lobby.* match.* room.* chat.* mahjong.* hongshi.* fishing.* slot.* roulette.*`
+`sys.* auth.* lobby.* match.* room.* chat.* mahjong.* hongshi.* fishing.* slot.* roulette.* stock.*`
 
 核心事件（完整清单见 packages/protocol/src/events.ts，三端共享常量）：
 
@@ -62,6 +62,7 @@
 - 捕鱼：`fishing.enter / fishing.waveStart(鱼群波次脚本) / fishing.spawn / fishing.fire → fishing.fireOk{bulletId} / fishing.hit → fishing.hitResult / fishing.playerState / fishing.bossWarning / fishing.leave`
 - 水果机：`slot.enter / slot.spin → slot.spinResult / slot.history / slot.jackpot(广播奖池) / slot.ticket`
 - 轮盘：`roulette.enter → roulette.enter.ok{config, round, myBets, history, balance} / roulette.state(阶段广播) / roulette.bet{bets[]} → roulette.bet.ok{accepted, balance} / roulette.spin{result, wheelIndex, spinMs} / roulette.result{myBets, myPayout, balance, history} / roulette.history / roulette.leave`
+- 股票涨跌：`stock.enter → stock.enter.ok{config, rounds[], prices, history, results, myBets, balance} / stock.tick{ts, prices}(每秒广播) / stock.round{round}(新回合) / stock.bet{instrument, type, selection, amount} → stock.bet.ok{bet{oddsBp}, balance} / stock.result{openingPrice, settlementPrice, direction, myBets[], myPayout, balance} / stock.leave`
 - 结算通用：`game.roundResult{roundId, results[], balances[]}`
 
 ### 2.4 断线恢复快照（room.sync）

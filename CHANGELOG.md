@@ -73,6 +73,19 @@
 - 明确不接入：`table_layout`（缩略图，投注台改程序绘制）；横幅裁掉 JACKPOT 缎带（轮盘无奖池）
 - 修复（网关）：`message` 监听器原先在两次 await 之后才挂上，open 后立即发送的帧会被静默丢弃（快客户端 / 重连竞态）；
   现改为连接建立时同步挂上并缓冲，握手完成后按序回放；seq 非递增被拒时输出 warn 日志
+
+### P8 股市风云（股票涨跌玩法，新游戏）
+- `game-common/stock`：三个虚拟品种（不含真实公司 / 商标）、赔率（涨跌 / 高低 1.9×、小数首末位 9.5×、四档涨跌幅区间 3.4× / 4.2×）、
+  `normalizeBet`（HIGHER / LOWER 参考价由服务端写入）、`evaluateBet`（平盘 / 等价退本金）、`gbmStep`（Box–Muller + CSPRNG）；
+  单测 7 项（含 4000 回合蒙特卡洛 RTP 断言）
+- `MarketDataProvider` 接口 + `SimulatedMarketProvider`（GBM + 均值回归，每秒 tick，落库 `stock_ticks` 保留 24 h，重启从库恢复序列）
+- `stockHost`：每品种独立 30 s 回合（结算 tick 即下一回合开盘）、结算前 8 s 锁盘、每次点击一注（幂等扣款 + 锁定赔率落库）、
+  按库结算 + 幂等派彩 + 按人推送、崩溃恢复（补结算 / 退款作废）、VIP / 任务 / 赛事指标；`games.stock_updown` 迁移 `008` 上线
+- 协议：`stock.enter / tick / round / bet → bet.ok / result / leave`
+- 客户端 `StockView`：品种列表、Canvas 走势图（贝塞尔平滑 / 开盘虚线 / 现价标签 / 涨跌渐变）、素材筹码、看涨 / 看跌成品底板 + 牛熊图标 + 程序文字、
+  高低 / 数字 / 区间侧注、本局投注与锁定赔率、近期结果、结算面板 + `RewardAnimation`；1920 / 960×540@2x 适配
+- 测试：E2E 新增 12 项（进场 / tick / 锁定赔率 / 服务端参考价 / 幂等 / 非法数字 / 未知品种 / 结算 / 派彩一致 / 余额一致 / 锁盘拒投），合计 55；
+  UI 冒烟 +1（10 项）；`tests/stock-shot.mjs`；`docs/05-game-rules/stock-architecture.md`
 - 测试：E2E 新增 10 项（进桌 / 扣款 / 幂等 / 非法号 / 超额 / 锁盘开奖 / 开奖后拒投 / 派彩一致 / 余额一致 / 历史），合计 43；
   新增 `tests/roulette-shot.mjs`；UI 冒烟 +1（9 项）；`docs/05-game-rules/roulette-architecture.md`
 
