@@ -1,147 +1,210 @@
 <template>
   <div class="lobby">
-    <!-- L1/L2 三层空间背景 -->
     <LobbyBackdrop />
 
-    <!-- ══ 顶栏 ══ -->
+    <!-- ══ 顶栏：玩家资料 / 品牌 / 资产 + 设置 ══ -->
     <header class="topbar">
-      <!-- 玩家信息容器 -->
-      <button class="player" @click="tab = 'me'">
-        <AvatarBadge :id="me?.avatarId ?? 1" :size="56" :vip="(me?.vip ?? 0) > 0" />
-        <span class="p-meta">
-          <span class="p-name">{{ me?.nickname ?? '—' }}</span>
-          <span class="p-line">
-            <span class="p-uid num">UID {{ me?.uid ?? '' }}</span>
-            <span class="p-lv">Lv.{{ me?.level ?? 1 }}</span>
-            <span v-if="(me?.vip ?? 0) > 0" class="p-vip">VIP{{ me?.vip }}</span>
-          </span>
-        </span>
-      </button>
-
-      <!-- 品牌字标（YANBIAN ENTERTAINMENT） -->
+      <PlayerProfile
+        :nickname="me?.nickname ?? '—'"
+        :uid="me?.uid ?? ''"
+        :level="me?.level ?? 1"
+        :vip="me?.vip ?? 0"
+        :avatar-id="me?.avatarId ?? 1"
+        :show-exp="false"
+        class="tb-profile"
+        @click="showMe = true"
+      />
       <div class="brand">
         <svg class="b-mark" viewBox="0 0 44 44">
           <defs>
             <linearGradient id="bmG" x1="0.15" y1="0" x2="0.85" y2="1">
-              <stop offset="0" stop-color="#f6e6bd" />
-              <stop offset="0.5" stop-color="#c9a063" />
-              <stop offset="1" stop-color="#8a6b3c" />
+              <stop offset="0" stop-color="#fff2c4" />
+              <stop offset="0.5" stop-color="#f5c04a" />
+              <stop offset="1" stop-color="#9a6416" />
             </linearGradient>
           </defs>
-          <circle cx="22" cy="22" r="19.5" fill="none" stroke="url(#bmG)" stroke-width="1.4" opacity="0.85" />
-          <circle cx="22" cy="22" r="15.5" fill="none" stroke="url(#bmG)" stroke-width="0.7" opacity="0.4" />
-          <path d="M9 27 L16.5 17.5 L20.5 22.5 L25.5 15 L32 24 L35 20.5 L38 27" fill="none" stroke="url(#bmG)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          <circle cx="25.5" cy="10.5" r="3.2" fill="none" stroke="url(#bmG)" stroke-width="1.3" />
-          <path d="M13 31 h18" stroke="url(#bmG)" stroke-width="1" stroke-linecap="round" opacity="0.6" />
+          <circle cx="22" cy="22" r="19.5" fill="none" stroke="url(#bmG)" stroke-width="1.6" opacity="0.95" />
+          <circle cx="22" cy="22" r="15.5" fill="none" stroke="url(#bmG)" stroke-width="0.8" opacity="0.5" />
+          <path d="M9 27 L16.5 17.5 L20.5 22.5 L25.5 15 L32 24 L35 20.5 L38 27" fill="none" stroke="url(#bmG)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="25.5" cy="10.5" r="3.2" fill="none" stroke="url(#bmG)" stroke-width="1.4" />
+          <path d="M13 31 h18" stroke="url(#bmG)" stroke-width="1.1" stroke-linecap="round" opacity="0.7" />
         </svg>
         <div class="b-text">
           <span class="b-cn" :class="{ ko: locale === 'ko' }">{{ locale === 'ko' ? user.brand.nameKo : user.brand.nameZh }}</span>
           <span class="b-en">{{ user.brand.nameEn }}</span>
         </div>
       </div>
-
-      <!-- 资产 + 设置 -->
       <div class="assets">
-        <div class="cap">
-          <AppIcon name="coin" :size="20" />
-          <span class="cap-num num">{{ fmt(me?.coins) }}</span>
-        </div>
-        <div class="cap">
-          <AppIcon name="gem" :size="19" />
-          <span class="cap-num num">{{ fmt(me?.diamonds) }}</span>
-        </div>
-        <button class="gear" :title="t('settings.title')" @click="showSettings = true">
-          <AppIcon name="gear" :size="19" />
-        </button>
+        <CurrencyBar kind="coin" :value="me?.coins ?? 0" addable @add="tab = 'shop'" />
+        <CurrencyBar kind="diamond" :value="me?.diamonds ?? 0" addable @add="tab = 'shop'" />
+        <GameButton round size="md" :art="settingsArt" :title="t('settings.title')" class="tb-gear" @click="showSettings = true" />
       </div>
     </header>
 
-    <!-- ══ 内容区 ══ -->
-    <main class="content">
-      <keep-alive>
-        <GameGrid v-if="tab === 'lobby'" @open-feature="openFeature" />
-        <ActivityPanel v-else-if="tab === 'activity'" />
-        <RecordsPanel v-else-if="tab === 'records'" />
-        <FriendsPanel v-else-if="tab === 'friends'" />
-        <MePanel v-else @logout="logout" />
-      </keep-alive>
-    </main>
+    <!-- ══ 主体：内容区 + 功能侧栏 ══ -->
+    <div class="body">
+      <main class="content">
+        <keep-alive>
+          <GameGrid v-if="tab === 'lobby'" @enter="enterGame" />
+          <GamesPanel v-else-if="tab === 'games'" @open="tab = 'lobby'" />
+          <TournamentPanel v-else-if="tab === 'tournament'" />
+          <FriendsPanel v-else-if="tab === 'friends'" />
+          <InventoryPanel v-else-if="tab === 'bag'" />
+          <ShopPanel v-else-if="tab === 'shop'" />
+          <ActivityPanel v-else-if="tab === 'activity'" />
+        </keep-alive>
+      </main>
+      <aside class="side">
+        <button v-for="f in featureList" :key="f.key" class="feat" type="button" @click="openFeature(f.key)">
+          <img class="f-ico" :src="f.icon" alt="" draggable="false" />
+          <span class="f-label">{{ t(f.label) }}</span>
+          <span v-if="f.key === 'mail' && unreadMail > 0" class="f-badge num">{{ unreadMail }}</span>
+        </button>
+      </aside>
+    </div>
 
-    <!-- ══ 悬浮 Dock 导航 ══ -->
-    <nav class="dock">
-      <button v-for="item in navs" :key="item.key" class="dock-item" :class="{ on: tab === item.key }" @click="tab = item.key">
-        <span class="d-plate"><AppIcon :name="item.icon" :size="22" /></span>
-        <span class="d-label">{{ t(item.label) }}</span>
-      </button>
-      <span class="dock-glow" :style="{ transform: `translateX(${navIndex * 100}%)` }" />
-    </nav>
+    <!-- ══ 底部导航 ══ -->
+    <GameNavbar v-model="tab" :items="navs" class="navbar" />
 
     <!-- 设置 -->
-    <ModalSheet v-model="showSettings" :title="t('settings.title')">
+    <GamePopup v-model="showSettings" :title="t('settings.title')" skin="blue" size="sm">
       <div class="set-row">
         <span>{{ t('settings.language') }}</span>
         <div class="seg">
-          <button :class="{ on: locale === 'zh' }" @click="setLocale('zh')">中文</button>
-          <button :class="{ on: locale === 'ko' }" @click="setLocale('ko')">한국어</button>
+          <GameButton size="sm" :variant="locale === 'zh' ? 'gold' : 'dark'" @click="setLocale('zh')">中文</GameButton>
+          <GameButton size="sm" :variant="locale === 'ko' ? 'gold' : 'dark'" @click="setLocale('ko')">한국어</GameButton>
         </div>
+      </div>
+      <div class="set-row">
+        <span>{{ t('settings.music') }}</span>
+        <GameToggle :model-value="audioState.music" @update:model-value="setAudio({ music: $event })" />
+      </div>
+      <div class="set-row">
+        <span>{{ t('settings.sfx') }}</span>
+        <GameToggle :model-value="audioState.sfx" @update:model-value="setAudio({ sfx: $event })" />
+      </div>
+      <div class="set-row">
+        <span>{{ t('settings.volume') }}</span>
+        <input class="range" type="range" min="0" max="100" :value="Math.round(audioState.musicVolume * 100)" @input="setAudio({ musicVolume: Number(($event.target as HTMLInputElement).value) / 100, sfxVolume: Math.min(1, Number(($event.target as HTMLInputElement).value) / 100 + 0.4) })" />
       </div>
       <div class="set-row">
         <span>{{ t('settings.uid') }}</span>
         <span class="num dim">{{ me?.uid }}</span>
       </div>
-      <button class="btn btn-danger" style="width: 100%; margin-top: 18px" @click="logout">
-        {{ t('settings.logout') }}
-      </button>
-    </ModalSheet>
+      <template #footer>
+        <GameButton variant="red" size="md" @click="logout">{{ t('settings.logout') }}</GameButton>
+      </template>
+    </GamePopup>
 
+    <!-- 我的 -->
+    <GamePopup v-model="showMe" :title="t('nav.me')" skin="blue" size="lg">
+      <MePanel @logout="logout" />
+      <template #footer>
+        <GameButton variant="gold" size="md" @click="((showMe = false), (showVip = true))">{{ t('feature.vip') }}</GameButton>
+      </template>
+    </GamePopup>
+
+    <VipPopup v-model="showVip" />
     <FeatureModals ref="features" />
+    <LoadingScreen ref="loader" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/user.js';
+import { api } from '../net/api.js';
 import { t, setLocale, currentLocale } from '../i18n/index.js';
-import ModalSheet from '../ui/ModalSheet.vue';
+import { asset, GAME_PRELOAD } from '../assets/assets.js';
+import { audio } from '../audio/AudioManager.js';
 import LobbyBackdrop from './lobby/LobbyBackdrop.vue';
-import GameGrid from './lobby/GameGrid.vue';
+import GameGrid, { type EnterRequest } from './lobby/GameGrid.vue';
+import GamesPanel from './lobby/GamesPanel.vue';
+import TournamentPanel from './lobby/TournamentPanel.vue';
 import ActivityPanel from './lobby/ActivityPanel.vue';
-import RecordsPanel from './lobby/RecordsPanel.vue';
 import FriendsPanel from './lobby/FriendsPanel.vue';
+import InventoryPanel from './lobby/InventoryPanel.vue';
+import ShopPanel from './lobby/ShopPanel.vue';
 import MePanel from './lobby/MePanel.vue';
+import VipPopup from './lobby/VipPopup.vue';
 import FeatureModals from './lobby/FeatureModals.vue';
-import AppIcon from '../ui/AppIcon.vue';
-import AvatarBadge from '../ui/AvatarBadge.vue';
-import { fmt } from '../ui/format.js';
+import PlayerProfile from '../ui/PlayerProfile.vue';
+import CurrencyBar from '../ui/CurrencyBar.vue';
+import GameButton from '../ui/GameButton.vue';
+import GameToggle from '../ui/GameToggle.vue';
+import GameNavbar from '../ui/GameNavbar.vue';
+import GamePopup from '../ui/GamePopup.vue';
+import LoadingScreen from '../ui/LoadingScreen.vue';
 
 const router = useRouter();
 const user = useUserStore();
 const me = computed(() => user.me);
 const locale = currentLocale;
-const tab = ref<'lobby' | 'activity' | 'records' | 'friends' | 'me'>('lobby');
+type Tab = 'lobby' | 'games' | 'tournament' | 'friends' | 'bag' | 'shop' | 'activity';
+const tab = ref<Tab>('lobby');
 const showSettings = ref(false);
+const showMe = ref(false);
+const showVip = ref(false);
+const unreadMail = ref(0);
 const features = ref<InstanceType<typeof FeatureModals> | null>(null);
+const loader = ref<InstanceType<typeof LoadingScreen> | null>(null);
+const settingsArt = asset('common', 'btnSettingsRound');
 
-const navs = [
-  { key: 'lobby' as const, icon: 'hall', label: 'nav.lobby' },
-  { key: 'activity' as const, icon: 'gift', label: 'nav.activity' },
-  { key: 'records' as const, icon: 'scroll', label: 'nav.records' },
-  { key: 'friends' as const, icon: 'friends', label: 'nav.friends' },
-  { key: 'me' as const, icon: 'user', label: 'nav.me' },
+const navs = computed(() => [
+  { key: 'lobby', icon: asset('common', 'navIconHome'), label: t('nav.lobby') },
+  { key: 'games', icon: asset('common', 'navIconMahjong'), label: t('nav.games') },
+  { key: 'tournament', icon: asset('common', 'navIconTrophy'), label: t('nav.tournament') },
+  { key: 'friends', icon: asset('common', 'navIconFriends'), label: t('nav.friends') },
+  { key: 'bag', icon: asset('common', 'navIconBag'), label: t('nav.bag') },
+  { key: 'shop', icon: asset('common', 'iconShopIngot'), label: t('nav.shop') },
+]);
+const featureList = [
+  { key: 'activity', icon: asset('common', 'iconEventGift'), label: 'feature.activity' },
+  { key: 'signin', icon: asset('common', 'iconDailyBonusBag'), label: 'feature.welfare' },
+  { key: 'tasks', icon: asset('common', 'iconTaskScroll'), label: 'feature.tasks' },
+  { key: 'mail', icon: asset('common', 'iconMail'), label: 'feature.mail' },
+  { key: 'rank', icon: asset('common', 'navIconRank'), label: 'feature.rank' },
+  { key: 'announce', icon: asset('common', 'iconMegaphoneRound'), label: 'feature.announce' },
+  { key: 'vip', icon: asset('common', 'iconVipCrown'), label: 'feature.vip' },
 ];
-const navIndex = computed(() => navs.findIndex((n) => n.key === tab.value));
+
+/* 音频设置（响应式镜像） */
+const audioState = reactive({ ...audio.settings });
+function setAudio(patch: Partial<typeof audioState>): void {
+  audio.update(patch);
+  Object.assign(audioState, audio.settings);
+}
 
 onMounted(() => {
   if (!user.me) void user.loadMe();
   void user.loadBrand();
+  audio.setScene('lobby');
+  void loadUnread();
 });
-
-function openFeature(key: string): void {
-  if (key === 'signin' || key === 'tasks') tab.value = 'activity';
-  else features.value?.open(key);
+async function loadUnread(): Promise<void> {
+  try {
+    const d = await api<{ items: { read_at: string | null }[] }>('/api/v1/mail');
+    unreadMail.value = d.items.filter((m) => !m.read_at).length;
+  } catch {
+    /* noop */
+  }
 }
-
+function openFeature(key: string): void {
+  if (key === 'signin' || key === 'tasks' || key === 'activity') tab.value = 'activity';
+  else if (key === 'vip') showVip.value = true;
+  else {
+    features.value?.open(key);
+    if (key === 'mail') setTimeout(() => void loadUnread(), 1500);
+  }
+}
+/** 进入游戏：先做真实资源预加载（按字节进度），再路由；退出游戏回大厅由各游戏 exit() 负责 */
+async function enterGame(req: EnterRequest): Promise<void> {
+  const groups = GAME_PRELOAD[req.gameId] ?? ['common'];
+  await loader.value?.load(groups, req.name);
+  audio.setScene('none');
+  void router.push({ path: req.path, query: req.query as Record<string, string> });
+}
 async function logout(): Promise<void> {
   await user.logout();
   void router.replace('/login');
@@ -157,7 +220,6 @@ async function logout(): Promise<void> {
   overflow: hidden;
   background: var(--bg-abyss);
 }
-
 /* ══ 顶栏 ══ */
 .topbar {
   position: relative;
@@ -166,78 +228,9 @@ async function logout(): Promise<void> {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: calc(var(--safe-top) + 16px) max(var(--safe-right), 26px) 12px max(var(--safe-left), 26px);
+  padding: calc(var(--safe-top) + 12px) max(var(--safe-right), 22px) 10px max(var(--safe-left), 22px);
   animation: fade-down 420ms var(--ease-out) both;
 }
-.player {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 18px 8px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  background: linear-gradient(120deg, rgba(20, 30, 50, 0.66), rgba(12, 18, 31, 0.42));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 8px 22px rgba(0, 0, 0, 0.4);
-  transition:
-    border-color 180ms var(--ease-out),
-    transform 180ms var(--ease-out);
-}
-.player:hover {
-  border-color: rgba(201, 160, 99, 0.4);
-  transform: translateY(-1px);
-}
-.player:active {
-  transform: scale(0.98);
-}
-.p-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-.p-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.02em;
-  line-height: 1;
-}
-.p-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  line-height: 1;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
-.p-uid {
-  font-size: 11.5px;
-  color: var(--text-disabled);
-  white-space: nowrap;
-}
-.p-lv {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--accent-ice);
-  border: 1px solid rgba(127, 184, 232, 0.35);
-  border-radius: 5px;
-  padding: 1.5px 5px;
-}
-.p-vip {
-  font-size: 10.5px;
-  font-weight: 800;
-  color: #2a1e06;
-  background: linear-gradient(180deg, #f6e6bd, #c9a063);
-  border-radius: 5px;
-  padding: 2px 6px;
-  box-shadow: 0 2px 8px rgba(201, 160, 99, 0.35);
-}
-/* 品牌字标 */
 .brand {
   position: absolute;
   left: 50%;
@@ -246,12 +239,11 @@ async function logout(): Promise<void> {
   align-items: center;
   gap: 11px;
   pointer-events: none;
-  opacity: 0.96;
 }
 .b-mark {
-  width: 40px;
-  height: 40px;
-  filter: drop-shadow(0 2px 10px rgba(201, 160, 99, 0.28));
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 2px 10px rgba(245, 192, 74, 0.4));
 }
 .b-text {
   display: flex;
@@ -260,465 +252,226 @@ async function logout(): Promise<void> {
 }
 .b-cn {
   font-family: var(--font-display-zh);
-  font-size: 21px;
+  font-size: 22px;
   font-weight: 400;
   letter-spacing: 0.34em;
-  padding-left: 0.34em;
-  background: linear-gradient(180deg, #f7ead0 10%, #d3ac6d 62%, #a07f43 100%);
+  line-height: 1;
+  background: linear-gradient(180deg, #fff6d5 0%, #ffd867 45%, #f39a1e 60%, #ffe28a 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  line-height: 1;
+  filter: drop-shadow(0 1px 0 #5a3305) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.6));
 }
 .b-cn.ko {
   font-family: var(--font-display-ko);
   font-weight: 800;
   font-size: 18px;
-  letter-spacing: 0.22em;
-  padding-left: 0.22em;
+  letter-spacing: 0.12em;
 }
 .b-en {
   font-family: var(--font-brand);
   font-size: 9.5px;
   font-weight: 600;
   letter-spacing: 0.4em;
-  padding-left: 0.4em;
-  color: var(--gold-warm);
-  opacity: 0.75;
-  line-height: 1;
+  color: #f5c04a;
+  opacity: 0.85;
 }
+.assets {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* ══ 主体 ══ */
+.body {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 14px;
+  padding: 4px max(var(--safe-right), 22px) 0 max(var(--safe-left), 22px);
+}
+.content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 4px 24px;
+  scrollbar-width: thin;
+}
+.side {
+  flex-shrink: 0;
+  width: 92px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-bottom: 12px;
+}
+.side::-webkit-scrollbar {
+  display: none;
+}
+.feat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px 6px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(20, 45, 110, 0.85), rgba(6, 18, 56, 0.9));
+  box-shadow:
+    inset 0 0 0 1.5px #7d4d0c,
+    inset 0 0 0 3px #f0c14e,
+    0 6px 14px rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 140ms var(--ease-out);
+  animation: rise-in 420ms var(--ease-out) both;
+}
+.feat:hover {
+  transform: translateY(-2px);
+}
+.feat:active {
+  transform: scale(0.94);
+}
+.f-ico {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
+}
+.f-label {
+  font-size: 12px;
+  font-weight: 800;
+  text-shadow: var(--sk-outline);
+  white-space: nowrap;
+}
+.f-badge {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #ff6b5a, #c8161a);
+  box-shadow: 0 0 0 2px #ffe28a;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+/* ══ 底部导航 ══ */
+.navbar {
+  position: relative;
+  z-index: 3;
+  margin: 0 auto;
+  width: min(880px, calc(100% - 40px));
+  margin-bottom: calc(var(--safe-bottom) + 10px);
+  animation: rise-in 420ms var(--ease-out) both;
+}
+/* 设置 */
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 14px;
+}
+.seg {
+  display: flex;
+  gap: 8px;
+}
+.range {
+  width: 160px;
+  accent-color: #f8c74a;
+}
+.dim {
+  color: #9fb4e8;
+}
+/* ══ 响应式 ══ */
 @media (max-width: 1180px) {
   .brand {
     display: none;
   }
 }
-
-.assets {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.cap {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  height: 40px;
-  padding: 0 16px 0 12px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(20, 30, 50, 0.72), rgba(11, 17, 29, 0.62));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.055);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    inset 0 -6px 12px rgba(0, 0, 0, 0.3),
-    0 6px 16px rgba(0, 0, 0, 0.32);
-}
-.cap-num {
-  font-size: 14.5px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-.gear {
-  width: 40px;
-  height: 40px;
-  border-radius: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--text-secondary);
-  background: linear-gradient(180deg, rgba(20, 30, 50, 0.7), rgba(11, 17, 29, 0.6));
-  border: 1px solid rgba(255, 255, 255, 0.055);
-  box-shadow: var(--edge-inner);
-  transition:
-    color 180ms var(--ease-out),
-    transform 260ms var(--ease-out),
-    border-color 180ms var(--ease-out);
-}
-.gear:hover {
-  color: var(--gold-champagne);
-  border-color: rgba(201, 160, 99, 0.4);
-  transform: rotate(38deg);
-}
-
-/* ══ 内容区 ══ */
-.content {
-  position: relative;
-  z-index: 2;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 8px max(var(--safe-right), 26px) 132px max(var(--safe-left), 26px);
-  /* 大屏时内容垂直居中，避免下半屏出现无意义空白 */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-@media (max-height: 700px), (max-width: 720px) {
-  .content {
-    justify-content: flex-start;
+@media (max-width: 900px) {
+  .body {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .side {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 0 6px;
+  }
+  .feat {
+    flex-shrink: 0;
+    width: 86px;
+  }
+  .f-ico {
+    width: 42px;
+    height: 42px;
   }
 }
-
-/* ══ Dock 导航 ══ */
-.dock {
-  position: absolute;
-  z-index: 4;
-  left: 50%;
-  bottom: calc(var(--safe-bottom) + 18px);
-  transform: translateX(-50%);
-  display: flex;
-  align-items: stretch;
-  width: min(620px, calc(100vw - 40px));
-  height: 86px;
-  padding: 8px;
-  border-radius: 26px;
-  background: linear-gradient(180deg, rgba(18, 27, 45, 0.82), rgba(9, 14, 24, 0.86));
-  backdrop-filter: blur(22px) saturate(1.15);
-  -webkit-backdrop-filter: blur(22px) saturate(1.15);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    0 18px 42px rgba(0, 0, 0, 0.55);
-  animation: fade-up 460ms var(--ease-out) both;
-}
-.dock-glow {
-  position: absolute;
-  left: 8px;
-  bottom: 10px;
-  width: calc((100% - 16px) / 5);
-  height: 3px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold-warm), transparent);
-  box-shadow: 0 0 12px rgba(201, 160, 99, 0.7);
-  transition: transform 320ms var(--ease-out);
-  pointer-events: none;
-}
-.dock-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: var(--text-disabled);
-  border-radius: 20px;
-  transition: color 180ms var(--ease-out);
-}
-.dock-item .d-plate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 13px;
-  transition:
-    transform 200ms var(--ease-out),
-    background 200ms var(--ease-out),
-    box-shadow 200ms var(--ease-out);
-}
-.dock-item:hover {
-  color: var(--text-strong);
-}
-.dock-item:hover .d-plate {
-  transform: translateY(-2px) scale(1.06);
-}
-.dock-item.on {
-  color: var(--gold-champagne);
-}
-.dock-item.on .d-plate {
-  background: radial-gradient(circle at 34% 26%, rgba(201, 160, 99, 0.28), rgba(10, 15, 26, 0.7) 78%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 6px 16px rgba(0, 0, 0, 0.45),
-    0 0 18px rgba(201, 160, 99, 0.22);
-}
-.d-label {
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-/* ══ 设置弹窗 ══ */
-.set-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(154, 163, 178, 0.1);
-}
-.seg {
-  display: flex;
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.seg button {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  padding: 6px 14px;
-  cursor: pointer;
-  font-size: 13px;
-}
-.seg button.on {
-  background: var(--gold-warm);
-  color: #14100a;
-  font-weight: 700;
-}
-.dim {
-  color: var(--text-secondary);
-}
-
-@keyframes fade-down {
-  from {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 16px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
-/* ══ 响应式：2K / 超宽屏（≥1921px）整体放大 ══ */
-@media (min-width: 1921px) {
-  .topbar {
-    padding: calc(var(--safe-top) + 22px) max(var(--safe-right), 46px) 16px max(var(--safe-left), 46px);
-  }
-  .player {
-    padding: 10px 24px 10px 12px;
-    gap: 16px;
-  }
-  .player :deep(.ab) {
-    width: 70px !important;
-    height: 70px !important;
-  }
-  .p-name {
-    font-size: 20px;
-  }
-  .p-uid {
-    font-size: 14px;
-  }
-  .p-lv,
-  .p-vip {
-    font-size: 13px;
-    padding: 2.5px 7px;
-  }
-  .b-mark {
-    width: 52px;
-    height: 52px;
-  }
-  .b-cn {
-    font-size: 27px;
-  }
-  .b-cn.ko {
-    font-size: 23px;
-  }
-  .b-en {
-    font-size: 12px;
-  }
-  .assets {
-    gap: 14px;
-  }
-  .cap {
-    height: 52px;
-    padding: 0 22px 0 16px;
-    gap: 12px;
-  }
-  .cap-num {
-    font-size: 19px;
-  }
-  .cap :deep(.appicon) {
-    width: 26px;
-    height: 26px;
-  }
-  .gear {
-    width: 52px;
-    height: 52px;
-    border-radius: 17px;
-  }
-  .gear :deep(.appicon) {
-    width: 25px;
-    height: 25px;
-  }
-  .content {
-    padding: 12px max(var(--safe-right), 46px) 166px max(var(--safe-left), 46px);
-  }
-  .dock {
-    width: min(780px, calc(100vw - 60px));
-    height: 108px;
-    bottom: calc(var(--safe-bottom) + 26px);
-    padding: 10px;
-    border-radius: 32px;
-  }
-  .dock-item .d-plate {
-    width: 52px;
-    height: 52px;
-    border-radius: 17px;
-  }
-  .dock-item :deep(.appicon) {
-    width: 29px;
-    height: 29px;
-  }
-  .d-label {
-    font-size: 14.5px;
-  }
-  .dock-glow {
-    height: 4px;
-    bottom: 13px;
-  }
-}
-
-/* ══ 响应式：横屏短屏（Android 横屏 / 16:9 手机横屏） ══ */
 @media (orientation: landscape) and (max-height: 700px) {
   .topbar {
-    gap: 10px;
-    padding: calc(var(--safe-top) + 8px) max(var(--safe-right), 16px) 6px max(var(--safe-left), 16px);
+    padding-top: calc(var(--safe-top) + 6px);
+    padding-bottom: 4px;
   }
-  .player {
-    padding: 5px 14px 5px 5px;
-    gap: 9px;
+  .tb-profile {
+    --h: 52px;
   }
-  .player :deep(.ab) {
-    width: 40px !important;
-    height: 40px !important;
+  .side {
+    width: 76px;
   }
-  .p-name {
-    font-size: 14px;
+  .f-ico {
+    width: 40px;
+    height: 40px;
   }
-  .p-uid {
-    font-size: 10px;
+  .f-label {
+    font-size: 11px;
   }
-  .p-lv,
-  .p-vip {
-    font-size: 9.5px;
-    padding: 1px 4px;
-  }
-  .assets {
-    gap: 8px;
-  }
-  .cap {
-    height: 34px;
-    padding: 0 13px 0 9px;
-    gap: 7px;
-  }
-  .cap-num {
-    font-size: 13px;
-  }
-  .cap :deep(.appicon) {
-    width: 17px;
-    height: 17px;
-  }
-  .gear {
-    width: 34px;
-    height: 34px;
-    border-radius: 11px;
+  .navbar {
+    width: min(760px, calc(100% - 40px));
+    margin-bottom: calc(var(--safe-bottom) + 4px);
   }
   .content {
-    padding: 4px max(var(--safe-right), 16px) 82px max(var(--safe-left), 16px);
-  }
-  .dock {
-    width: min(520px, calc(100vw - 32px));
-    height: 60px;
-    bottom: calc(var(--safe-bottom) + 10px);
-    padding: 6px;
-    border-radius: 20px;
-  }
-  .dock-item {
-    gap: 1px;
-  }
-  .dock-item .d-plate {
-    width: 26px;
-    height: 26px;
-    border-radius: 9px;
-  }
-  .dock-item :deep(.appicon) {
-    width: 18px;
-    height: 18px;
-  }
-  .d-label {
-    font-size: 10px;
-  }
-  .dock-glow {
-    bottom: 6px;
+    padding-bottom: 8px;
   }
 }
-
-/* ══ 响应式：手机竖屏收敛 ══ */
 @media (max-width: 720px) {
   .topbar {
-    padding-left: max(var(--safe-left), 14px);
-    padding-right: max(var(--safe-right), 14px);
-  }
-  .content {
-    padding-left: max(var(--safe-left), 14px);
-    padding-right: max(var(--safe-right), 14px);
-    padding-bottom: 118px;
-  }
-  .topbar {
     gap: 8px;
-    padding-top: calc(var(--safe-top) + 10px);
-  }
-  .player {
-    padding: 6px 12px 6px 6px;
-    gap: 9px;
-    min-width: 0;
-  }
-  .p-name {
-    font-size: 13.5px;
-    max-width: 88px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .p-uid {
-    font-size: 10px;
-  }
-  .p-lv {
-    font-size: 9.5px;
-    padding: 1px 4px;
   }
   .assets {
     gap: 6px;
   }
-  .cap {
-    height: 34px;
-    padding: 0 12px 0 9px;
+  .tb-gear {
+    display: none;
   }
-  .cap-num {
-    font-size: 13px;
+}
+@media (max-width: 560px) {
+  .topbar {
+    flex-wrap: wrap;
+    row-gap: 8px;
   }
-  .gear {
-    width: 34px;
-    height: 34px;
+  .tb-profile {
+    --h: 56px;
   }
-  .dock {
-    height: 74px;
-    border-radius: 22px;
+  .assets {
+    width: 100%;
+    justify-content: flex-end;
   }
-  .dock-item .d-plate {
-    width: 34px;
-    height: 34px;
-  }
-  .d-label {
-    font-size: 10.5px;
+  .assets :deep(.cb) {
+    --h: 32px;
   }
 }
 </style>

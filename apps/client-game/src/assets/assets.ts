@@ -15,6 +15,16 @@ export function asset<G extends AssetGroup>(group: G, key: AssetKey<G>): string 
   return (ASSET_MANIFEST[group] as Record<string, string>)[key as string]!;
 }
 
+/** 按 "group.key" 字符串取 URL（服务器下发的图标引用，如商品 / 道具 icon），未登记返回空串 */
+export function assetByKey(ref: string | null | undefined): string {
+  if (!ref) return '';
+  const dot = ref.indexOf('.');
+  if (dot < 0) return '';
+  const group = ref.slice(0, dot) as AssetGroup;
+  const key = ref.slice(dot + 1);
+  return ((ASSET_MANIFEST as Record<string, Record<string, string>>)[group] ?? {})[key] ?? '';
+}
+
 /** 组内全部 URL */
 export function assetGroup<G extends AssetGroup>(group: G): Record<string, string> {
   return ASSET_MANIFEST[group] as Record<string, string>;

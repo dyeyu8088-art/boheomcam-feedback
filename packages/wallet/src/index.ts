@@ -15,6 +15,10 @@ export const SYS = {
   ADJUST: 4,
   FISH_POOL: 5,
   SLOT_POOL: 6,
+  SHOP: 7,
+  ROULETTE_POOL: 8,
+  STOCK_POOL: 9,
+  JACKPOT_POOL: 10,
 } as const;
 
 export interface PostTxInput {

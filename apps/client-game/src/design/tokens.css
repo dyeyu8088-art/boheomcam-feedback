@@ -1,4 +1,5 @@
 @import './fonts.css';
+@import './skin.css';
 /* Design System「玄夜鎏金」v2 ——唯一视觉 Token 来源（docs/07-design-system.md / docs/11-lobby-design.md） */
 :root {
   /* ── 背景层（三层空间：远景/中景/前景） ── */

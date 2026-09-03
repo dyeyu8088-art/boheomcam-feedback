@@ -1,0 +1,68 @@
+/*
+ * 新版美术皮肤「金财」—— 与六张素材表同一语言：高饱和金 + 深海蓝 + 喜庆红。
+ * 只补充 tokens.css 没有的变量与工具类；旧「玄夜鎏金」token 继续用于文字层级、间距、动效。
+ */
+:root {
+  --sk-gold-1: #ffe9a6; /* 高光 */
+  --sk-gold-2: #f8c74a; /* 主金 */
+  --sk-gold-3: #d9942a; /* 中金 */
+  --sk-gold-4: #8f5a12; /* 暗金 / 描边 */
+  --sk-navy-1: #1a3f8f;
+  --sk-navy-2: #0d1f5c;
+  --sk-navy-3: #061238;
+  --sk-red-1: #ff5d4d;
+  --sk-red-2: #c8161a;
+  --sk-red-3: #7a0a10;
+  --sk-green-1: #7cf36a;
+  --sk-green-2: #22a83a;
+  --sk-green-3: #0f5c22;
+  --sk-purple-1: #c77dff;
+  --sk-purple-2: #7a2fbf;
+  --sk-purple-3: #3c1266;
+  --sk-orange-1: #ffb15c;
+  --sk-orange-2: #f26a1b;
+  --sk-orange-3: #8a2f05;
+  --sk-ink: #2a1500; /* 金底上的深色字 */
+  --sk-outline: 0 1px 0 #2a1500, 0 -1px 0 #2a1500, 1px 0 0 #2a1500, -1px 0 0 #2a1500, 0 2px 5px rgba(0, 0, 0, 0.6);
+  --sk-frame: linear-gradient(180deg, var(--sk-gold-1), var(--sk-gold-2) 35%, var(--sk-gold-4) 100%);
+  --sk-glow-gold: 0 0 18px rgba(248, 199, 74, 0.45);
+}
+
+/* 金色描边文字（游戏名 / 金额） */
+.sk-gold-text {
+  background: linear-gradient(180deg, #fff6d5 0%, #ffd867 45%, #f39a1e 60%, #ffe28a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 #5a3305) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.6));
+  font-weight: 900;
+}
+/* 白字黑描边（按钮 / 标签） */
+.sk-outline-text {
+  color: #fff;
+  font-weight: 800;
+  text-shadow: var(--sk-outline);
+}
+/* 金框面板（响应式，替代拉伸位图框） */
+.sk-panel {
+  position: relative;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #14306e, #081a4a 60%, #050f30);
+  box-shadow:
+    inset 0 0 0 2px #3c2a0a,
+    inset 0 0 0 4px #f0c14e,
+    inset 0 0 0 6px #7d4d0c,
+    inset 0 10px 24px rgba(255, 255, 255, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.55),
+    var(--sk-glow-gold);
+}
+.sk-panel.red {
+  background: linear-gradient(180deg, #8e1414, #5a0b0b 60%, #3a0606);
+}
+.sk-panel.black {
+  background: linear-gradient(180deg, #23262e, #101218 60%, #07080c);
+}
+.sk-panel.cream {
+  background: linear-gradient(180deg, #fff6df, #f6e3b5 70%, #eed39a);
+  color: #4a2a06;
+}

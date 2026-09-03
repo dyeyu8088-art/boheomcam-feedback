@@ -88,14 +88,42 @@ export async function persistRoundEnd(
   for (const o of outcomes) {
     if (o.isBot) continue;
     await bumpTask(o.uid, 'play_rounds', room.gameCode);
+    await bumpExp(o.uid, 20 + Math.floor(Math.abs(o.coinChange) / 100));
+    await bumpTournament(o.uid, room.gameCode, 'rounds', 1);
+    if (o.coinChange > 0) await bumpTournament(o.uid, room.gameCode, 'coin_win', o.coinChange);
     if (o.isWin) {
       await bumpTask(o.uid, 'win_rounds', room.gameCode);
+      await bumpTournament(o.uid, room.gameCode, 'wins', 1);
       await redis.zincrby(`rank:wins:${day}`, 1, String(o.uid)).catch(() => undefined);
       await redis.expire(`rank:wins:${day}`, 172800).catch(() => undefined);
     }
   }
   log.info({ roundId, roomId: room.roomId, game: room.gameCode }, 'round settled');
   return { balances };
+}
+
+/** VIP 经验：按投入 / 输赢累加，等级由 vip_levels 阈值决定（服务端唯一写入点） */
+export async function bumpExp(uid: number, by: number): Promise<void> {
+  if (by <= 0) return;
+  await query(
+    `UPDATE user_profiles SET exp = exp + $2,
+       vip = GREATEST(vip, COALESCE((SELECT max(level) FROM vip_levels WHERE exp_required <= user_profiles.exp + $2), 0)),
+       updated_at = now()
+     WHERE user_id=$1`,
+    [uid, by],
+  ).catch(() => undefined);
+}
+
+/** 赛事积分：只累加已报名、进行中且 metric 匹配的赛事 */
+export async function bumpTournament(uid: number, gameId: string, metric: string, by: number): Promise<void> {
+  if (by <= 0) return;
+  await query(
+    `UPDATE tournament_entries te SET score = te.score + $4
+     FROM tournaments t
+     WHERE t.id = te.tournament_id AND te.user_id=$1 AND t.game_id=$2 AND t.metric=$3
+       AND t.status='running' AND now() BETWEEN t.starts_at AND t.ends_at`,
+    [uid, gameId, metric, by],
+  ).catch(() => undefined);
 }
 
 /** 任务进度（与 api 服务同一 DB，直接写 task_progress） */

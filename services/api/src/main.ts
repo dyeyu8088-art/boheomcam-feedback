@@ -1,6 +1,7 @@
 /**
  * api-service 启动入口。
  * SERVICE_ROLES 控制装载模块（默认全部）：auth,user,wallet,activity,social,config,admin
+ * activity 角色同时装载 vip / inventory / shop / tournament（含赛事调度）
  * —— 生产环境可按角色拆分容器水平扩展（见 deploy/docker-compose.prod.yml）。
  */
 import { getLogger, getPool, initIdGenerator, loadEnv, query } from '@yanbian/server-core';
@@ -12,6 +13,10 @@ import { registerActivityRoutes } from './modules/activity/routes.js';
 import { registerSocialRoutes } from './modules/social/routes.js';
 import { registerConfigRoutes } from './modules/config/routes.js';
 import { registerAdminRoutes } from './modules/admin/routes.js';
+import { registerVipRoutes } from './modules/vip/routes.js';
+import { registerInventoryRoutes } from './modules/inventory/routes.js';
+import { registerShopRoutes } from './modules/shop/routes.js';
+import { registerTournamentRoutes, startTournamentScheduler } from './modules/tournament/routes.js';
 
 const log = getLogger('api-main');
 
@@ -29,7 +34,14 @@ async function main(): Promise<void> {
     auth: registerAuthRoutes,
     user: registerUserRoutes,
     wallet: registerWalletRoutes,
-    activity: registerActivityRoutes,
+    activity: (a) => {
+      registerActivityRoutes(a);
+      registerVipRoutes(a);
+      registerInventoryRoutes(a);
+      registerShopRoutes(a);
+      registerTournamentRoutes(a);
+      startTournamentScheduler();
+    },
     social: registerSocialRoutes,
     config: registerConfigRoutes,
     admin: registerAdminRoutes,

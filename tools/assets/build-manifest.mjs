@@ -14,7 +14,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const ASSETS = path.join(root, 'apps/client-game/public/assets');
 const OUT_JSON = path.join(root, 'apps/client-game/public/assets-manifest.json');
 const OUT_TS = path.join(root, 'apps/client-game/src/assets/manifest.gen.ts');
-const EXT = new Set(['.png', '.webp', '.jpg', '.jpeg', '.svg']);
+const EXT = new Set(['.png', '.webp', '.jpg', '.jpeg', '.svg', '.mp3', '.ogg']);
 
 const camel = (s) => s.replace(/[-_ .]+([a-zA-Z0-9])/g, (_, c) => c.toUpperCase()).replace(/^[A-Z]/, (c) => c.toLowerCase());
 
