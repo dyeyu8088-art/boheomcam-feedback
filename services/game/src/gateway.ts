@@ -236,6 +236,11 @@ async function handleMessage(session: GameSession, raw: string): Promise<void> {
         reply('slot.history.ok', await slotHost.history(session));
         return;
       }
+      case Ev.SlTicket: {
+        if (!msg.requestId) throw new ApiError(ErrorCode.VALIDATION, '缺少 requestId');
+        reply('slot.ticket.ok', await slotHost.useTicket(session, msg.data as Record<string, unknown>, msg.requestId));
+        return;
+      }
 
       default: {
         // 桌面游戏动作（mahjong.* / hongshi.* / game.trustee）

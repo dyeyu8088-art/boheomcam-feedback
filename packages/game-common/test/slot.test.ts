@@ -41,20 +41,20 @@ describe('水果机引擎', () => {
   it('Wild 替代成线', () => {
     const rows: SlotSymbol[][] = [
       ['CHERRY', 'LEMON', 'ORANGE', 'GRAPE', 'MELON'],
-      ['BELL', 'WILD', 'BELL', 'CHERRY', 'LEMON'],
+      ['DIAMOND', 'WILD', 'DIAMOND', 'CHERRY', 'LEMON'],
       ['LEMON', 'ORANGE', 'GRAPE', 'MELON', 'CHERRY'],
     ];
     const out = evaluate(cfg, gridOf(rows), [0, 0, 0, 0, 0], [], 100, 20, false);
     const line0 = out.lineWins.find((w) => w.lineIndex === 0);
     expect(line0).toBeDefined();
-    expect(line0!.symbol).toBe('BELL');
+    expect(line0!.symbol).toBe('DIAMOND');
     expect(line0!.count).toBe(3);
   });
 
   it('Scatter 触发免费旋转与总注赔付', () => {
     const rows: SlotSymbol[][] = [
-      ['SCATTER', 'LEMON', 'SCATTER', 'GRAPE', 'SCATTER'],
-      ['BELL', 'CHERRY', 'BELL', 'CHERRY', 'LEMON'],
+      ['BONUS', 'LEMON', 'BONUS', 'GRAPE', 'BONUS'],
+      ['DIAMOND', 'CHERRY', 'DIAMOND', 'CHERRY', 'LEMON'],
       ['LEMON', 'ORANGE', 'GRAPE', 'MELON', 'CHERRY'],
     ];
     const out = evaluate(cfg, gridOf(rows), [0, 0, 0, 0, 0], [], 100, 20, false);
@@ -65,8 +65,8 @@ describe('水果机引擎', () => {
 
   it('免费旋转倍率生效且不重复触发', () => {
     const rows: SlotSymbol[][] = [
-      ['SCATTER', 'LEMON', 'SCATTER', 'GRAPE', 'SCATTER'],
-      ['BELL', 'WILD', 'BELL', 'CHERRY', 'LEMON'],
+      ['BONUS', 'LEMON', 'BONUS', 'GRAPE', 'BONUS'],
+      ['DIAMOND', 'WILD', 'DIAMOND', 'CHERRY', 'LEMON'],
       ['LEMON', 'ORANGE', 'GRAPE', 'MELON', 'CHERRY'],
     ];
     const normal = evaluate(cfg, gridOf(rows), [0, 0, 0, 0, 0], [], 100, 20, false);

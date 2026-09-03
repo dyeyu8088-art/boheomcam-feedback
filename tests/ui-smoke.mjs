@@ -43,17 +43,17 @@ try {
   await page.locator('.gcard.slot_fruit').click();
   await page.waitForURL('**/#/game/slot', { timeout: 8000 });
   await page.waitForTimeout(1500);
-  ok(await page.locator('.spin-btn').isVisible(), '水果机界面加载');
+  ok(await page.locator('button.spin').isVisible(), '水果机界面加载');
   await page.screenshot({ path: `${SHOT_DIR}/03-slot.png` });
   const balBefore = await page.locator('.hud-top .hcoins').textContent();
-  await page.locator('.spin-btn').click();
+  await page.locator('button.spin').click();
   // 等待服务端结果 + 停轮动画完成（余额或"赢得"数字任一变化即算收到结果）
   let resultSeen = false;
   for (let i = 0; i < 24; i += 1) {
     await page.waitForTimeout(400);
     const balNow = await page.locator('.hud-top .hcoins').textContent();
-    const winNow = await page.locator('.cval.jade').textContent();
-    if (balNow?.trim() !== balBefore?.trim() || (winNow && winNow.trim() !== '—' && winNow.trim() !== '')) {
+    const winNow = await page.locator('.win-num').textContent();
+    if (balNow?.trim() !== balBefore?.trim() || (winNow && winNow.trim() !== '0' && winNow.trim() !== '')) {
       resultSeen = true;
       break;
     }

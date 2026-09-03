@@ -123,10 +123,12 @@ async function testSlot() {
   await c.once('sys.hello');
   const enter = await c.call('slot.enter');
   assert(enter.data.paytable?.columns === 5, '进入返回赔付表');
+  assert(enter.data.jackpots && ['grand', 'major', 'minor', 'mini'].every((k) => typeof enter.data.jackpots[k] === 'number'), '进入返回四档 Jackpot 奖池');
   const balBefore = enter.data.balance;
   const spin = await c.call('slot.spin', { betPerLine: 100, lines: 20 }, 'slot.spinResult');
   assert(Array.isArray(spin.data.stops) && spin.data.stops.length === 5, '停位 5 列');
   assert(typeof spin.data.totalWin === 'number', '返回中奖额');
+  assert(spin.data.jackpots && spin.data.jackpots.mini >= enter.data.jackpots.mini, 'Spin 后 Jackpot 奖池注入（服务端累积）');
   assert(spin.data.balance === balBefore - 2000 + spin.data.totalWin || spin.data.freeSpinsRemaining >= 0, '余额按 服务端 结果变化');
   // 重复 requestId 幂等
   const rid = `dup-${Date.now()}`;

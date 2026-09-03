@@ -88,6 +88,8 @@ export const Ev = {
   SlSpin: 'slot.spin',
   SlSpinResult: 'slot.spinResult',
   SlHistory: 'slot.history',
+  SlJackpot: 'slot.jackpot',
+  SlTicket: 'slot.ticket',
 } as const;
 
 export type EventName = (typeof Ev)[keyof typeof Ev];

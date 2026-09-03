@@ -294,4 +294,12 @@ export const ko: Record<string, string> = {
   'fs.players': '같은 방 플레이어',
   'fs.boss.whale': '혹등고래',
   'fs.boss.dragonKing': '재신어',
+
+  // ── 水果机 Jackpot ──
+  'sl.maxBet': '최대 베팅',
+  'sl.turbo': '터보',
+  'sl.ticket': '무료권',
+  'sl.ticketUsed': '무료 스핀권 사용',
+  'sl.jackpotHit': '잭팟 당첨!',
+  'sl.freeLeft': '무료 스핀 {n}회 남음',
 };

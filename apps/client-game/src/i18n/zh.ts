@@ -312,4 +312,12 @@ export const zh: Record<string, string> = {
   'fs.players': '同桌玩家',
   'fs.boss.whale': '座头鲸',
   'fs.boss.dragonKing': '财神鱼',
+
+  // ── 水果机 Jackpot ──
+  'sl.maxBet': '最大投注',
+  'sl.turbo': '极速',
+  'sl.ticket': '免费券',
+  'sl.ticketUsed': '已使用免费旋转券',
+  'sl.jackpotHit': 'JACKPOT 命中！',
+  'sl.freeLeft': '免费旋转 剩余 {n}',
 };

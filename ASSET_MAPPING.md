@@ -54,7 +54,7 @@
 | 素材文件 | 游戏 | 界面 | 组件 | 功能 | 状态 |
 | --- | --- | --- | --- | --- | --- |
 | lobby/game_icons/icon_game_fishing.png | 大厅 | 游戏区 | `GameEntryCard` | 进入捕鱼 → `router.push('/game/fishing')` | 🔧 |
-| lobby/game_icons/icon_game_slots.png | 大厅 | 游戏区 | `GameEntryCard` | 进入水果机 → `/game/slot` | 🔧 |
+| lobby/game_icons/icon_game_slots.png | 大厅 | 游戏区 | `GameEntryCard` | 进入水果机 → `/game/slot` | ✅ |
 | lobby/game_icons/icon_game_roulette.png | 大厅 | 游戏区 | `GameEntryCard` | 进入轮盘 → `/game/roulette` | 🔧 |
 | lobby/game_icons/icon_game_stock.png | 大厅 | 游戏区 | `GameEntryCard` | 进入股票玩法 → `/game/stock` | 🔧 |
 | lobby/banners/logo_mahjong_master.png | 大厅 | 游戏区 | `GameEntryCard` | 进入麻将 → 场次选择 → 匹配 | 🔧 |
@@ -96,25 +96,25 @@
 
 | 素材文件 | 游戏 | 界面 | 组件 | 功能 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| slots/symbols/slot_cherry.png | 水果机 | Reel | `ReelSymbol` | 符号 `CHERRY` | 🔧 |
-| slots/symbols/slot_lemon.png | 水果机 | Reel | `ReelSymbol` | `LEMON` | 🔧 |
-| slots/symbols/slot_orange.png | 水果机 | Reel | `ReelSymbol` | `ORANGE` | 🔧 |
-| slots/symbols/slot_grape.png | 水果机 | Reel | `ReelSymbol` | `GRAPE` | 🔧 |
-| slots/symbols/slot_watermelon.png | 水果机 | Reel | `ReelSymbol` | `MELON` | 🔧 |
-| slots/symbols/slot_diamond.png | 水果机 | Reel | `ReelSymbol` | `DIAMOND`（替代原 BELL 位） | 🔧 |
-| slots/symbols/slot_seven.png | 水果机 | Reel | `ReelSymbol` | `SEVEN` | 🔧 |
-| slots/symbols/slot_gold.png | 水果机 | Reel | `ReelSymbol` | `GOLD`（替代原 CROWN 位） | 🔧 |
-| slots/symbols/slot_wild.png | 水果机 | Reel | `ReelSymbol` | `WILD` 百搭 | 🔧 |
-| slots/symbols/slot_bonus.png | 水果机 | Reel | `ReelSymbol` | `BONUS`（原 SCATTER：免费旋转触发） | 🔧 |
-| slots/buttons/btn_spin.png | 水果机 | 控制台 | `SpinButton` | `spin()`（余额判定 → 扣费 → 服务端结果 → 停轮） | 🔧 |
-| slots/buttons/btn_max_bet.png | 水果机 | 控制台 | `GameButton art` | `maxBet()` | 🔧 |
-| slots/buttons/btn_auto.png | 水果机 | 控制台 | `GameButton art` | `toggleAuto()`（剩余次数程序绘制） | 🔧 |
-| slots/buttons/btn_turbo.png | 水果机 | 控制台 | `GameButton art` | `toggleTurbo()`（转轴动画加速） | 🔧 |
-| slots/buttons/btn_minus_blue.png / btn_plus_blue.png | 水果机 | 控制台 | `GameButton art` | `stepBet(±1)` | 🔧 |
-| slots/ui/total_bet_plate.png | 水果机 | 控制台 | `BetStepper` | 总投注板（数字程序绘制） | 🔧 |
-| slots/jackpot/jackpot_grand / major / minor / mini.png | 水果机 | 顶部 | `JackpotBar` | 四档奖池（金额实时推送 `slot.jackpot`，数字滚动） | 🔧 |
-| slots/ui/win_frame.png | 水果机 | 演出 | `WinBanner` | WIN 金额滚动 | 🔧 |
-| slots/character/caishen_ingot.png / caishen_round.png | 水果机 | 场景 / 大奖 | `SlotMascot` | 立绘、Jackpot 演出 | 🔧 |
+| slots/symbols/slot_cherry.png | 水果机 | Reel | `ReelSymbol` | 符号 `CHERRY` | ✅ |
+| slots/symbols/slot_lemon.png | 水果机 | Reel | `ReelSymbol` | `LEMON` | ✅ |
+| slots/symbols/slot_orange.png | 水果机 | Reel | `ReelSymbol` | `ORANGE` | ✅ |
+| slots/symbols/slot_grape.png | 水果机 | Reel | `ReelSymbol` | `GRAPE` | ✅ |
+| slots/symbols/slot_watermelon.png | 水果机 | Reel | `ReelSymbol` | `MELON` | ✅ |
+| slots/symbols/slot_diamond.png | 水果机 | Reel | `ReelSymbol` | `DIAMOND`（替代原 BELL 位） | ✅ |
+| slots/symbols/slot_seven.png | 水果机 | Reel | `ReelSymbol` | `SEVEN` | ✅ |
+| slots/symbols/slot_gold.png | 水果机 | Reel | `ReelSymbol` | `GOLD`（替代原 CROWN 位） | ✅ |
+| slots/symbols/slot_wild.png | 水果机 | Reel | `ReelSymbol` | `WILD` 百搭 | ✅ |
+| slots/symbols/slot_bonus.png | 水果机 | Reel | `ReelSymbol` | `BONUS`（原 SCATTER：免费旋转触发） | ✅ |
+| slots/buttons/btn_spin.png | 水果机 | 控制台 | `SpinButton` | `spin()`（余额判定 → 扣费 → 服务端结果 → 停轮） | ✅ |
+| slots/buttons/btn_max_bet.png | 水果机 | 控制台 | `GameButton art` | `maxBet()` | ✅ |
+| slots/buttons/btn_auto.png | 水果机 | 控制台 | `GameButton art` | `toggleAuto()`（剩余次数程序绘制） | ✅ |
+| slots/buttons/btn_turbo.png | 水果机 | 控制台 | `GameButton art` | `toggleTurbo()`（转轴动画加速） | ✅ |
+| slots/buttons/btn_minus_blue.png / btn_plus_blue.png | 水果机 | 控制台 | `GameButton art` | `stepBet(±1)` | ✅ |
+| slots/ui/total_bet_plate.png | 水果机 | 控制台 | `BetStepper` | 总投注板（数字程序绘制） | ✅ |
+| slots/jackpot/jackpot_grand / major / minor / mini.png | 水果机 | 顶部 | `JackpotBar` | 四档奖池（金额实时推送 `slot.jackpot`，数字滚动） | ✅ |
+| slots/ui/win_frame.png | 水果机 | 演出 | `WinBanner` | WIN 金额滚动 | ✅ |
+| slots/character/caishen_ingot.png / caishen_round.png | 水果机 | 场景 / 大奖 | `SlotMascot` | 立绘、Jackpot 演出 | ✅ |
 
 ## 5. 轮盘（roulette）
 

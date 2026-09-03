@@ -157,6 +157,10 @@ function step(d: 1 | -1): void {
   pointer-events: none;
   white-space: nowrap;
 }
+.bs.slot .bs-val {
+  top: 58%;
+  font-size: calc(var(--h) * 0.4);
+}
 .bs-label {
   position: absolute;
   left: 50%;

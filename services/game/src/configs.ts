@@ -2,7 +2,7 @@
 import { query } from '@yanbian/server-core';
 import { YANBIAN_DRAFT_RULE, type MahjongRuleConfig } from '@yanbian/game-common/mahjong';
 import { HONGSHI_DRAFT_RULE, type HongshiRuleConfig } from '@yanbian/game-common/hongshi';
-import { FRUIT_GOLD_V1, type SlotPaytableConfig } from '@yanbian/game-common/slot';
+import { FRUIT_GOLD_V2 as FRUIT_GOLD_V1, type SlotPaytableConfig } from '@yanbian/game-common/slot';
 import type { StageConf } from './room.js';
 
 const cache = new Map<string, { at: number; value: unknown }>();

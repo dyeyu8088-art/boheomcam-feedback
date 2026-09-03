@@ -56,9 +56,10 @@ async function run(): Promise<void> {
   await pool.query(
     `INSERT INTO slot_paytables (paytable_version, game_id, config, status)
      VALUES ($1,'slot_fruit',$2,'active')
-     ON CONFLICT (paytable_version) DO UPDATE SET config = EXCLUDED.config`,
+     ON CONFLICT (paytable_version) DO UPDATE SET config = EXCLUDED.config, status='active'`,
     [FRUIT_GOLD_V1.paytableVersion, JSON.stringify(FRUIT_GOLD_V1)],
   );
+  await pool.query(`UPDATE slot_paytables SET status='retired' WHERE game_id='slot_fruit' AND paytable_version <> $1 AND status='active'`, [FRUIT_GOLD_V1.paytableVersion]);
 
   // 平台场次配置（麻将/红十金币场）
   const stages = {

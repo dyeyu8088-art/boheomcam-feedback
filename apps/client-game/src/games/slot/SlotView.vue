@@ -1,314 +1,189 @@
 <template>
   <div class="sl-root">
-    <div class="hud-top">
-      <button class="hback" @click="exit"><AppIcon name="back" :size="18" /></button>
-      <div class="title">{{ t('game.slot_fruit') }}</div>
-      <div class="hcoins num"><AppIcon name="coin" :size="16" />{{ fmt(balance) }}</div>
-    </div>
-
     <div ref="stageEl" class="stage" />
 
-    <!-- 免费旋转横幅 -->
+    <!-- ══ 顶栏：退出 / 四档 Jackpot / 金币 ══ -->
+    <div class="hud-top">
+      <GameButton round size="md" :art="exitArt" class="hback" sfx="close" @click="exit" />
+      <div class="jackpots">
+        <JackpotBar v-for="tier in TIERS" :key="tier" :tier="tier" :amount="jackpots[tier]" :hit="hitTier === tier" size="sm" />
+      </div>
+      <CurrencyBar kind="coin" :value="balance" class="hcoins" />
+    </div>
+
+    <img class="mascot" :src="mascotArt" alt="" draggable="false" />
+
     <transition name="pop">
       <div v-if="freeSpinsRemaining > 0" class="fs-banner">
-        <svg class="fsb-star" viewBox="0 0 24 24"><path d="M12 2.4 14.3 9 21 11.3 14.3 13.6 12 20.2 9.7 13.6 3 11.3 9.7 9 z" fill="currentColor" /><path d="M19.4 3 20.3 5.4 22.7 6.3 20.3 7.2 19.4 9.6 18.5 7.2 16.1 6.3 18.5 5.4 z" fill="currentColor" opacity="0.7" /></svg>
-        {{ t('sl.freeSpins', { n: freeSpinsRemaining }) }}
-        <svg class="fsb-star" viewBox="0 0 24 24"><path d="M12 2.4 14.3 9 21 11.3 14.3 13.6 12 20.2 9.7 13.6 3 11.3 9.7 9 z" fill="currentColor" /><path d="M19.4 3 20.3 5.4 22.7 6.3 20.3 7.2 19.4 9.6 18.5 7.2 16.1 6.3 18.5 5.4 z" fill="currentColor" opacity="0.7" /></svg>
+        <img :src="bonusArt" alt="" />
+        <span class="sk-outline-text">{{ t('sl.freeLeft', { n: freeSpinsRemaining }) }}</span>
       </div>
     </transition>
 
-    <!-- 大奖演出（金币雨 + 滚动数字） -->
-    <transition name="pop">
-      <div v-if="tierShow" class="tier-overlay" @click="skipTier">
-        <span v-for="n in 18" :key="n" class="rain-coin" :style="coinStyle(n)">
-          <AppIcon name="coin" :size="n % 3 === 0 ? 30 : 22" />
-        </span>
-        <div class="tier-text" :class="tierShow">{{ tierLabel }}</div>
-        <div class="tier-amount num">{{ fmt(rollingWin) }}</div>
+    <!-- ══ 控制台 ══ -->
+    <div class="console">
+      <div class="win-bar">
+        <img :src="winFrameArt" alt="" draggable="false" />
+        <AnimatedNumber class="win-num" :value="lastWin" raw :duration="700" />
       </div>
-    </transition>
-
-    <!-- 控制台 -->
-    <div class="console glass">
-      <div class="ctrl">
-        <div class="clabel">{{ t('sl.bet') }}</div>
-        <div class="cvals">
-          <button class="cbtn" :disabled="spinning" @click="stepBet(-1)">−</button>
-          <span class="cval num">{{ betPerLine }}</span>
-          <button class="cbtn" :disabled="spinning" @click="stepBet(1)">＋</button>
-        </div>
+      <BetStepper v-model="betPerLine" :options="betOptions" skin="slot" :format="fmtTotal" :disabled="spinning || freeSpinsRemaining > 0" class="bet" />
+      <div class="total">
+        <span class="t-label">{{ t('sl.bet') }}</span>
+        <span class="t-val num">{{ fmt(betPerLine) }}</span>
+        <span class="t-lines">{{ t('sl.lines') }} {{ LINES }}</span>
       </div>
-      <div class="ctrl">
-        <div class="clabel">{{ t('sl.totalBet') }}</div>
-        <div class="cval num gold">{{ fmt(betPerLine * 20) }}</div>
-      </div>
-      <button class="spin-btn" :class="{ spinning }" :disabled="spinning && !autoSpin" @click="onSpin">
-        <span v-if="!spinning">{{ t('sl.spin') }}</span>
-        <span v-else class="spin-ring" />
-      </button>
-      <div class="ctrl">
-        <div class="clabel">{{ t('sl.win') }}</div>
-        <div class="cval num jade">{{ fmt(lastWin) }}</div>
-      </div>
-      <button class="btn btn-secondary btn-sm" :class="{ activeAuto: autoSpin }" @click="toggleAutoSpin">
-        {{ autoSpin ? t('sl.stopAuto') : t('sl.auto') }}
+      <GameButton :art="maxBetArt" size="md" class="ctl" :disabled="spinning || freeSpinsRemaining > 0" @click="maxBet" />
+      <GameButton :art="turboArt" size="md" class="ctl" :class="{ on: turbo }" sfx="toggle" @click="turbo = !turbo" />
+      <GameButton :art="autoArt" size="md" class="ctl" :class="{ on: autoSpin }" sfx="toggle" @click="toggleAutoSpin">
+        <span v-if="autoSpin" class="auto-n num">{{ autoLeft }}</span>
+      </GameButton>
+      <GameButton v-if="ticketQty > 0" variant="green" size="md" :icon="bonusArt" :badge="ticketQty" :disabled="spinning" sfx="confirm" @click="useTicket">{{ t('sl.ticket') }}</GameButton>
+      <button class="spin" :class="{ spinning }" :disabled="spinning && !autoSpin" type="button" @click="onSpin">
+        <img :src="spinArt" alt="" draggable="false" />
+        <span v-if="spinning" class="spin-ring" />
       </button>
     </div>
+    <RewardAnimation ref="reward" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Application, Container, Graphics } from 'pixi.js';
+import { Application, Container, Graphics, Rectangle, Sprite, type Texture } from 'pixi.js';
 import { Ev } from '@yanbian/protocol';
 import { gameSocket } from '../../net/ws.js';
 import { useUserStore } from '../../stores/user.js';
 import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
-import AppIcon from '../../ui/AppIcon.vue';
 import { fmt } from '../../ui/format.js';
+import { asset, pixiTextures, release } from '../../assets/assets.js';
+import { audio } from '../../audio/AudioManager.js';
+import GameButton from '../../ui/GameButton.vue';
+import CurrencyBar from '../../ui/CurrencyBar.vue';
+import BetStepper from '../../ui/BetStepper.vue';
+import JackpotBar from '../../ui/JackpotBar.vue';
+import AnimatedNumber from '../../ui/AnimatedNumber.vue';
+import RewardAnimation from '../../ui/RewardAnimation.vue';
 
-function coinStyle(n: number): Record<string, string> {
-  return {
-    left: `${(n * 53) % 100}%`,
-    animationDelay: `${((n * 0.37) % 1.6).toFixed(2)}s`,
-    animationDuration: `${(1.6 + ((n * 0.53) % 1.4)).toFixed(2)}s`,
-  };
-}
+type Tier = 'grand' | 'major' | 'minor' | 'mini';
+const TIERS: Tier[] = ['grand', 'major', 'minor', 'mini'];
+const LINES = 20;
+const COLS = 5;
+const ROWS = 3;
 
 const router = useRouter();
 const user = useUserStore();
 const stageEl = ref<HTMLDivElement | null>(null);
-
+const reward = ref<InstanceType<typeof RewardAnimation> | null>(null);
 const balance = ref(user.me?.coins ?? 0);
 const betOptions = ref<number[]>([100, 200, 500, 1000]);
 const betPerLine = ref(100);
 const lastWin = ref(0);
 const spinning = ref(false);
 const autoSpin = ref(false);
+const autoLeft = ref(0);
+const turbo = ref(false);
 const freeSpinsRemaining = ref(0);
-const tierShow = ref<'' | 'big' | 'mega' | 'epic'>('');
-const tierLabel = ref('');
-const rollingWin = ref(0);
-let rollTimer = 0;
+const ticketQty = ref(0);
+const jackpots = ref<Record<Tier, number>>({ grand: 0, major: 0, minor: 0, mini: 0 });
+const hitTier = ref<Tier | ''>('');
+
+const exitArt = asset('common', 'btnExitRound');
+const mascotArt = asset('slots', 'caishenIngot');
+const fmtTotal = (v: number): string => fmt(v * LINES);
+const bonusArt = asset('slots', 'slotBonus');
+const winFrameArt = asset('slots', 'winFrame');
+const maxBetArt = asset('slots', 'btnMaxBet');
+const turboArt = asset('slots', 'btnTurbo');
+const autoArt = asset('slots', 'btnAuto');
+const spinArt = asset('slots', 'btnSpin');
+const SYMBOL_KEY: Record<string, string> = {
+  CHERRY: 'slotCherry',
+  LEMON: 'slotLemon',
+  ORANGE: 'slotOrange',
+  GRAPE: 'slotGrape',
+  MELON: 'slotWatermelon',
+  DIAMOND: 'slotDiamond',
+  SEVEN: 'slotSeven',
+  GOLD: 'slotGold',
+  WILD: 'slotWild',
+  BONUS: 'slotBonus',
+};
+const RANDOM_SYMS = Object.keys(SYMBOL_KEY);
+const rnd = (): string => RANDOM_SYMS[Math.floor(Math.random() * RANDOM_SYMS.length)]!;
 
 let app: Application | null = null;
+let tex: Record<string, Texture> = {};
 let reels: Container[] = [];
 let winLineLayer: Graphics | null = null;
-const COLS = 5;
-const ROWS = 3;
+let highlightLayer: Container | null = null;
+let reelMaskRef: Graphics | null = null;
 let cellW = 96;
 let cellH = 86;
 let originX = 0;
 let originY = 0;
 let paytableLines: number[][] = [];
 let destroyed = false;
-
-/** 圆弧折线点集（避免依赖 Graphics.arc 填充行为） */
-function arcPoints(cx: number, cy: number, r: number, a0: number, a1: number, steps = 20): number[] {
-  const pts: number[] = [];
-  for (let i = 0; i <= steps; i += 1) {
-    const a = a0 + ((a1 - a0) * i) / steps;
-    pts.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
-  }
-  return pts;
-}
-
-function starPoints(cx: number, cy: number, rOut: number, rIn: number, n = 5, rot = -Math.PI / 2): number[] {
-  const pts: number[] = [];
-  for (let i = 0; i < n * 2; i += 1) {
-    const r = i % 2 === 0 ? rOut : rIn;
-    const a = rot + (Math.PI * i) / n;
-    pts.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
-  }
-  return pts;
-}
-
-/** 程序化矢量符号库（原创；任何 DPI 锐利，三端渲染一致） */
-function drawSymbolArt(g: Graphics, sym: string, u: number): void {
-  // u = 符号半幅基准
-  switch (sym) {
-    case 'CHERRY': {
-      g.moveTo(-u * 0.05, -u * 0.85)
-        .quadraticCurveTo(u * 0.5, -u * 0.7, u * 0.42, u * 0.05)
-        .stroke({ color: 0x4c7a3a, width: u * 0.12, cap: 'round' });
-      g.moveTo(-u * 0.05, -u * 0.85)
-        .quadraticCurveTo(-u * 0.55, -u * 0.6, -u * 0.5, u * 0.15)
-        .stroke({ color: 0x4c7a3a, width: u * 0.12, cap: 'round' });
-      g.ellipse(u * 0.28, -u * 0.78, u * 0.34, u * 0.15).fill(0x5b9146);
-      g.circle(u * 0.42, u * 0.35, u * 0.42).fill(0xc22b3a);
-      g.circle(-u * 0.5, u * 0.45, u * 0.38).fill(0xa8202e);
-      g.circle(u * 0.28, u * 0.2, u * 0.13).fill({ color: 0xffffff, alpha: 0.55 });
-      g.circle(-u * 0.6, u * 0.32, u * 0.1).fill({ color: 0xffffff, alpha: 0.4 });
-      break;
-    }
-    case 'LEMON': {
-      g.poly([-u * 0.95, 0, -u * 0.75, -u * 0.16, -u * 0.75, u * 0.16]).fill(0xd9b83a);
-      g.poly([u * 0.95, 0, u * 0.75, -u * 0.16, u * 0.75, u * 0.16]).fill(0xd9b83a);
-      g.ellipse(0, 0, u * 0.8, u * 0.52).fill(0xe8ce52);
-      g.ellipse(0, u * 0.18, u * 0.7, u * 0.3).fill({ color: 0xc7a92e, alpha: 0.45 });
-      g.ellipse(-u * 0.24, -u * 0.2, u * 0.34, u * 0.14).fill({ color: 0xffffff, alpha: 0.45 });
-      break;
-    }
-    case 'ORANGE': {
-      g.circle(0, u * 0.08, u * 0.62).fill(0xe08a3c);
-      g.circle(0, u * 0.22, u * 0.5).fill({ color: 0xc06f26, alpha: 0.4 });
-      g.ellipse(-u * 0.2, -u * 0.12, u * 0.24, u * 0.14).fill({ color: 0xffffff, alpha: 0.42 });
-      g.ellipse(u * 0.22, -u * 0.62, u * 0.3, u * 0.13).fill(0x5b9146);
-      g.circle(0, -u * 0.52, u * 0.06).fill(0x7d5a20);
-      break;
-    }
-    case 'GRAPE': {
-      const berry = (x: number, y: number, r: number, c: number): void => {
-        g.circle(x, y, r).fill(c);
-      };
-      g.moveTo(0, -u * 0.85).lineTo(0, -u * 0.5).stroke({ color: 0x4c7a3a, width: u * 0.1, cap: 'round' });
-      g.ellipse(u * 0.28, -u * 0.72, u * 0.3, u * 0.13).fill(0x5b9146);
-      berry(-u * 0.32, -u * 0.28, u * 0.24, 0x6d4a9e);
-      berry(u * 0.32, -u * 0.28, u * 0.24, 0x6d4a9e);
-      berry(0, -u * 0.34, u * 0.24, 0x7d58b0);
-      berry(-u * 0.48, u * 0.1, u * 0.24, 0x5d3d8a);
-      berry(u * 0.48, u * 0.1, u * 0.24, 0x5d3d8a);
-      berry(0, u * 0.06, u * 0.26, 0x6d4a9e);
-      berry(-u * 0.24, u * 0.44, u * 0.24, 0x54367c);
-      berry(u * 0.24, u * 0.44, u * 0.24, 0x54367c);
-      berry(0, u * 0.72, u * 0.22, 0x4a2f6e);
-      g.circle(-u * 0.08, -u * 0.4, u * 0.08).fill({ color: 0xffffff, alpha: 0.45 });
-      g.circle(-u * 0.55, 0, u * 0.07).fill({ color: 0xffffff, alpha: 0.35 });
-      break;
-    }
-    case 'MELON': {
-      // 西瓜切片：绿皮弧 + 白圈 + 红瓤 + 籽
-      const rind = arcPoints(0, -u * 0.1, u * 0.85, 0.12 * Math.PI, 0.88 * Math.PI);
-      g.poly([...rind]).fill(0x3f7a44);
-      const white = arcPoints(0, -u * 0.1, u * 0.74, 0.14 * Math.PI, 0.86 * Math.PI);
-      g.poly([...white]).fill(0xe9f0dc);
-      const flesh = arcPoints(0, -u * 0.1, u * 0.66, 0.15 * Math.PI, 0.85 * Math.PI);
-      g.poly([...flesh]).fill(0xd6484e);
-      g.circle(-u * 0.26, u * 0.28, u * 0.055).fill(0x2b2320);
-      g.circle(u * 0.02, u * 0.42, u * 0.055).fill(0x2b2320);
-      g.circle(u * 0.28, u * 0.26, u * 0.055).fill(0x2b2320);
-      g.circle(-u * 0.02, u * 0.18, u * 0.055).fill(0x2b2320);
-      break;
-    }
-    case 'BELL': {
-      // 钟体（穹顶 + 喇叭口）
-      const dome = arcPoints(0, -u * 0.05, u * 0.52, Math.PI, 2 * Math.PI);
-      g.poly([...dome, u * 0.62, u * 0.42, -u * 0.62, u * 0.42]).fill(0xe0b44e);
-      g.poly([-u * 0.62, u * 0.42, u * 0.62, u * 0.42, u * 0.5, u * 0.55, -u * 0.5, u * 0.55]).fill(0xb8903a);
-      g.roundRect(-u * 0.09, -u * 0.72, u * 0.18, u * 0.18, u * 0.06).fill(0x8a6b1e);
-      g.circle(0, u * 0.62, u * 0.12).fill(0x8a6b1e);
-      g.ellipse(-u * 0.2, -u * 0.18, u * 0.14, u * 0.26).fill({ color: 0xffffff, alpha: 0.35 });
-      break;
-    }
-    case 'SEVEN': {
-      // 经典红 7（双层拉出立体感）
-      const seven = (dx: number, dy: number, c: number): void => {
-        g.poly([
-          -u * 0.5 + dx, -u * 0.72 + dy,
-          u * 0.52 + dx, -u * 0.72 + dy,
-          u * 0.14 + dx, u * 0.72 + dy,
-          -u * 0.22 + dx, u * 0.72 + dy,
-          u * 0.1 + dx, -u * 0.34 + dy,
-          -u * 0.5 + dx, -u * 0.34 + dy,
-        ]).fill(c);
-      };
-      seven(u * 0.06, u * 0.07, 0x7d1d22);
-      seven(0, 0, 0xd6363c);
-      g.poly([-u * 0.5, -u * 0.72, u * 0.52, -u * 0.72, u * 0.44, -u * 0.56, -u * 0.5, -u * 0.56]).fill({ color: 0xffffff, alpha: 0.3 });
-      break;
-    }
-    case 'CROWN': {
-      g.poly([
-        -u * 0.66, u * 0.34, -u * 0.72, -u * 0.36, -u * 0.32, -u * 0.05, 0, -u * 0.6,
-        u * 0.32, -u * 0.05, u * 0.72, -u * 0.36, u * 0.66, u * 0.34,
-      ]).fill(0xd9b352);
-      g.roundRect(-u * 0.66, u * 0.34, u * 1.32, u * 0.24, u * 0.08).fill(0xb8903a);
-      g.circle(-u * 0.72, -u * 0.42, u * 0.09).fill(0xe8cf82);
-      g.circle(0, -u * 0.68, u * 0.1).fill(0xe8cf82);
-      g.circle(u * 0.72, -u * 0.42, u * 0.09).fill(0xe8cf82);
-      g.circle(-u * 0.34, u * 0.14, u * 0.08).fill(0xc23a4a);
-      g.circle(0, u * 0.1, u * 0.09).fill(0x3d6fa8);
-      g.circle(u * 0.34, u * 0.14, u * 0.08).fill(0x3f8a5a);
-      g.poly([-u * 0.66, u * 0.34, u * 0.66, u * 0.34, u * 0.6, u * 0.42, -u * 0.6, u * 0.42]).fill({ color: 0xffffff, alpha: 0.2 });
-      break;
-    }
-    case 'WILD': {
-      g.circle(0, 0, u * 0.78).fill({ color: 0xc9a063, alpha: 0.16 });
-      g.poly(starPoints(0, 0, u * 0.8, u * 0.36)).fill(0xd9b352);
-      g.poly(starPoints(0, 0, u * 0.52, u * 0.24)).fill(0xf0dcab);
-      g.circle(0, 0, u * 0.12).fill(0xfff6df);
-      break;
-    }
-    case 'SCATTER': {
-      g.circle(0, u * 0.05, u * 0.8).fill({ color: 0x7fb8e8, alpha: 0.14 });
-      g.poly([-u * 0.42, -u * 0.5, u * 0.42, -u * 0.5, u * 0.68, -u * 0.1, 0, u * 0.66, -u * 0.68, -u * 0.1]).fill(0x7fb8e8);
-      g.poly([-u * 0.42, -u * 0.5, -u * 0.14, -u * 0.1, 0, u * 0.66, -u * 0.68, -u * 0.1]).fill(0x5d94c6);
-      g.poly([u * 0.42, -u * 0.5, u * 0.14, -u * 0.1, 0, u * 0.66, u * 0.68, -u * 0.1]).fill(0x9fd0f2);
-      g.poly([-u * 0.14, -u * 0.1, u * 0.14, -u * 0.1, 0, u * 0.66]).fill(0x7fb8e8);
-      g.poly([-u * 0.42, -u * 0.5, u * 0.42, -u * 0.5, u * 0.14, -u * 0.1, -u * 0.14, -u * 0.1]).fill(0xcfe8ff);
-      break;
-    }
-    default:
-      g.circle(0, 0, u * 0.5).fill(0x555f72);
-  }
-}
+let lastGrid: string[][] = [];
+const offs: (() => void)[] = [];
 
 function makeSymbol(sym: string): Container {
   const c = new Container();
-  const special = sym === 'WILD' || sym === 'SCATTER';
+  const special = sym === 'WILD' || sym === 'BONUS';
   const card = new Graphics();
-  const w = cellW * 0.88;
-  const h = cellH * 0.88;
-  card.roundRect(-w / 2, -h / 2, w, h, 12).fill(0x161c2b);
-  // 顶部受光面
-  card.roundRect(-w / 2 + 2, -h / 2 + 2, w - 4, h * 0.34, 10).fill({ color: 0xffffff, alpha: 0.045 });
-  card.roundRect(-w / 2, -h / 2, w, h, 12).stroke({ color: special ? 0xc9a063 : 0x2b3448, width: special ? 2 : 1.2 });
+  const w = cellW * 0.9;
+  const h = cellH * 0.9;
+  card.roundRect(-w / 2, -h / 2, w, h, 12).fill(special ? 0x1a1230 : 0x0d1a3c);
+  card.roundRect(-w / 2 + 2, -h / 2 + 2, w - 4, h * 0.34, 10).fill({ color: 0xffffff, alpha: 0.05 });
+  card.roundRect(-w / 2, -h / 2, w, h, 12).stroke({ color: special ? 0xf0c14e : 0x3a4a78, width: special ? 2.4 : 1.2 });
   c.addChild(card);
-  const art = new Graphics();
-  drawSymbolArt(art, sym, Math.min(cellW, cellH) * 0.34);
-  c.addChild(art);
+  const texture = tex[SYMBOL_KEY[sym] ?? 'slotCherry'];
+  if (texture) {
+    const s = new Sprite(texture);
+    s.anchor.set(0.5);
+    const fit = Math.min((cellW * 0.78) / texture.width, (cellH * 0.78) / texture.height);
+    s.scale.set(fit);
+    c.addChild(s);
+  }
   return c;
 }
 
 /** 每列构建符号带（顶部+可视+底部缓冲），旋转时纵向滚动 */
 function fillReel(col: number, symbols: string[]): void {
   const reel = reels[col]!;
-  reel.removeChildren().forEach((ch) => ch.destroy());
+  reel.removeChildren().forEach((ch) => ch.destroy({ children: true }));
   for (let i = 0; i < symbols.length; i += 1) {
     const node = makeSymbol(symbols[i]!);
-    node.y = (i - 1) * cellH;
+    node.y = (i + 0.5) * cellH;
     reel.addChild(node);
   }
 }
 
-const RANDOM_SYMS = ['CHERRY', 'LEMON', 'ORANGE', 'GRAPE', 'MELON', 'BELL', 'SEVEN', 'CROWN', 'WILD', 'SCATTER'];
-const rnd = (): string => RANDOM_SYMS[Math.floor(Math.random() * RANDOM_SYMS.length)]!;
-
-/**
- * 按竞品分析的 Spin 节奏公式播放：弹射加速 → 匀速滚动 → 逐列错峰停（120ms 间隔）+ 回弹。
- * 服务端已定结果 grid（[col][row]），动画只负责表现。
- */
-function playSpinAnimation(grid: string[][]): Promise<void> {
+/** 按竞品分析的 Spin 节奏：弹射加速 → 匀速滚动 → 逐列错峰停 + 回弹；极速模式压缩为 45% */
+function playSpinAnimation(grid: string[][], prev: string[][] = []): Promise<void> {
   return new Promise((resolve) => {
     if (!app) {
       resolve();
       return;
     }
     winLineLayer?.clear();
+    highlightLayer?.removeChildren().forEach((ch) => ch.destroy());
+    audio.sfx('spin', { volume: 0.6 });
+    const speed = turbo.value ? 0.45 : 1;
     const startAt = performance.now();
-    const stopDelays = [900, 1020, 1140, 1260, 1380];
+    const stopDelays = [900, 1020, 1140, 1260, 1380].map((d) => d * speed);
     let resolvedCols = 0;
     for (let col = 0; col < COLS; col += 1) {
       const reel = reels[col]!;
-      // 滚动带：随机符号 + 末端接最终结果
-      const strip: string[] = [];
-      for (let i = 0; i < 20; i += 1) strip.push(rnd());
-      strip.push(grid[col]![0]!, grid[col]![1]!, grid[col]![2]!);
+      const cur = prev[col] ?? [rnd(), rnd(), rnd()];
+      const strip: string[] = [rnd(), grid[col]![0]!, grid[col]![1]!, grid[col]![2]!];
+      for (let i = 0; i < 18; i += 1) strip.push(rnd());
+      strip.push(cur[0]!, cur[1]!, cur[2]!, rnd());
       fillReel(col, strip);
-      const totalScroll = (strip.length - 4) * cellH;
+      const totalScroll = (strip.length - 5) * cellH;
       const stopAt = stopDelays[col]!;
+      let stopped = false;
       const tick = (): void => {
         if (destroyed) {
           resolve();
@@ -316,24 +191,26 @@ function playSpinAnimation(grid: string[][]): Promise<void> {
         }
         const now = performance.now() - startAt;
         let p: number;
-        if (now < 160) {
-          // 弹射加速（含轻微回拉）
-          const k = now / 160;
+        if (now < 160 * speed) {
+          const k = now / (160 * speed);
           p = -0.06 * Math.sin(k * Math.PI) + 0.08 * k * k;
         } else if (now < stopAt) {
-          const k = (now - 160) / (stopAt - 160);
+          const k = (now - 160 * speed) / (stopAt - 160 * speed);
           p = 0.08 + 0.86 * k;
-        } else if (now < stopAt + 200) {
-          // 急停回弹
-          const k = (now - stopAt) / 200;
+        } else if (now < stopAt + 200 * speed) {
+          if (!stopped) {
+            stopped = true;
+            audio.sfx('reelStop', { volume: 0.5, rate: 0.95 + col * 0.03 });
+          }
+          const k = (now - stopAt) / (200 * speed);
           p = 0.94 + 0.06 * (1 - (1 - k) * (1 - k)) + Math.sin(k * Math.PI) * 0.012;
         } else {
-          reel.y = originY + totalScroll;
+          reel.y = originY;
           resolvedCols += 1;
           if (resolvedCols === COLS) resolve();
           return;
         }
-        reel.y = originY + totalScroll * Math.min(1, Math.max(-0.05, p));
+        reel.y = originY - totalScroll * (1 - Math.min(1.02, Math.max(-0.05, p)));
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
@@ -341,157 +218,197 @@ function playSpinAnimation(grid: string[][]): Promise<void> {
   });
 }
 
-function drawWinLines(winLines: { lineIndex: number }[]): void {
-  if (!winLineLayer) return;
+function drawWinLines(winLines: { lineIndex: number; count: number }[]): void {
+  if (!winLineLayer || !highlightLayer) return;
   winLineLayer.clear();
-  const colors = [0xc9a063, 0x3e9b8f, 0xb5495b, 0x7fb8e8, 0xd7c74a];
-  winLines.slice(0, 6).forEach((w, i) => {
+  highlightLayer.removeChildren().forEach((ch) => ch.destroy());
+  const colors = [0xffd25a, 0x7cf36a, 0xff7a68, 0x8ac8ff, 0xd59bff];
+  const cells = new Set<string>();
+  winLines.slice(0, 8).forEach((w, i) => {
     const rows = paytableLines[w.lineIndex];
     if (!rows) return;
     const color = colors[i % colors.length]!;
     winLineLayer!.moveTo(originX + cellW * 0.5, originY + cellH * (rows[0]! + 0.5) + cellH);
-    for (let c = 0; c < COLS; c += 1) {
-      winLineLayer!.lineTo(originX + cellW * (c + 0.5), originY + cellH * (rows[c]! + 0.5) + cellH);
-    }
-    winLineLayer!.stroke({ color, width: 3, alpha: 0.85 });
+    for (let c = 0; c < COLS; c += 1) winLineLayer!.lineTo(originX + cellW * (c + 0.5), originY + cellH * (rows[c]! + 0.5) + cellH);
+    winLineLayer!.stroke({ color, width: 4, alpha: 0.9 });
+    winLineLayer!.stroke({ color: 0xffffff, width: 1.5, alpha: 0.6 });
+    for (let c = 0; c < w.count; c += 1) cells.add(`${c}:${rows[c]}`);
   });
+  // 中奖格金框脉冲
+  for (const key of cells) {
+    const [c, r] = key.split(':').map(Number) as [number, number];
+    const g = new Graphics();
+    g.roundRect(-cellW * 0.45, -cellH * 0.45, cellW * 0.9, cellH * 0.9, 12).stroke({ color: 0xffe28a, width: 4, alpha: 0.95 });
+    g.position.set(originX + cellW * (c + 0.5), originY + cellH * (r + 0.5) + cellH);
+    highlightLayer.addChild(g);
+    const s0 = performance.now();
+    const pulse = (): void => {
+      if (destroyed || g.destroyed) return;
+      const k = ((performance.now() - s0) / 600) % 1;
+      g.scale.set(1 + Math.sin(k * Math.PI) * 0.06);
+      g.alpha = 0.7 + Math.sin(k * Math.PI) * 0.3;
+      requestAnimationFrame(pulse);
+    };
+    requestAnimationFrame(pulse);
+  }
 }
-
-let reelMaskRef: Graphics | null = null;
 
 function layout(): void {
   if (!app) return;
   const w = app.renderer.width;
   const h = app.renderer.height;
-  // 机台随视口放大（此前固定 110×100 的上限会让 1080p 下的机器缩成一小块）。
-  // 投注条是画布外的 DOM 层，这里只需为顶部铭牌与底部币槽留出余量。
-  const topSafe = 52;
-  const cell = Math.min((w - 60) / COLS, ((h - 84) / ROWS) * 1.05, 220);
+  // 顶部留 Jackpot 条、底部留控制台（DOM 层），机台在中间自适应
+  const topSafe = Math.max(96, h * 0.15);
+  const bottomSafe = Math.max(120, h * 0.2);
+  const cell = Math.min((w - 60) / COLS, ((h - topSafe - bottomSafe) / ROWS) * 1.05, 220);
   cellW = cell;
   cellH = cell / 1.05;
   originX = (w - cellW * COLS) / 2;
-  originY = topSafe - cellH;
+  originY = topSafe + (h - topSafe - bottomSafe - cellH * ROWS) / 2 - cellH;
   reels.forEach((reel, col) => {
     reel.x = originX + cellW * (col + 0.5);
     reel.y = originY;
   });
   if (reelMaskRef) {
     reelMaskRef.clear();
-    reelMaskRef.roundRect(originX - 8, originY + cellH - 8, cellW * COLS + 16, cellH * ROWS + 16, 14).fill(0xffffff);
+    // 遮罩严格贴合可见三行：符号带上下的缓冲格在任何格尺寸下都不可见
+    reelMaskRef.roundRect(originX - 4, originY + cellH, cellW * COLS + 8, cellH * ROWS, 10).fill(0xffffff);
   }
+}
+
+function setBalance(v: number): void {
+  balance.value = v;
+  user.setBalance(v);
 }
 
 async function onSpin(): Promise<void> {
   if (spinning.value) return;
+  const cost = betPerLine.value * LINES;
+  if (freeSpinsRemaining.value <= 0 && balance.value < cost) {
+    toast(t('error.INSUFFICIENT_BALANCE'), 'error');
+    autoSpin.value = false;
+    return;
+  }
   spinning.value = true;
   lastWin.value = 0;
   try {
-    const r = await gameSocket.call<any>(Ev.SlSpin, { betPerLine: betPerLine.value, lines: 20 }, 15000);
-    // 服务端先结算；客户端播动画
-    await playSpinAnimation(r.grid ?? []);
+    const r = await gameSocket.call<any>(Ev.SlSpin, { betPerLine: betPerLine.value, lines: LINES }, 15000);
+    const prev = lastGrid;
+    lastGrid = r.grid ?? lastGrid;
+    await playSpinAnimation(lastGrid, prev);
     lastWin.value = r.totalWin;
-    balance.value = r.balance;
-    user.setBalance(r.balance);
+    setBalance(r.balance);
     freeSpinsRemaining.value = r.freeSpinsRemaining ?? 0;
+    if (r.jackpots) jackpots.value = r.jackpots;
     drawWinLines(r.winLines ?? []);
-    if (r.tier === 'big' || r.tier === 'mega' || r.tier === 'epic') {
-      await showTier(r.tier, r.totalWin);
+    if (r.totalWin > 0) audio.sfx(r.tier === 'normal' ? 'coin' : 'win', { volume: 0.7 });
+    if (r.jackpotHit) {
+      hitTier.value = r.jackpotHit.tier;
+      audio.sfx('jackpot');
+      await new Promise<void>((res) => {
+        reward.value?.play({ amount: r.jackpotHit.amount, tier: 'epic', banner: winFrameArt, caption: `${String(r.jackpotHit.tier).toUpperCase()} ${t('sl.jackpotHit')}`, duration: 2600 });
+        setTimeout(res, 4200);
+      });
+      hitTier.value = '';
+    } else if (r.tier === 'big' || r.tier === 'mega' || r.tier === 'epic') {
+      await new Promise<void>((res) => {
+        reward.value?.play({ amount: r.totalWin, tier: r.tier, banner: winFrameArt, caption: r.tier === 'big' ? t('sl.bigWin') : r.tier === 'mega' ? t('sl.megaWin') : t('sl.epicWin') });
+        setTimeout(res, r.tier === 'big' ? 1800 : r.tier === 'mega' ? 2600 : 3400);
+      });
     }
-    if (r.freeSpinsAwarded > 0) toast(t('sl.freeSpins', { n: r.freeSpinsAwarded }), 'success');
+    if (r.freeSpinsAwarded > 0) {
+      audio.sfx('bigwin');
+      toast(t('sl.freeSpins', { n: r.freeSpinsAwarded }), 'success');
+    }
   } catch (e) {
     const err = e as Error & { code?: number };
     toast(err.code === 3000 ? t('error.INSUFFICIENT_BALANCE') : err.message, 'error');
     autoSpin.value = false;
   } finally {
     spinning.value = false;
+    if (autoSpin.value) autoLeft.value = Math.max(0, autoLeft.value - 1);
+    if (autoSpin.value && autoLeft.value <= 0) autoSpin.value = false;
     if ((autoSpin.value || freeSpinsRemaining.value > 0) && !destroyed) {
       setTimeout(() => {
         if ((autoSpin.value || freeSpinsRemaining.value > 0) && !spinning.value && !destroyed) void onSpin();
-      }, 650);
+      }, turbo.value ? 350 : 700);
     }
   }
 }
 
-function showTier(tier: 'big' | 'mega' | 'epic', amount: number): Promise<void> {
-  return new Promise((resolve) => {
-    tierShow.value = tier;
-    tierLabel.value = tier === 'big' ? t('sl.bigWin') : tier === 'mega' ? t('sl.megaWin') : t('sl.epicWin');
-    rollingWin.value = 0;
-    const durMs = tier === 'big' ? 1600 : tier === 'mega' ? 2600 : 3600;
-    const start = performance.now();
-    window.clearInterval(rollTimer);
-    rollTimer = window.setInterval(() => {
-      const p = Math.min(1, (performance.now() - start) / durMs);
-      rollingWin.value = Math.round(amount * p);
-      if (p >= 1) {
-        window.clearInterval(rollTimer);
-        setTimeout(() => {
-          tierShow.value = '';
-          resolve();
-        }, 700);
-      }
-    }, 40);
-  });
+function maxBet(): void {
+  betPerLine.value = betOptions.value[betOptions.value.length - 1]!;
+  audio.sfx('chips');
 }
-
-function skipTier(): void {
-  window.clearInterval(rollTimer);
-  tierShow.value = '';
-}
-
-function stepBet(dir: number): void {
-  const idx = betOptions.value.indexOf(betPerLine.value);
-  const next = betOptions.value[Math.min(betOptions.value.length - 1, Math.max(0, idx + dir))];
-  if (next) betPerLine.value = next;
-}
-
 function toggleAutoSpin(): void {
   autoSpin.value = !autoSpin.value;
+  autoLeft.value = autoSpin.value ? 50 : 0;
   if (autoSpin.value && !spinning.value) void onSpin();
 }
-
+async function useTicket(): Promise<void> {
+  if (spinning.value) return;
+  try {
+    const r = await gameSocket.call<{ freeSpinsRemaining: number; ticketQty?: number }>(Ev.SlTicket, { betPerLine: betPerLine.value }, 8000);
+    freeSpinsRemaining.value = r.freeSpinsRemaining;
+    if (r.ticketQty !== undefined) ticketQty.value = r.ticketQty;
+    toast(t('sl.ticketUsed'), 'success');
+    if (!spinning.value) void onSpin();
+  } catch (e) {
+    toast((e as Error).message, 'error');
+  }
+}
 async function exit(): Promise<void> {
+  autoSpin.value = false;
   await gameSocket.call('room.leave').catch(() => undefined);
   void router.replace('/lobby');
 }
 
 onMounted(async () => {
   if (gameSocket.status !== 'open') await gameSocket.connect();
+  audio.setScene('slot');
+  audio.preload(['spin', 'reelStop', 'win', 'bigwin', 'jackpot', 'coin', 'chips']);
   app = new Application();
-  await app.init({ resizeTo: stageEl.value!, background: 0x0c0a12, antialias: true, resolution: Math.min(2, window.devicePixelRatio), autoDensity: true });
+  await app.init({ resizeTo: stageEl.value!, background: 0x0a0716, antialias: true, resolution: Math.min(2, window.devicePixelRatio), autoDensity: true });
   stageEl.value!.appendChild(app.canvas);
+  tex = await pixiTextures('slots');
 
-  // 背景：放射流光 + 金色光晕（机台后方的演出光）
+  // 背景：放射流光（细长楔形，逐帧旋转）+ 金色光晕（烘焙成 1/4 分辨率纹理，避免每帧十余层全屏叠加）
   const rays = new Graphics();
   const glow = new Graphics();
+  const backdrop = new Container();
+  let glowSprite: Sprite | null = null;
   const drawBackdrop = (): void => {
     const w = app!.renderer.width;
     const h = app!.renderer.height;
     const cx = w / 2;
-    const cy = h * 0.44;
+    const cy = h * 0.46;
     const R = Math.hypot(w, h);
     rays.clear();
     for (let i = 0; i < 16; i += 1) {
       const a0 = (Math.PI * 2 * i) / 16;
       const a1 = a0 + 0.16;
-      rays.poly([cx, cy, cx + Math.cos(a0) * R, cy + Math.sin(a0) * R, cx + Math.cos(a1) * R, cy + Math.sin(a1) * R])
-        .fill({ color: 0xf0c46a, alpha: 0.028 });
+      rays.poly([0, 0, Math.cos(a0) * R, Math.sin(a0) * R, Math.cos(a1) * R, Math.sin(a1) * R]).fill({ color: 0xf0c46a, alpha: 0.035 });
     }
-    rays.position.set(0, 0);
-    rays.pivot.set(0, 0);
+    rays.position.set(cx, cy);
     glow.clear();
-    // 多层同心圆叠出柔和光晕（Graphics 无径向渐变）
-    for (let i = 10; i >= 1; i -= 1) {
-      glow.circle(cx, cy, (Math.min(w, h) * 0.62 * i) / 10).fill({ color: 0x3b2b52, alpha: 0.05 });
+    for (let i = 10; i >= 1; i -= 1) glow.circle(cx, cy, (Math.min(w, h) * 0.66 * i) / 10).fill({ color: 0x3a1a4a, alpha: 0.05 });
+    for (let i = 6; i >= 1; i -= 1) glow.circle(cx, cy, (Math.min(w, h) * 0.32 * i) / 6).fill({ color: 0xf0c46a, alpha: 0.014 });
+    if (glowSprite) {
+      glowSprite.destroy({ texture: true, textureSource: true });
+      glowSprite = null;
     }
-    for (let i = 6; i >= 1; i -= 1) {
-      glow.circle(cx, cy, (Math.min(w, h) * 0.3 * i) / 6).fill({ color: 0xf0c46a, alpha: 0.012 });
-    }
+    const gtex = app!.renderer.generateTexture({ target: glow, frame: new Rectangle(0, 0, w, h), resolution: 0.25 });
+    glowSprite = new Sprite(gtex);
+    glowSprite.width = w;
+    glowSprite.height = h;
+    backdrop.addChildAt(glowSprite, 0);
   };
+  app.stage.addChild(backdrop, rays);
   drawBackdrop();
-  app.stage.addChild(glow, rays);
-  let raySpin = 0;
 
+  // 机台底座必须在符号层之下，否则会盖住转轴
+  const frame = new Graphics();
+  app.stage.addChild(frame);
   const reelStage = new Container();
   app.stage.addChild(reelStage);
   const reelMask = new Graphics();
@@ -503,107 +420,111 @@ onMounted(async () => {
     reelStage.addChild(reel);
     reels.push(reel);
   }
-  // 机框（金属双框 + 角饰 + 卷轴筒明暗 + 中线指示）
-  const frame = new Graphics();
-  app.stage.addChild(frame);
+  if (import.meta.env.DEV) {
+    // 开发/测试钩子：E2E 与截图脚本读取布局与转轴状态
+    (window as unknown as { __sl: unknown }).__sl = {
+      app,
+      reels,
+      metrics: () => ({ originX, originY, cellW, cellH, w: app!.renderer.width, h: app!.renderer.height, sw: app!.screen.width, sh: app!.screen.height, res: app!.renderer.resolution, mask: reelMaskRef?.getBounds() }),
+    };
+  }
+  highlightLayer = new Container();
   winLineLayer = new Graphics();
-  app.stage.addChild(winLineLayer);
+  app.stage.addChild(highlightLayer, winLineLayer);
   layout();
   const drawFrame = (): void => {
-    const wx = originX - 12;
-    const wy = originY + cellH - 12;
-    const ww = cellW * COLS + 24;
-    const wh = cellH * ROWS + 24;
+    const wx = originX - 14;
+    const wy = originY + cellH - 14;
+    const ww = cellW * COLS + 28;
+    const wh = cellH * ROWS + 28;
     frame.clear();
-    // 卷轴筒纵深：窗口上下渐暗（多层 alpha 条模拟圆柱阴影）
+    // 机台底座（深色）+ 金色双框
+    frame.roundRect(wx - 16, wy - 16, ww + 32, wh + 32, 30).fill(0x0c1230);
+    frame.roundRect(wx - 16, wy - 16, ww + 32, wh + 32, 30).stroke({ color: 0x8f5a12, width: 8 });
+    frame.roundRect(wx - 16, wy - 16, ww + 32, wh + 32, 30).stroke({ color: 0xf8c74a, width: 3.5 });
+    frame.roundRect(wx - 10, wy - 10, ww + 20, wh + 20, 24).stroke({ color: 0xffe9a6, width: 1.2, alpha: 0.7 });
+    frame.roundRect(wx, wy, ww, wh, 16).stroke({ color: 0xd9942a, width: 2 });
+    // 卷轴筒纵深
     for (let i = 0; i < 5; i += 1) {
-      const a = 0.3 - i * 0.055;
+      const a = 0.32 - i * 0.06;
       frame.rect(wx + 6, wy + 6 + i * 5, ww - 12, 5).fill({ color: 0x05070c, alpha: a });
       frame.rect(wx + 6, wy + wh - 11 - i * 5, ww - 12, 5).fill({ color: 0x05070c, alpha: a });
     }
-    // 金属外框
-    frame.roundRect(wx - 6, wy - 6, ww + 12, wh + 12, 22).stroke({ color: 0x8a6b3c, width: 6, alpha: 0.9 });
-    frame.roundRect(wx - 6, wy - 6, ww + 12, wh + 12, 22).stroke({ color: 0xe6cfa3, width: 1.4, alpha: 0.8 });
-    frame.roundRect(wx, wy, ww, wh, 16).stroke({ color: 0xc9a063, width: 2 });
-    frame.roundRect(wx + 3, wy + 3, ww - 6, wh - 6, 14).stroke({ color: 0x594420, width: 1, alpha: 0.6 });
-    // 列分隔
     for (let cIdx = 1; cIdx < COLS; cIdx += 1) {
       const x = originX + cellW * cIdx;
       frame.moveTo(x, wy + 6).lineTo(x, wy + wh - 6).stroke({ color: 0x2b3448, width: 2, alpha: 0.8 });
-      frame.moveTo(x + 1.4, wy + 6).lineTo(x + 1.4, wy + wh - 6).stroke({ color: 0xffffff, width: 0.8, alpha: 0.05 });
     }
-    // 角饰铆钉
-    for (const [cx, cy] of [
-      [wx - 2, wy - 2],
-      [wx + ww + 2, wy - 2],
-      [wx - 2, wy + wh + 2],
-      [wx + ww + 2, wy + wh + 2],
+    // 角饰宝石
+    for (const [gx, gy] of [
+      [wx - 8, wy - 8],
+      [wx + ww + 8, wy - 8],
+      [wx - 8, wy + wh + 8],
+      [wx + ww + 8, wy + wh + 8],
     ] as const) {
-      frame.circle(cx, cy, 5.5).fill(0xc9a063);
-      frame.circle(cx, cy, 5.5).stroke({ color: 0x6e5426, width: 1.2 });
-      frame.circle(cx - 1.4, cy - 1.6, 1.8).fill({ color: 0xffffff, alpha: 0.5 });
+      frame.circle(gx, gy, 9).fill(0x8f5a12);
+      frame.circle(gx, gy, 6.5).fill(0x3b7dff);
+      frame.circle(gx - 2, gy - 2.2, 2.2).fill({ color: 0xffffff, alpha: 0.7 });
     }
-    // 中央赔付线指示箭头
+    // 中线指示
     const midY = wy + wh / 2;
-    frame.poly([wx - 16, midY - 8, wx - 4, midY, wx - 16, midY + 8]).fill(0xc9a063);
-    frame.poly([wx + ww + 16, midY - 8, wx + ww + 4, midY, wx + ww + 16, midY + 8]).fill(0xc9a063);
-
-    // 顶部铭牌（机台冠部）+ 灯珠
-    const mqH = Math.max(22, cellH * 0.2);
-    const mqW = ww * 0.52;
-    const mqX = wx + (ww - mqW) / 2;
-    const mqY = wy - 6 - mqH - 10;
-    frame.roundRect(mqX, mqY, mqW, mqH, mqH / 2).fill(0x1a1327);
-    frame.roundRect(mqX, mqY, mqW, mqH, mqH / 2).stroke({ color: 0xc9a063, width: 2.2 });
-    frame.roundRect(mqX + 4, mqY + 4, mqW - 8, mqH - 8, (mqH - 8) / 2).stroke({ color: 0xe6cfa3, width: 1, alpha: 0.45 });
-    const lamps = 5;
+    frame.poly([wx - 26, midY - 9, wx - 12, midY, wx - 26, midY + 9]).fill(0xf8c74a);
+    frame.poly([wx + ww + 26, midY - 9, wx + ww + 12, midY, wx + ww + 26, midY + 9]).fill(0xf8c74a);
+    // 顶部灯带
+    const lamps = 11;
     for (let i = 0; i < lamps; i += 1) {
-      const lx = mqX + (mqW * (i + 0.5)) / lamps;
-      frame.circle(lx, mqY + mqH / 2, mqH * 0.16).fill(i % 2 === 0 ? 0xfff3d0 : 0xf0c46a);
-      frame.circle(lx, mqY + mqH / 2, mqH * 0.26).stroke({ color: 0xc9a063, width: 1, alpha: 0.4 });
+      const lx = wx - 6 + ((ww + 12) * (i + 0.5)) / lamps;
+      frame.circle(lx, wy - 16, 4.5).fill(0x8f5a12);
+      frame.circle(lx, wy - 16, 3).fill(i % 2 === 0 ? 0xffe28a : 0xff8a5a);
     }
-
-    // 左右立柱（机台侧板）
-    const pillarW = Math.max(12, cellW * 0.1);
-    for (const px of [wx - 6 - pillarW - 6, wx + ww + 6 + 6] as const) {
-      frame.roundRect(px, wy - 6, pillarW, wh + 12, pillarW / 2).fill(0x191223);
-      frame.roundRect(px, wy - 6, pillarW, wh + 12, pillarW / 2).stroke({ color: 0x8a6b3c, width: 1.6, alpha: 0.85 });
-      for (let i = 1; i <= 3; i += 1) {
-        frame.circle(px + pillarW / 2, wy - 6 + ((wh + 12) * i) / 4, pillarW * 0.18).fill({ color: 0xc9a063, alpha: 0.7 });
-      }
-    }
-
-    // 底部币槽
-    const trayY = wy + wh + 12;
-    frame.roundRect(wx + ww * 0.18, trayY, ww * 0.64, Math.max(10, cellH * 0.09), 6).fill(0x120d1c);
-    frame.roundRect(wx + ww * 0.18, trayY, ww * 0.64, Math.max(10, cellH * 0.09), 6).stroke({ color: 0x8a6b3c, width: 1.4, alpha: 0.8 });
   };
   drawFrame();
-  window.addEventListener('resize', () => {
-    layout();
-    drawBackdrop();
-    drawFrame();
-  });
-  // 放射流光极慢自转（60s 一圈，环境动效不抢主体）
-  app.ticker.add((ticker) => {
-    raySpin += (ticker.deltaMS / 60000) * Math.PI * 2;
-    rays.rotation = raySpin;
-    rays.pivot.set(app!.renderer.width / 2, app!.renderer.height * 0.44);
-    rays.position.set(app!.renderer.width / 2, app!.renderer.height * 0.44);
+  // 初始静态网格
+  for (let col = 0; col < COLS; col += 1) {
+    const strip = [rnd(), rnd(), rnd(), rnd(), rnd()];
+    fillReel(col, strip);
+    reels[col]!.y = originY;
+  }
+  let lampPhase = 0;
+  let lastW = app.renderer.width;
+  let lastH = app.renderer.height;
+  app.ticker.add((tk) => {
+    rays.rotation += 0.0006 * tk.deltaTime;
+    lampPhase += tk.deltaTime;
+    if (app!.renderer.width !== lastW || app!.renderer.height !== lastH) {
+      lastW = app!.renderer.width;
+      lastH = app!.renderer.height;
+      drawBackdrop();
+      layout();
+      drawFrame();
+      if (lastGrid.length) {
+        for (let col = 0; col < COLS; col += 1) {
+          fillReel(col, [rnd(), lastGrid[col]![0]!, lastGrid[col]![1]!, lastGrid[col]![2]!, rnd()]);
+          reels[col]!.y = originY;
+        }
+      }
+    }
   });
 
+  offs.push(
+    gameSocket.on(Ev.SlJackpot, (m) => {
+      const d = m.data as { pools: Record<Tier, number>; hit?: { tier: Tier; amount: number; uid: number } };
+      jackpots.value = d.pools;
+      if (d.hit && d.hit.uid !== (user.me?.uid ?? -1)) {
+        hitTier.value = d.hit.tier;
+        setTimeout(() => (hitTier.value = ''), 2500);
+      }
+    }),
+  );
   try {
-    const enter = await gameSocket.call<any>('slot.enter');
-    balance.value = enter.balance;
-    betOptions.value = enter.paytable.betOptions;
+    const r = await gameSocket.call<any>(Ev.SlEnter, {}, 8000);
+    betOptions.value = r.paytable.betOptions;
     betPerLine.value = betOptions.value[0]!;
-    paytableLines = enter.paytable.lines;
-    freeSpinsRemaining.value = enter.freeSpinsRemaining ?? 0;
-    // 初始随机静态盘面
-    for (let col = 0; col < COLS; col += 1) {
-      fillReel(col, [rnd(), rnd(), rnd(), rnd(), rnd()]);
-      reels[col]!.y = originY + cellH;
-    }
+    paytableLines = r.paytable.lines;
+    setBalance(r.balance);
+    freeSpinsRemaining.value = r.freeSpinsRemaining ?? 0;
+    jackpots.value = r.jackpots ?? jackpots.value;
+    ticketQty.value = r.ticketQty ?? 0;
+    if (freeSpinsRemaining.value > 0) void onSpin();
   } catch (e) {
     toast((e as Error).message, 'error');
     void router.replace('/lobby');
@@ -613,216 +534,256 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   destroyed = true;
   autoSpin.value = false;
-  window.clearInterval(rollTimer);
+  offs.forEach((off) => off());
   app?.destroy(true, { children: true });
   app = null;
+  reels = [];
+  void release('slots');
+  audio.setScene('none');
 });
 </script>
 
 <style scoped>
 .sl-root {
-  height: 100%;
   position: relative;
+  height: 100%;
   overflow: hidden;
-  background: radial-gradient(120% 100% at 50% 30%, #191426 0%, #0c0a12 70%);
-  display: flex;
-  flex-direction: column;
-}
-.hud-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: calc(var(--safe-top) + 8px) 14px 8px;
-  z-index: 5;
-}
-.hback {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--line-soft);
-  color: var(--gold-champagne);
-  font-size: 20px;
-  cursor: pointer;
-}
-.title {
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  color: var(--gold-champagne);
-}
-.hcoins {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--line-soft);
-  border-radius: 18px;
-  padding: 6px 12px;
-  font-size: 12px;
-  color: var(--gold-warm);
-  font-weight: 700;
+  background: #0a0716;
+  user-select: none;
 }
 .stage {
-  flex: 1;
-  position: relative;
-}
-.fs-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: absolute;
-  top: calc(var(--safe-top) + 52px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, transparent, rgba(201, 160, 99, 0.3), transparent);
-  color: var(--gold-champagne);
-  padding: 6px 40px;
-  font-weight: 700;
-  font-size: 14px;
-  z-index: 6;
-  white-space: nowrap;
-}
-.tier-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(6, 8, 12, 0.75);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  z-index: 20;
-  cursor: pointer;
 }
-.tier-text {
-  font-size: 46px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  background: linear-gradient(180deg, #ffe9b8, #c9a063 60%, #8a6b3c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: tier-in 0.5s var(--ease-out);
-  text-shadow: 0 0 40px rgba(201, 160, 99, 0.4);
-}
-.tier-text.mega {
-  font-size: 56px;
-}
-.tier-text.epic {
-  font-size: 64px;
-}
-@keyframes tier-in {
-  0% {
-    transform: scale(2.2);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-.tier-amount {
-  font-size: 34px;
-  font-weight: 800;
-  color: #ffe9b0;
-}
-.rain-coin {
+/* ══ 顶栏 ══ */
+.hud-top {
   position: absolute;
-  top: -40px;
-  animation: coin-fall linear infinite;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+  z-index: 3;
+  top: calc(var(--safe-top) + 8px);
+  left: max(var(--safe-left), 12px);
+  right: max(var(--safe-right), 12px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
   pointer-events: none;
 }
-@keyframes coin-fall {
-  0% {
-    transform: translateY(0) rotate(0deg);
-    opacity: 0;
-  }
-  8% {
-    opacity: 1;
-  }
+.hud-top > * {
+  pointer-events: auto;
+}
+.jackpots {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.jackpots :deep(.jb) {
+  --w: clamp(150px, 12vw, 220px);
+}
+.hcoins {
+  --h: 36px;
+}
+.mascot {
+  position: absolute;
+  z-index: 1;
+  right: max(var(--safe-right), 8px);
+  bottom: 120px;
+  height: min(38vh, 300px);
+  pointer-events: none;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.6));
+  animation: mascot-bob 3s ease-in-out infinite;
+}
+@keyframes mascot-bob {
+  0%,
   100% {
-    transform: translateY(110vh) rotate(340deg);
-    opacity: 0.9;
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
   }
 }
+.fs-banner {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: calc(var(--safe-top) + 64px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 18px 6px 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(34, 168, 58, 0.9), rgba(15, 92, 34, 0.9));
+  box-shadow:
+    inset 0 0 0 2px #7d4d0c,
+    inset 0 0 0 3.5px #ffd867,
+    0 0 26px rgba(124, 243, 106, 0.55);
+  font-size: 18px;
+}
+.fs-banner img {
+  height: 40px;
+}
+/* ══ 控制台 ══ */
 .console {
+  position: absolute;
+  z-index: 3;
+  left: max(var(--safe-left), 12px);
+  right: max(var(--safe-right), 12px);
+  bottom: calc(var(--safe-bottom) + 10px);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  margin: 0 12px calc(var(--safe-bottom) + 12px);
-  padding: 12px 16px;
-  border-radius: 20px;
-  z-index: 5;
+  gap: 12px;
+  flex-wrap: wrap;
 }
-.ctrl {
+.win-bar {
+  position: relative;
+  width: clamp(180px, 16vw, 260px);
+  aspect-ratio: 3.4 / 1;
+}
+.win-bar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.win-num {
+  position: absolute;
+  left: 50%;
+  top: 66%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(16px, 1.5vw, 24px);
+  font-weight: 900;
+  color: #fff3c4;
+  text-shadow:
+    0 1px 0 #5a3305,
+    0 0 8px rgba(255, 200, 80, 0.55);
+}
+.bet {
+  --h: 44px;
+  margin-top: 14px;
+}
+.total {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  line-height: 1.1;
 }
-.clabel {
-  font-size: 10px;
-  color: var(--text-secondary);
-}
-.cvals {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.cbtn {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  border: 1px solid var(--line-soft);
-  background: var(--bg-night);
-  color: var(--gold-champagne);
-  cursor: pointer;
-}
-.cval {
-  font-weight: 800;
-  font-size: 15px;
-}
-.cval.gold {
-  color: var(--gold-champagne);
-}
-.cval.jade {
-  color: var(--accent-jade);
-}
-.spin-btn {
-  width: 74px;
-  height: 74px;
-  border-radius: 50%;
-  border: 3px solid var(--gold-warm);
-  background: radial-gradient(circle at 32% 28%, #4a3a1f, #241a08);
-  color: var(--gold-champagne);
-  font-size: 17px;
-  font-weight: 900;
+.t-label,
+.t-lines {
+  font-size: 11px;
+  color: #9fb4e8;
   letter-spacing: 0.08em;
+}
+.t-val {
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffe28a;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+.ctl {
+  --h: 52px;
+  min-width: 92px !important;
+}
+.ctl.on {
+  filter: drop-shadow(0 0 12px rgba(255, 226, 138, 0.95)) brightness(1.15);
+}
+.auto-n {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 900;
+  color: #ffe28a;
+  text-shadow: var(--sk-outline);
+}
+.spin {
+  position: relative;
+  width: clamp(88px, 8vw, 128px);
+  height: clamp(88px, 8vw, 128px);
+  padding: 0;
+  border: 0;
+  background: transparent;
   cursor: pointer;
-  box-shadow: var(--shadow-glow-gold);
-  transition: transform var(--dur-micro) var(--ease-out);
+  transition: transform 120ms var(--ease-out);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
 }
-.spin-btn:active {
-  transform: scale(0.93);
+.spin img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
-.spin-btn.spinning {
-  filter: brightness(0.8);
+.spin:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+.spin:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.spin:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.4) brightness(0.8);
+}
+.spin.spinning img {
+  animation: spin-rot 1.2s linear infinite;
+}
+@keyframes spin-rot {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .spin-ring {
-  display: inline-block;
-  width: 22px;
-  height: 22px;
-  border: 3px solid rgba(230, 207, 163, 0.25);
-  border-top-color: var(--gold-champagne);
+  position: absolute;
+  inset: 14%;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  animation: spin-rot 800ms linear infinite;
 }
-.activeAuto {
-  border-color: var(--accent-jade);
-  color: var(--accent-jade);
+.pop-enter-active,
+.pop-leave-active {
+  transition: all 260ms var(--ease-out);
 }
-.fsb-star {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
+.pop-enter-from,
+.pop-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.7);
+}
+/* ══ 响应式 ══ */
+@media (max-width: 900px), (max-height: 560px) {
+  .mascot {
+    display: none;
+  }
+  .jackpots :deep(.jb) {
+    --w: 120px;
+  }
+  .win-bar {
+    width: 150px;
+  }
+  .ctl {
+    --h: 40px;
+    min-width: 72px !important;
+  }
+  .bet {
+    --h: 38px;
+  }
+  .console {
+    gap: 8px;
+    bottom: calc(var(--safe-bottom) + 6px);
+  }
+  .spin {
+    width: 74px;
+    height: 74px;
+  }
+}
+@media (max-width: 720px) {
+  .jackpots {
+    gap: 4px;
+  }
+  .jackpots :deep(.jb) {
+    --w: 86px;
+  }
+  .t-lines {
+    display: none;
+  }
 }
 </style>

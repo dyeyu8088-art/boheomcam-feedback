@@ -1,5 +1,46 @@
 # CHANGELOG
 
+## [0.3.0] - 2026-09-03 新版美术全量接入（PHASE 20 · P1–P5）
+
+### P1–P2 项目扫描与素材入库
+- 新增 `PROJECT_ANALYSIS.md`（技术栈 / 目录 / 功能矩阵 / API / WS 事件 / 27 张表 / 待改文件）与
+  `ASSET_MAPPING.md`（素材 → 游戏 → 界面 → 组件 → 功能，状态 ✅ / 🔧 / 📦，以及「明确不接入」清单）
+- 六张 AI 生成素材表（红十 / 麻将 / 轮盘 / 捕鱼 / 股票 / 水果机）按 alpha 侵蚀连通域拆分为 343 个独立 PNG，
+  统一目录 `public/assets/{common,lobby,fishing,slots,roulette,stock_game,mahjong,red10}/…`，统一英文命名
+- `tools/assets/build-manifest.mjs` 生成 `public/assets-manifest.json` + `src/assets/manifest.gen.ts`（key 由文件名派生，重复即报错）；
+  `src/assets/assets.ts` 提供 `asset() / assetByKey() / preload()（按字节加权进度）/ pixiTextures() / release()`，禁止散落硬编码路径
+- 素材表中的真实商标（Apple / Tesla / Microsoft / BTC / ETH）与 TOP-UP / CASHBACK 现金语义元素不接入；
+  含中文烘焙文字的按钮仅作 `_zh` 变体在中文环境使用，其它语言用 CSS 底板 + 程序文字
+
+### P3 统一大厅与公共 UI 组件库
+- `ui/`：`GameButton`（四态 / 艺术底图 / 徽标 / 音效）、`CurrencyBar`、`AnimatedNumber`、`PlayerProfile`、`VipBadge`、`GameNavbar`、
+  `BetChip`、`BetStepper`、`ProgressBar`、`JackpotBar`、`GameToggle`、`GamePopup`、`Countdown`、`RewardAnimation`、`LoadingScreen`
+- `audio/AudioManager.ts`：BGM / SFX / Voice 三总线、设置持久化、首次手势解锁、按场景切换与释放；
+  41 个 Kenney CC0 音效转 mono 22.05 kHz MP3
+- 大厅重写：六游戏入口（延边麻将 / 红十 / 捕鱼 / 水果机 / 轮盘 / 股票涨跌，后两者由服务端 `games.status` 控制显示「即将上线」）、
+  顶部头像 / 昵称 / ID / 等级 / VIP / 金币 / 钻石、功能区（活动 / 签到 / 任务 / 邮件 / 排行 / 公告 / VIP）、底部导航（大厅 / 游戏 / 比赛 / 好友 / 背包 / 商城）
+- 新后端：`GET /vip` + `POST /vip/daily`、`GET /inventory`、`GET /shop` + `POST /shop/purchase`（幂等）、
+  `GET /tournaments` + `POST /tournaments/:id/join`（幂等）与 60 s 赛事调度器（按排名结算 → 系统邮件发奖 → 自动开启下一期）；
+  迁移 `006_expansion.sql` / 种子 `002_expansion.sql`（vip_levels 0–10、道具、商品、四档 Jackpot、赛事）
+- 结算链路新增 VIP 经验 `bumpExp` 与赛事指标 `bumpTournament`
+
+### P4 捕鱼
+- `game-common/fishing`：技能配置（雷电 / 导弹 / 激光 / 核弹 / 冰冻 / 锁定，冷却与目标数）、Boss 血量模型
+  （`bossMaxHp = baseOdds × bulletBaseCost × topMultiplier`，伤害按成本浮动，奖励按 RTP 按伤害比例分配）、冰冻窗口
+- `fishingHost`：技能优先消耗背包道具（幂等 key），否则扣金币；击杀入账幂等；Boss 血量 / 死亡 / 分账广播；`fishing_skill_uses` 落库
+- 客户端：精灵鱼群对象池、三档炮台、技能栏、锁定准星、Boss 血条、冰冻演出；Pixi `autoDensity` 修复 DPR 2 双倍渲染
+- 单测 `fishing-skills.test.ts` 5 项；E2E 新增 3 项技能断言
+
+### P5 水果机
+- 赔付表 `fruit_gold_v2`（符号改名 CHERRY LEMON ORANGE GRAPE MELON DIAMOND SEVEN GOLD WILD BONUS，数学不变；迁移时自动激活并退役旧版）
+- `slotHost` 重写：四档 Jackpot 奖池（每注按 `contrib_bp` 注入、`hit_chance_ppm` 由高到低判定、命中后 `FOR UPDATE` 重置种子、
+  `slot:jackpot:<roundId>` 幂等入账、`slot_jackpot_hits` 落库、`slot.jackpot` 广播）；免费旋转持久化到 Redis；免费旋转券 `slot.ticket`
+- 客户端重写：精灵符号、四档 Jackpot 条实时滚动、WIN 板、TOTAL BET 板（数字程序绘制）、MAX BET / TURBO / AUTO(50) / 券；
+  转轴弹射 → 匀速 → 错峰停 + 回弹（极速 45%）；中奖线与格子脉冲；大奖 / Jackpot 演出
+- 修复：机台底座层级盖住转轴；转轴滚动方向与遮罩贴合；光晕烘焙为 1/4 分辨率纹理减少全屏叠加；
+  素材切边残留（元宝 / 樱桃 / 葡萄）与财神立绘矩形光晕清理
+- 单测 `slot.test.ts` 7 项；E2E 新增 2 项 Jackpot 断言（合计 33 项）；新增 `tests/slot-shot.mjs`
+
 ## [0.2.1] - 2026-09-03 GitHub 开源素材接入（PHASE 19 美术精修 · 续）
 
 ### 素材来源与合规（新增 `THIRD_PARTY_ASSETS.md`）
