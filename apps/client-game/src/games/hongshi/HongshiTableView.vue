@@ -3,16 +3,19 @@
     <div v-if="phase === 'connecting' || phase === 'matching'" class="overlay">
       <div class="radar"><span /><span /><span /></div>
       <div class="otext">{{ phase === 'matching' ? t('lobby.matching') : t('common.loading') }}</div>
-      <button v-if="phase === 'matching'" class="btn btn-secondary" @click="cancelMatch">{{ t('lobby.match.cancel') }}</button>
+      <GameButton v-if="phase === 'matching'" variant="dark" size="md" sfx="close" @click="cancelMatch">{{ t('lobby.match.cancel') }}</GameButton>
     </div>
 
     <div v-else-if="phase === 'waiting'" class="overlay">
-      <div class="wait-card glass">
-        <div class="wtitle">{{ t('game.hongshi') }}</div>
+      <div class="wait-card sk-panel">
+        <img class="w-mascot" :src="mascotArt" alt="" draggable="false" />
+        <div class="wtitle sk-gold-text">{{ t('game.hongshi') }}</div>
         <div class="wno num">{{ t('room.no', { no: room?.roomNo ?? '' }) }}</div>
         <div class="wbtns">
-          <button class="btn btn-primary" style="flex: 1" @click="ready(true)">{{ t('room.ready') }}</button>
-          <button class="btn btn-secondary" @click="leaveToLobby()">{{ t('room.leave') }}</button>
+          <!-- 中文环境使用素材表成品「准备」按钮；其它语言用 CSS 板件 + 程序文字 -->
+          <GameButton v-if="zh" :art="readyArt" size="lg" block sfx="confirm" @click="ready(true)" />
+          <GameButton v-else variant="green" size="lg" block sfx="confirm" @click="ready(true)">{{ t('room.ready') }}</GameButton>
+          <GameButton variant="dark" size="lg" sfx="close" @click="leaveToLobby()">{{ t('room.leave') }}</GameButton>
         </div>
       </div>
     </div>
@@ -20,9 +23,9 @@
     <template v-else>
       <TableSurface tone="wine" />
       <div class="hud-top">
-        <button class="hback" @click="leaveToLobby()"><AppIcon name="back" :size="18" /></button>
+        <GameButton round size="md" :art="exitArt" class="hback" sfx="close" @click="leaveToLobby()" />
         <div class="hinfo num">{{ t('room.round', { a: room?.currentRound ?? 1, b: room?.totalRounds ?? 4 }) }}</div>
-        <div class="hcoins num"><AppIcon name="coin" :size="15" />{{ fmt(user.me?.coins) }}</div>
+        <CurrencyBar kind="coin" :value="user.me?.coins ?? 0" class="hcoins" />
       </div>
 
       <!-- 其他玩家 -->
@@ -33,7 +36,7 @@
             <div class="oname">{{ p.nickname }}</div>
             <div class="obadges">
               <span v-if="identityOf(p.seat) !== null" class="camp" :class="{ red: identityOf(p.seat) }">
-                {{ identityOf(p.seat) ? t('hs.red') : t('hs.blue') }}
+                <img v-if="identityOf(p.seat)" class="suit-ic" :src="suitHeartArt" alt="" draggable="false" />{{ identityOf(p.seat) ? t('hs.red') : t('hs.blue') }}
               </span>
               <span v-if="rankOf(p.seat)" class="frank">{{ t(`hs.rank${rankOf(p.seat)}`) }}</span>
             </div>
@@ -55,16 +58,34 @@
           <template v-if="lastPlayOf(p.seat)">
             <PlayCard v-for="c in lastPlayOf(p.seat)!" :key="c" :card="c" size="sm" class="pcard" />
           </template>
+          <img v-else-if="passedSeats.has(p.seat) && zh" class="pass-art" :src="noPlayArt" alt="" draggable="false" />
           <span v-else-if="passedSeats.has(p.seat)" class="pass-tag">{{ t('hs.pass') }}</span>
         </div>
       </div>
 
-      <!-- 操作按钮 -->
+      <!-- 出牌演出：炸弹 / 有红十（中文用素材爆字，其它语言程序文字） -->
+      <transition-group name="pop" tag="div" class="callouts">
+        <div v-for="c in callouts" :key="c.id" class="callout" :class="[`cpos${c.pos}`, c.kind]">
+          <img v-if="zh && c.art" :src="c.art" alt="" draggable="false" />
+          <span v-else class="callout-text">{{ c.text }}</span>
+        </div>
+      </transition-group>
+      <transition name="pop">
+        <div v-if="turnSeat === mySeat" class="turn-flag">
+          <img v-if="zh" :src="turnArrowArt" alt="" draggable="false" />
+          <span v-else class="turn-text">{{ t('hs.yourTurn') }}</span>
+        </div>
+      </transition>
+      <RewardAnimation ref="reward" />
+
+      <!-- 操作按钮：全部走服务端校验（hongshi.play / hongshi.pass / hongshi.hint） -->
       <div v-if="turnSeat === mySeat" class="hs-actions">
-        <button class="btn btn-secondary" :disabled="mustLead" @click="doPass">{{ t('hs.pass') }}</button>
-        <button class="btn btn-secondary" @click="doHint">{{ t('hs.hint') }}</button>
-        <button class="btn btn-primary" :disabled="selected.size === 0" @click="doPlay">{{ t('hs.play') }}</button>
+        <GameButton variant="dark" size="lg" :disabled="mustLead" sfx="pass" @click="doPass">{{ t('hs.pass') }}</GameButton>
+        <GameButton variant="blue" size="lg" sfx="tick" @click="doHint">{{ t('hs.hint') }}</GameButton>
+        <GameButton variant="gold" size="lg" :disabled="selected.size === 0" sfx="card" @click="doPlay">{{ t('hs.play') }}</GameButton>
       </div>
+      <!-- 结算面板收起后可随时重新查看本局战绩 -->
+      <GameButton v-if="!showSettle && result" :art="zh ? settleArt : undefined" variant="purple" size="sm" class="re-settle" sfx="open" @click="showSettle = true">{{ t('hs.settle.title') }}</GameButton>
 
       <!-- 手牌 -->
       <div class="my-hand">
@@ -83,53 +104,69 @@
       </div>
 
       <!-- 结算 -->
-      <ModalSheet v-model="showSettle" :title="t('hs.settle.title')" width="480px">
+      <GamePopup v-model="showSettle" :title="t('hs.result')" skin="red" size="md">
         <div v-if="result" class="settle">
-          <div v-if="result.solo" class="solo">{{ t('hs.solo') }} ×{{ result.multiplier }}</div>
-          <div class="srows">
-            <div v-for="r in result.ranks" :key="r.seat" class="srow">
-              <span>
-                {{ t(`hs.rank${r.rank}`) }} · {{ nameOf(r.seat) }}
-                <span class="camp" :class="{ red: result.teams[0].seats.includes(r.seat) }">
-                  {{ result.teams[0].seats.includes(r.seat) ? t('hs.red') : t('hs.blue') }}
+          <div class="s-main">
+            <div class="s-head">
+              <img v-if="myTeamWon" class="s-win" :src="winArt" alt="" draggable="false" />
+              <span v-else-if="isDraw" class="s-lose draw">{{ t('hs.draw') }}</span>
+              <span v-else class="s-lose">{{ t('hs.teamLose') }}</span>
+              <img v-if="result.multiplier === 2" class="s-mult" :src="x2Art" alt="" draggable="false" />
+              <img v-else-if="result.multiplier >= 4" class="s-mult" :src="x4Art" alt="" draggable="false" />
+              <span v-else-if="result.multiplier > 1" class="s-mult-text num">×{{ result.multiplier }}</span>
+            </div>
+            <div v-if="result.solo" class="solo">{{ t('hs.solo') }} · {{ t('hs.multiplier', { n: result.multiplier }) }}</div>
+            <div class="srows">
+              <div v-for="r in rankRows" :key="r.seat" class="srow">
+                <span class="sname">
+                  <span class="srank">{{ t(`hs.rank${r.rank}`) }}</span>{{ nameOf(r.seat) }}
+                  <span class="camp" :class="{ red: redSeats.includes(r.seat) }">
+                    <img v-if="redSeats.includes(r.seat)" class="suit-ic" :src="suitHeartArt" alt="" draggable="false" />{{ redSeats.includes(r.seat) ? t('hs.red') : t('hs.blue') }}
+                  </span>
                 </span>
-              </span>
-              <span class="num" :class="(result.scoreChanges[r.seat] ?? 0) > 0 ? 'win' : (result.scoreChanges[r.seat] ?? 0) < 0 ? 'lose' : ''">
-                {{ fmtSigned(result.scoreChanges[r.seat] ?? 0) }}
-              </span>
+                <span class="num sval" :class="(result.scoreChanges[r.seat] ?? 0) > 0 ? 'win' : (result.scoreChanges[r.seat] ?? 0) < 0 ? 'lose' : ''">
+                  {{ fmtSigned(result.scoreChanges[r.seat] ?? 0) }}
+                </span>
+              </div>
             </div>
           </div>
+          <img class="s-mascot" :src="mascotArt" alt="" draggable="false" />
         </div>
-      </ModalSheet>
+      </GamePopup>
 
-      <ModalSheet v-model="showMatchOver" :title="t('mj.matchOver')" width="480px">
+      <GamePopup v-model="showMatchOver" :title="t('mj.matchOver')" skin="cream" size="md" :closable="false">
         <div class="srows">
-          <div v-for="row in matchTotals" :key="row.seat" class="srow">
-            <span>{{ row.nickname }}</span>
-            <span class="num" :class="row.score > 0 ? 'win' : row.score < 0 ? 'lose' : ''">{{ fmtSigned(row.score) }}</span>
+          <div v-for="(row, i) in matchTotals" :key="row.seat" class="srow">
+            <span class="sname"><span class="srank">{{ i + 1 }}</span>{{ row.nickname }}</span>
+            <span class="num sval" :class="row.score > 0 ? 'win' : row.score < 0 ? 'lose' : ''">{{ fmtSigned(row.score) }}</span>
           </div>
         </div>
-        <button class="btn btn-primary" style="width: 100%; margin-top: 16px" @click="leaveToLobby(false)">{{ t('common.back') }}</button>
-      </ModalSheet>
+        <GameButton variant="gold" size="lg" block class="s-back" sfx="confirm" @click="leaveToLobby(false)">{{ t('common.back') }}</GameButton>
+      </GamePopup>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Ev } from '@yanbian/protocol';
 import { gameSocket } from '../../net/ws.js';
 import { useUserStore } from '../../stores/user.js';
 import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
-import ModalSheet from '../../ui/ModalSheet.vue';
+import GamePopup from '../../ui/GamePopup.vue';
+import GameButton from '../../ui/GameButton.vue';
+import CurrencyBar from '../../ui/CurrencyBar.vue';
+import RewardAnimation from '../../ui/RewardAnimation.vue';
+import { asset } from '../../assets/assets.js';
+import { audio } from '../../audio/AudioManager.js';
+import { currentLocale } from '../../i18n/index.js';
 import CountdownRing from '../CountdownRing.vue';
 import TableSurface from '../TableSurface.vue';
 import PlayCard from './PlayCard.vue';
 import { useGameRoom, relativePos } from '../useGameRoom.js';
 import AvatarBadge from '../../ui/AvatarBadge.vue';
-import AppIcon from '../../ui/AppIcon.vue';
-import { fmt, fmtSigned } from '../../ui/format.js';
+import { fmtSigned } from '../../ui/format.js';
 
 const user = useUserStore();
 const { room, phase, mySeat, on, begin, ready, leaveToLobby, cancelMatch } = useGameRoom('hongshi');
@@ -148,6 +185,41 @@ const result = ref<any>(null);
 const showSettle = ref(false);
 const showMatchOver = ref(false);
 const matchTotals = ref<{ seat: number; nickname: string; score: number }[]>([]);
+
+/** 新版美术：含中文烙字的素材只在中文环境使用；其它语言用 CSS 板件 + 程序文字 */
+const zh = computed(() => currentLocale.value === 'zh');
+const exitArt = asset('common', 'btnExitRound');
+const readyArt = asset('red10', 'btnReadyZh');
+const settleArt = asset('red10', 'btnSettleZh');
+const noPlayArt = asset('red10', 'fxNoPlayZh');
+const bombArt = asset('red10', 'fxBombZh');
+const hongshiArt = asset('red10', 'fxHongshiZh');
+const turnArrowArt = asset('red10', 'turnArrowZh');
+const winArt = asset('red10', 'fxWin');
+const x2Art = asset('red10', 'fxX2');
+const x4Art = asset('red10', 'fxX4');
+const mascotArt = asset('red10', 'caishenCard');
+const suitHeartArt = asset('red10', 'cardsuit_heart');
+const callouts = ref<{ id: number; pos: number; kind: string; text: string; art?: string }[]>([]);
+const reward = ref<InstanceType<typeof RewardAnimation> | null>(null);
+let calloutSeq = 0;
+const redSeats = computed<number[]>(() => {
+  const teams = (result.value?.teams ?? []) as { seats: number[]; isRedTeam?: boolean }[];
+  return (teams.find((x) => x.isRedTeam) ?? teams[0])?.seats ?? [];
+});
+const myTeamWon = computed(() => ((result.value?.scoreChanges?.[mySeat.value] as number | undefined) ?? 0) > 0);
+/** 平局：四家分数变化全为 0（头游+末游 对 二游+三游） */
+const isDraw = computed(() => Object.values((result.value?.scoreChanges ?? {}) as Record<number, number>).every((v) => v === 0));
+const rankRows = computed(() => [...((result.value?.ranks ?? []) as { seat: number; rank: number }[])].sort((a, b) => a.rank - b.rank));
+
+function pushCallout(seat: number, kind: string, text: string, art?: string, ms = 1500): void {
+  calloutSeq += 1;
+  const id = calloutSeq;
+  callouts.value.push({ id, pos: relativePos(seat, mySeat.value), kind, text, art });
+  setTimeout(() => {
+    callouts.value = callouts.value.filter((c) => c.id !== id);
+  }, ms);
+}
 
 const others = computed(() =>
   (room.value?.players ?? [])
@@ -197,7 +269,11 @@ function applySnapshot(game: any): void {
   deadlineAt.value = Date.now() + 10000;
 }
 
+onBeforeUnmount(() => audio.setScene('none'));
+
 onMounted(async () => {
+  audio.setScene('hongshi');
+  audio.preload(['card', 'cardSlide', 'deal', 'pass', 'bomb', 'win', 'lose']);
   const snap = await begin(user.me?.uid ?? 0);
   if (snap && (snap as any).game) applySnapshot((snap as any).game);
 
@@ -207,6 +283,7 @@ onMounted(async () => {
     phase.value = 'playing';
   });
   on(Ev.HsDeal, (d) => {
+    audio.sfx('deal', { volume: 0.7 });
     resetRound();
     hand.value = sortHand([...d.cards]);
     for (const p of room.value?.players ?? []) handCounts.value.set(p.seat, 13);
@@ -221,6 +298,12 @@ onMounted(async () => {
     }
   });
   on(Ev.HsPlayed, (d) => {
+    if (d.comboType === 'bomb') {
+      pushCallout(d.seat, 'bomb', t('hs.bomb'), bombArt, 1600);
+      audio.sfx('bomb');
+    } else {
+      audio.sfx(d.seat === mySeat.value ? 'card' : 'cardSlide', { volume: 0.7 });
+    }
     lastPlays.value.set(d.seat, d.cards);
     passedSeats.value.delete(d.seat);
     handCounts.value.set(d.seat, d.handLeft);
@@ -230,6 +313,7 @@ onMounted(async () => {
     }
   });
   on(Ev.HsPass, (d) => {
+    if (d.seat !== mySeat.value) audio.sfx('pass', { volume: 0.5 });
     passedSeats.value.add(d.seat);
     passedSeats.value = new Set(passedSeats.value);
   });
@@ -238,7 +322,10 @@ onMounted(async () => {
     passedSeats.value = new Set();
   });
   on(Ev.HsIdentityReveal, (d) => {
-    for (const s of d.seats ?? []) identities.value.set(s, true);
+    for (const s of d.seats ?? []) {
+      identities.value.set(s, true);
+      pushCallout(s, 'hongshi', t('hs.hasRed'), hongshiArt, 1800);
+    }
     identities.value = new Map(identities.value);
   });
   on('hongshi.finish', (d) => {
@@ -255,6 +342,13 @@ onMounted(async () => {
   on(Ev.HsRoundEnd, (d) => {
     result.value = d.result;
     showSettle.value = true;
+    const myGain = (d.result?.scoreChanges?.[mySeat.value] as number | undefined) ?? 0;
+    if (myGain > 0) {
+      const mult = (d.result?.multiplier as number | undefined) ?? 1;
+      reward.value?.play({ amount: myGain, tier: mult >= 4 ? 'mega' : mult >= 2 ? 'big' : 'normal', banner: t('hs.teamWin'), caption: t('hs.result') });
+    } else if (myGain < 0) {
+      audio.sfx('lose', { volume: 0.5 });
+    }
     const mine = (d.balances as { userId: number; balance: number }[] | undefined)?.find((b) => b.userId === user.me?.uid);
     if (mine) user.setBalance(mine.balance);
     if (room.value) {
@@ -263,10 +357,10 @@ onMounted(async () => {
         if (p) p.score = tot.score;
       }
     }
-    setTimeout(() => (showSettle.value = false), 5200);
+    setTimeout(() => (showSettle.value = false), 6600);
   });
   on(Ev.GameMatchOver, (d) => {
-    matchTotals.value = d.totals ?? [];
+    matchTotals.value = [...((d.totals ?? []) as typeof matchTotals.value)].sort((a, b) => b.score - a.score);
     showSettle.value = false;
     showMatchOver.value = true;
   });
@@ -382,23 +476,27 @@ function cancelTrustee(): void {
   z-index: 5;
 }
 .hback {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--line-soft);
-  color: var(--gold-champagne);
-  font-size: 20px;
-  cursor: pointer;
+  flex-shrink: 0;
 }
-.hinfo,
-.hcoins {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--line-soft);
+.hinfo {
+  background: linear-gradient(180deg, rgba(38, 16, 24, 0.92), rgba(16, 6, 11, 0.9));
+  border: 1.5px solid var(--sk-gold-3, #c9a063);
   border-radius: 18px;
-  padding: 6px 14px;
+  padding: 6px 16px;
   font-size: 12px;
-  color: var(--gold-champagne);
+  font-weight: 700;
+  color: var(--sk-gold-1, #ffe9a6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.45);
+}
+.hcoins {
+  flex-shrink: 0;
+}
+.suit-ic {
+  height: 11px;
+  margin-right: 3px;
+  vertical-align: -1px;
 }
 .opp {
   position: absolute;
@@ -488,6 +586,11 @@ function cancelTrustee(): void {
   color: var(--gold-champagne);
   font-weight: 700;
 }
+.pass-art {
+  height: clamp(34px, 5.2vh, 50px);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+  animation: callout-in 320ms var(--ease-out);
+}
 .pass-tag {
   font-size: 13px;
   font-weight: 700;
@@ -574,6 +677,103 @@ function cancelTrustee(): void {
   top: 50%;
   transform: translateY(-50%);
 }
+/* 喊话层：炸弹 / 有红十 按相对座位方位弹出 */
+.callouts {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+}
+.callout {
+  position: absolute;
+  animation: callout-in 380ms var(--ease-out);
+  filter: drop-shadow(0 0 14px rgba(255, 140, 40, 0.7)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+}
+.callout img {
+  height: clamp(60px, 10vh, 104px);
+}
+.callout-text {
+  font-family: var(--font-calligraphy);
+  font-size: clamp(34px, 5vh, 56px);
+  font-weight: 900;
+  color: #ffe9a6;
+  text-shadow:
+    0 0 2px #7a3a00,
+    0 0 3px #7a3a00,
+    0 0 12px rgba(255, 140, 40, 0.9);
+}
+.callout.cpos0 {
+  left: 50%;
+  bottom: 36%;
+  transform: translateX(-50%);
+}
+.callout.cpos2 {
+  left: 50%;
+  top: 17%;
+  transform: translateX(-50%);
+}
+.callout.cpos1 {
+  right: 14%;
+  top: 36%;
+}
+.callout.cpos3 {
+  left: 14%;
+  top: 36%;
+}
+@keyframes callout-in {
+  0% {
+    opacity: 0;
+    scale: 1.8;
+  }
+  60% {
+    opacity: 1;
+    scale: 0.94;
+  }
+  100% {
+    scale: 1;
+  }
+}
+/* 轮到我出牌 */
+.turn-flag {
+  position: absolute;
+  left: max(var(--safe-left), 14px);
+  bottom: calc(var(--safe-bottom) + 126px);
+  z-index: 8;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+  animation: turn-bob 1.1s ease-in-out infinite;
+}
+.turn-flag img {
+  height: clamp(44px, 7vh, 64px);
+}
+.turn-text {
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 900;
+  color: #1a1206;
+  background: linear-gradient(180deg, #ffe9a6, #f0b93a 60%, #c98a1c);
+  border-radius: 12px;
+  padding: 8px 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+}
+@keyframes turn-bob {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+}
+.re-settle {
+  position: absolute;
+  right: max(var(--safe-right), 14px);
+  bottom: calc(var(--safe-bottom) + 200px);
+  z-index: 8;
+  --h: 40px;
+}
 .hs-actions {
   position: absolute;
   left: 50%;
@@ -620,9 +820,79 @@ function cancelTrustee(): void {
   font-size: 13px;
 }
 .settle {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  gap: 8px;
+  align-items: end;
+}
+.s-main {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
+}
+.s-mascot {
+  width: 112px;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
+}
+.s-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 72px;
+}
+.s-win {
+  height: 92px;
+  filter: drop-shadow(0 0 16px rgba(255, 170, 60, 0.6));
+}
+.s-lose {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text-secondary);
+  letter-spacing: 0.1em;
+}
+.s-lose.draw {
+  color: #ffe9a6;
+}
+.s-mult {
+  height: 64px;
+}
+.s-mult-text {
+  font-size: 30px;
+  font-weight: 900;
+  color: #ffe28a;
+  text-shadow: var(--sk-outline);
+}
+.sname {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.srank {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: linear-gradient(180deg, #ffe9a6, #c98a1c);
+  color: #1a1206;
+  font-size: 11px;
+  font-weight: 900;
+}
+.sval {
+  font-weight: 900;
+  font-size: 16px;
+}
+.s-back {
+  margin-top: 16px;
+}
+.w-mascot {
+  align-self: center;
+  height: 96px;
+  margin-top: -56px;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.5));
 }
 .solo {
   text-align: center;
@@ -646,5 +916,27 @@ function cancelTrustee(): void {
 }
 .lose {
   color: var(--accent-crimson);
+}
+@media (max-height: 640px) {
+  .turn-flag {
+    bottom: calc(var(--safe-bottom) + 96px);
+  }
+  .turn-flag img {
+    height: 40px;
+  }
+  .hs-actions {
+    bottom: calc(var(--safe-bottom) + 108px);
+  }
+  .re-settle {
+    bottom: calc(var(--safe-bottom) + 150px);
+  }
+}
+@media (max-width: 560px) {
+  .settle {
+    grid-template-columns: 1fr;
+  }
+  .s-mascot {
+    display: none;
+  }
 }
 </style>

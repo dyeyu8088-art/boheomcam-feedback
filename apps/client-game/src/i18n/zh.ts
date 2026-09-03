@@ -181,6 +181,8 @@ export const zh: Record<string, string> = {
   'mj.settle.next': '下一局即将开始…',
   'mj.matchOver': '牌局结束',
   'mj.fan': '{n} 番',
+  'mj.yourTurn': '轮到你出牌',
+  'mj.bigWin': '大赢',
 
   // 红十
   'hs.pass': '不出',
@@ -194,6 +196,14 @@ export const zh: Record<string, string> = {
   'hs.rank3': '三游',
   'hs.rank4': '末游',
   'hs.settle.title': '本局结算',
+  'hs.yourTurn': '我出牌',
+  'hs.bomb': '炸弹',
+  'hs.hasRed': '有红十',
+  'hs.result': '本局战绩',
+  'hs.multiplier': '倍数 ×{n}',
+  'hs.teamWin': '本方获胜',
+  'hs.teamLose': '本方落败',
+  'hs.draw': '平局',
 
   // 捕鱼
   'fs.title': '捕鱼',

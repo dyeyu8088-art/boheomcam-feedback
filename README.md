@@ -57,6 +57,9 @@ node tests/ui-smoke.mjs                    # 客户端浏览器冒烟 8 项（Pl
 node tests/admin-ui-smoke.mjs              # 后台浏览器冒烟 7 项（需 ADMIN_PASSWORD）
 node tests/lobby-shot.mjs                  # 大厅四分辨率截图回归（1920/2560/Android 横屏/手机竖屏）
 node tests/table-shot.mjs                  # 麻将/红十牌桌截图回归（1920×1080 / 960×540@2x）
+node tests/fishing-shot.mjs                # 捕鱼截图回归（开火 + 技能）
+node tests/slot-shot.mjs                   # 水果机截图回归（待机 / 转动中 / 停轮）
+node tests/settle-shot.mjs                 # 麻将/红十 喊话 · 胡牌爆字 · 结算面板截图（ONLY=mahjong WANT_FX=1 MAX_MS=900000）
 node tests/load-ws.mjs 500 0.1             # WS 负载（本机阶梯；生产压测见 docs/09）
 ```
 

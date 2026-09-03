@@ -4,13 +4,14 @@
     <div v-if="phase === 'connecting' || phase === 'matching'" class="overlay">
       <div class="radar"><span /><span /><span /></div>
       <div class="otext">{{ phase === 'matching' ? t('lobby.matching') : t('common.loading') }}</div>
-      <button v-if="phase === 'matching'" class="btn btn-secondary" @click="cancelMatch">{{ t('lobby.match.cancel') }}</button>
+      <GameButton v-if="phase === 'matching'" variant="dark" size="md" sfx="close" @click="cancelMatch">{{ t('lobby.match.cancel') }}</GameButton>
     </div>
 
     <!-- 等待开局 -->
     <div v-else-if="phase === 'waiting'" class="overlay">
-      <div class="wait-card glass">
-        <div class="wtitle">{{ t('game.mahjong_yanbian') }}</div>
+      <div class="wait-card sk-panel">
+        <img class="w-mascot" :src="mascotArt" alt="" draggable="false" />
+        <div class="wtitle sk-gold-text">{{ t('game.mahjong_yanbian') }}</div>
         <div class="wno num" @click="copyRoomNo">{{ t('room.no', { no: room?.roomNo ?? '' }) }} ⧉</div>
         <div class="wplayers">
           <div v-for="p in room?.players ?? []" :key="p.uid" class="wp">
@@ -24,10 +25,8 @@
           </div>
         </div>
         <div class="wbtns">
-          <button class="btn btn-primary" style="flex: 1" @click="toggleReady">
-            {{ meReady ? t('room.cancelReady') : t('room.ready') }}
-          </button>
-          <button class="btn btn-secondary" @click="leaveToLobby()">{{ t('room.leave') }}</button>
+          <GameButton :variant="meReady ? 'dark' : 'green'" size="lg" block sfx="confirm" @click="toggleReady">{{ meReady ? t('room.cancelReady') : t('room.ready') }}</GameButton>
+          <GameButton variant="dark" size="lg" sfx="close" @click="leaveToLobby()">{{ t('room.leave') }}</GameButton>
         </div>
       </div>
     </div>
@@ -37,13 +36,13 @@
       <TableSurface tone="emerald" />
       <!-- 顶部信息 -->
       <div class="hud-top">
-        <button class="hback" @click="leaveToLobby()"><AppIcon name="back" :size="18" /></button>
+        <GameButton round size="md" :art="exitArt" class="hback" sfx="close" @click="leaveToLobby()" />
         <div class="hinfo">
           <span class="num">{{ t('room.round', { a: room?.currentRound ?? 1, b: room?.totalRounds ?? 4 }) }}</span>
           <span class="sep">·</span>
           <span class="num">{{ t('mj.wallLeft', { n: wallLeft }) }}</span>
         </div>
-        <div class="hcoins num"><AppIcon name="coin" :size="15" />{{ fmt(user.me?.coins) }}</div>
+        <CurrencyBar kind="coin" :value="user.me?.coins ?? 0" class="hcoins" />
       </div>
 
       <!-- 对家/上下家 -->
@@ -108,9 +107,9 @@
           <span class="cmp-wind ww">{{ windAt(3) }}</span>
           <span class="cmp-left num">{{ wallLeft }}</span>
           <span class="cmp-left-cap">{{ t('mj.wallUnit') }}</span>
-          <svg class="cmp-arrow" viewBox="0 0 120 120" :style="{ transform: `rotate(${arrowDeg}deg)` }">
-            <path d="M60 6 L67.5 22 L60 17.5 L52.5 22 z" fill="url(#cmpGold)" />
-          </svg>
+          <div class="cmp-arrow" :style="{ transform: `rotate(${arrowDeg}deg)` }">
+            <img :src="pointerArt" alt="" draggable="false" />
+          </div>
         </div>
       </div>
 
@@ -121,6 +120,7 @@
           <span class="wind-badge lg">{{ windOfSeat(mySeat) }}</span>
           <div class="mscore num">{{ myPlayer?.score ?? 0 }}</div>
           <CountdownRing v-if="turnSeat === mySeat" :deadline="deadlineAt" />
+          <span v-if="turnSeat === mySeat" class="turn-tag">{{ t('mj.yourTurn') }}</span>
         </div>
         <div class="my-melds">
           <div v-for="(m, i) in myMelds" :key="i" class="meld">
@@ -152,17 +152,31 @@
       <!-- 动作按钮 -->
       <transition name="pop">
         <div v-if="actionOptions.length > 0" class="action-bar">
-          <button
-            v-for="a in actionOptions"
-            :key="a.action"
+          <GameButton
+            v-for="(a, i) in actionOptions"
+            :key="`${a.action}-${i}`"
+            round
+            size="xl"
+            :variant="ACT_VARIANT[a.action] ?? 'dark'"
             class="act"
             :class="a.action"
+            :sfx="a.action === 'hu' ? 'hu' : a.action === 'pass' ? 'pass' : 'confirm'"
             @click="doAction(a)"
           >
-            {{ t(`mj.${a.action === 'pass' ? 'pass' : a.action}`) }}
-          </button>
+            {{ t(`mj.${a.action}`) }}
+            <span v-if="a.kinds" class="act-kinds"><MjTile v-for="(k, j) in a.kinds" :key="j" :kind="k" size="xs" /></span>
+          </GameButton>
         </div>
       </transition>
+
+      <!-- 吃碰杠胡喊话（程序文字，按座位方位弹出） + 胡牌爆字 + 得分演出 -->
+      <transition-group name="pop" tag="div" class="callouts">
+        <div v-for="c in callouts" :key="c.id" class="callout sk-outline-text" :class="[`cpos${c.pos}`, c.kind]">{{ c.text }}</div>
+      </transition-group>
+      <transition name="fx">
+        <div v-if="huFx" class="hu-fx"><img :src="huArt" alt="" draggable="false" /></div>
+      </transition>
+      <RewardAnimation ref="reward" />
 
       <!-- 托管提示 -->
       <div v-if="myPlayer?.trustee" class="trustee-bar glass" @click="cancelTrustee">
@@ -170,7 +184,7 @@
       </div>
 
       <!-- 聊天 -->
-      <button class="chat-btn glass" @click="showChat = !showChat"><AppIcon name="chat" :size="18" /></button>
+      <GameButton round size="sm" :art="chatArt" class="chat-btn" sfx="toggle" @click="showChat = !showChat" />
       <transition name="pop">
         <div v-if="showChat" class="chat-panel glass">
           <button v-for="n in 6" :key="n" class="chat-q" @click="sendQuick(n - 1)">{{ t(`room.chat.q${n - 1}`) }}</button>
@@ -181,57 +195,61 @@
       </transition-group>
 
       <!-- 单局结算 -->
-      <ModalSheet v-model="showSettle" :title="t('mj.settle.title')" width="480px">
+      <GamePopup v-model="showSettle" :title="t('mj.settle.title')" skin="cream" size="md" :closable="false">
         <div v-if="roundResult" class="settle">
-          <div v-if="roundResult.isDraw" class="sdraw">{{ t('mj.liuju') }}</div>
-          <div v-for="w in roundResult.winners" :key="w.seat" class="swin">
-            <span class="swho">{{ nameOf(w.seat) }}</span>
-            <span class="show">{{ w.selfDraw ? t('mj.zimo') : t('mj.hu') }} · {{ t('mj.fan', { n: w.fan }) }}</span>
-            <span class="spat">{{ w.patterns.map((p: any) => p.id).join(' / ') }}</span>
-          </div>
-          <div class="srows">
-            <div v-for="p in allPlayers" :key="p.seat" class="srow">
-              <span>{{ nameOf(p.seat) }}</span>
-              <span class="num" :class="scoreOf(p.seat) > 0 ? 'win' : scoreOf(p.seat) < 0 ? 'lose' : ''">
-                {{ fmtSigned(scoreOf(p.seat)) }}
-              </span>
+          <div class="s-main">
+            <div v-if="roundResult.isDraw" class="sdraw">{{ t('mj.liuju') }}</div>
+            <img v-else-if="bigWin" class="s-bigwin" :src="bigWinArt" alt="" draggable="false" />
+            <div v-for="w in roundResult.winners" :key="w.seat" class="swin">
+              <span class="swho">{{ nameOf(w.seat) }}</span>
+              <span class="show">{{ w.selfDraw ? t('mj.zimo') : t('mj.hu') }} · {{ t('mj.fan', { n: w.fan }) }}</span>
+              <span class="spat">{{ w.patterns.map((p: any) => p.id).join(' / ') }}</span>
             </div>
+            <div class="srows">
+              <div v-for="p in allPlayers" :key="p.seat" class="srow">
+                <span class="sname"><AvatarBadge :id="p.avatarId" :size="22" />{{ nameOf(p.seat) }}</span>
+                <span class="num sval" :class="scoreOf(p.seat) > 0 ? 'win' : scoreOf(p.seat) < 0 ? 'lose' : ''">{{ fmtSigned(scoreOf(p.seat)) }}</span>
+              </div>
+            </div>
+            <div class="snext">{{ t('mj.settle.next') }}</div>
           </div>
-          <div class="snext">{{ t('mj.settle.next') }}</div>
+          <img class="s-mascot" :src="mascotArt" alt="" draggable="false" />
         </div>
-      </ModalSheet>
+      </GamePopup>
 
       <!-- 总结算 -->
-      <ModalSheet v-model="showMatchOver" :title="t('mj.matchOver')" width="480px">
+      <GamePopup v-model="showMatchOver" :title="t('mj.matchOver')" skin="red" size="md" :closable="false">
         <div class="srows">
-          <div v-for="row in matchTotals" :key="row.seat" class="srow">
-            <span>{{ row.nickname }}</span>
-            <span class="num" :class="row.score > 0 ? 'win' : row.score < 0 ? 'lose' : ''">{{ fmtSigned(row.score) }}</span>
+          <div v-for="(row, i) in matchTotals" :key="row.seat" class="srow">
+            <span class="sname"><span class="srank num">{{ i + 1 }}</span>{{ row.nickname }}</span>
+            <span class="num sval" :class="row.score > 0 ? 'win' : row.score < 0 ? 'lose' : ''">{{ fmtSigned(row.score) }}</span>
           </div>
         </div>
-        <button class="btn btn-primary" style="width: 100%; margin-top: 16px" @click="leaveToLobby(false)">
-          {{ t('common.back') }}
-        </button>
-      </ModalSheet>
+        <GameButton variant="gold" size="lg" block class="s-back" sfx="confirm" @click="leaveToLobby(false)">{{ t('common.back') }}</GameButton>
+      </GamePopup>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Ev } from '@yanbian/protocol';
 import { gameSocket } from '../../net/ws.js';
 import { useUserStore } from '../../stores/user.js';
 import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
-import ModalSheet from '../../ui/ModalSheet.vue';
+import GamePopup from '../../ui/GamePopup.vue';
+import GameButton from '../../ui/GameButton.vue';
+import CurrencyBar from '../../ui/CurrencyBar.vue';
+import RewardAnimation from '../../ui/RewardAnimation.vue';
+import { asset } from '../../assets/assets.js';
+import { audio } from '../../audio/AudioManager.js';
 import CountdownRing from '../CountdownRing.vue';
 import MjTile from './MjTile.vue';
 import TableSurface from '../TableSurface.vue';
 import { useGameRoom, relativePos } from '../useGameRoom.js';
 import AvatarBadge from '../../ui/AvatarBadge.vue';
-import AppIcon from '../../ui/AppIcon.vue';
-import { fmt, fmtSigned } from '../../ui/format.js';
+import { fmtSigned } from '../../ui/format.js';
 
 const user = useUserStore();
 const me = computed(() => user.me);
@@ -263,6 +281,37 @@ const roundResult = ref<any>(null);
 const showMatchOver = ref(false);
 const matchTotals = ref<{ seat: number; nickname: string; score: number }[]>([]);
 let bubbleSeq = 0;
+
+/** 新版美术：按钮 / 指针 / 爆字 / 立绘全部经资源清单读取；动作按钮文字由程序绘制（双语） */
+const exitArt = asset('common', 'btnExitRound');
+const chatArt = asset('common', 'iconChatRound');
+const pointerArt = asset('mahjong', 'turnPointer');
+const huArt = asset('mahjong', 'fxHu');
+const bigWinArt = asset('mahjong', 'fxBigWin');
+const mascotArt = asset('mahjong', 'caishenFaTile');
+const ACT_VARIANT: Record<string, 'gold' | 'blue' | 'green' | 'red' | 'purple' | 'orange' | 'dark' | 'ghost'> = {
+  hu: 'gold',
+  gang: 'red',
+  peng: 'orange',
+  chi: 'green',
+  ting: 'purple',
+  pass: 'dark',
+};
+const callouts = ref<{ id: number; pos: number; kind: string; text: string }[]>([]);
+const huFx = ref(false);
+const reward = ref<InstanceType<typeof RewardAnimation> | null>(null);
+let calloutSeq = 0;
+const bigWin = computed(() => ((roundResult.value?.winners ?? []) as { fan: number }[]).some((w) => w.fan >= 3));
+
+/** 座位喊话：吃 / 碰 / 杠 / 胡，按相对方位弹出后自动消失 */
+function pushCallout(seat: number, kind: string, text: string, ms = 1500): void {
+  calloutSeq += 1;
+  const id = calloutSeq;
+  callouts.value.push({ id, pos: relativePos(seat, mySeat.value), kind, text });
+  setTimeout(() => {
+    callouts.value = callouts.value.filter((c) => c.id !== id);
+  }, ms);
+}
 
 const allPlayers = computed(() =>
   (room.value?.players ?? []).map((p) => ({
@@ -350,7 +399,11 @@ function normalizeOptions(options: any[]): typeof actionOptions.value {
   return out;
 }
 
+onBeforeUnmount(() => audio.setScene('none'));
+
 onMounted(async () => {
+  audio.setScene('mahjong');
+  audio.preload(['tile', 'hu', 'pass', 'confirm', 'win', 'deal']);
   const snap = await begin(user.me?.uid ?? 0);
   if (snap && (snap as any).game) applySnapshot((snap as any).game);
 
@@ -361,6 +414,7 @@ onMounted(async () => {
     phase.value = 'playing';
   });
   on(Ev.MjDeal, (d) => {
+    audio.sfx('deal', { volume: 0.7 });
     resetRound();
     myHand.value = [...d.tiles];
     dealerSeat.value = d.dealerSeat;
@@ -397,6 +451,7 @@ onMounted(async () => {
     if (d.seat !== mySeat.value) actionOptions.value = [];
   });
   on(Ev.MjDiscarded, (d) => {
+    audio.sfx('tile', { volume: 0.8, rate: 0.96 + Math.random() * 0.08 });
     const s = ensureSeat(d.seat);
     s.discards.push(d.tile);
     s.handCount -= d.seat === mySeat.value ? 0 : 1;
@@ -413,6 +468,9 @@ onMounted(async () => {
     actionOptions.value = normalizeOptions(d.options ?? []);
   });
   on(Ev.MjMeld, (d) => {
+    const shout = d.type === 'chi' ? 'chi' : d.type === 'peng' ? 'peng' : 'gang';
+    pushCallout(d.seat, shout, t(`mj.${shout}`));
+    audio.sfx('confirm', { volume: 0.6 });
     const s = ensureSeat(d.seat);
     if (d.type === 'bugang') {
       const meld = s.melds.find((m) => m.type === 'peng' && m.kinds[0] === d.kind);
@@ -454,7 +512,22 @@ onMounted(async () => {
       }
     }
     actionOptions.value = [];
-    showSettle.value = true;
+    const winners = (d.result?.winners ?? []) as { seat: number; fan: number }[];
+    if (winners.length > 0) {
+      // 胡牌爆字 → 再弹结算；本人得分走统一奖励演出
+      for (const w of winners) pushCallout(w.seat, 'hu', t('mj.hu'), 1800);
+      huFx.value = true;
+      audio.sfx('hu');
+      setTimeout(() => {
+        huFx.value = false;
+        showSettle.value = true;
+        const mine = scoreOf(mySeat.value);
+        if (mine > 0) reward.value?.play({ amount: mine, tier: bigWin.value ? 'big' : 'normal', banner: t('mj.hu'), caption: t('mj.settle.title') });
+        else if (mine < 0) audio.sfx('lose', { volume: 0.5 });
+      }, 1400);
+    } else {
+      showSettle.value = true;
+    }
     if (typeof d.balances !== 'undefined') {
       const mine = (d.balances as { userId: number; balance: number }[]).find((b) => b.userId === user.me?.uid);
       if (mine) user.setBalance(mine.balance);
@@ -467,11 +540,12 @@ onMounted(async () => {
     }
     setTimeout(() => {
       showSettle.value = false;
-    }, 5200);
+    }, 6600);
   });
   on(Ev.GameMatchOver, (d) => {
-    matchTotals.value = d.totals ?? [];
+    matchTotals.value = [...((d.totals ?? []) as typeof matchTotals.value)].sort((a, b) => b.score - a.score);
     showSettle.value = false;
+    huFx.value = false;
     showMatchOver.value = true;
   });
   on(Ev.RoomChat, (d) => {
@@ -650,34 +724,26 @@ function copyRoomNo(): void {
   z-index: 5;
 }
 .hback {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--line-soft);
-  color: var(--gold-champagne);
-  font-size: 20px;
-  cursor: pointer;
+  flex-shrink: 0;
 }
 .hinfo {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--line-soft);
+  background: linear-gradient(180deg, rgba(10, 26, 19, 0.92), rgba(5, 14, 10, 0.9));
+  border: 1.5px solid var(--sk-gold-3, #c9a063);
   border-radius: 18px;
   padding: 6px 16px;
   font-size: 12px;
-  color: var(--gold-champagne);
+  font-weight: 700;
+  color: var(--sk-gold-1, #ffe9a6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.45);
 }
 .sep {
   margin: 0 8px;
   opacity: 0.5;
 }
 .hcoins {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--line-soft);
-  border-radius: 18px;
-  padding: 6px 12px;
-  font-size: 12px;
-  color: var(--gold-warm);
+  flex-shrink: 0;
 }
 
 .opp {
@@ -874,7 +940,35 @@ function copyRoomNo(): void {
 }
 .cmp-arrow {
   transition: transform 400ms var(--ease-out);
-  filter: drop-shadow(0 0 6px rgba(201, 160, 99, 0.7));
+  filter: drop-shadow(0 0 6px rgba(255, 200, 80, 0.8));
+}
+.cmp-arrow img {
+  position: absolute;
+  top: 1%;
+  left: 50%;
+  width: 17%;
+  transform: translateX(-50%);
+}
+.turn-tag {
+  font-size: 11px;
+  font-weight: 800;
+  color: #1a1206;
+  background: linear-gradient(180deg, #ffe9a6, #f0b93a 60%, #c98a1c);
+  border-radius: 999px;
+  padding: 3px 9px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+  animation: turn-pulse 1.2s ease-in-out infinite;
+}
+@keyframes turn-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
 }
 .cmp-wind {
   position: absolute;
@@ -909,7 +1003,7 @@ function copyRoomNo(): void {
 }
 .cmp-left-cap {
   position: absolute;
-  top: 62%;
+  top: 59%;
   font-size: clamp(10px, 1.1vh, 13px);
   letter-spacing: 0.14em;
   color: var(--text-disabled);
@@ -1012,32 +1106,124 @@ function copyRoomNo(): void {
   z-index: 8;
 }
 .act {
-  min-width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  border: 2px solid var(--line-soft);
-  font-size: 20px;
-  font-weight: 800;
-  cursor: pointer;
-  color: var(--text-primary);
-  background: radial-gradient(circle at 32% 28%, #2c3550, #171d2c);
-  box-shadow: var(--shadow-card);
-  transition: transform var(--dur-micro) var(--ease-out);
+  --h: 66px;
+  position: relative;
 }
-.act:active {
-  transform: scale(0.92);
+.act :deep(.gb-label) {
+  font-family: var(--font-calligraphy);
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1;
 }
 .act.hu {
-  border-color: var(--gold-warm);
-  color: var(--gold-champagne);
-  background: radial-gradient(circle at 32% 28%, #4a3a1f, #241a08);
-  box-shadow: var(--shadow-glow-gold);
-  font-size: 24px;
+  --h: 80px;
+  filter: drop-shadow(0 0 16px rgba(255, 214, 120, 0.85));
+}
+.act.hu :deep(.gb-label) {
+  font-size: 36px;
 }
 .act.pass {
-  opacity: 0.8;
+  opacity: 0.88;
 }
-
+.act-kinds {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1px;
+  margin-top: 5px;
+}
+/* 喊话：按相对座位方位弹出 */
+.callouts {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+}
+.callout {
+  position: absolute;
+  font-family: var(--font-calligraphy);
+  font-size: clamp(34px, 5vh, 56px);
+  font-weight: 900;
+  color: #ffe9a6;
+  text-shadow:
+    0 0 2px #7a3a00,
+    0 0 3px #7a3a00,
+    0 0 12px rgba(255, 140, 40, 0.9),
+    0 4px 10px rgba(0, 0, 0, 0.6);
+  animation: callout-in 380ms var(--ease-out);
+}
+.callout.hu {
+  color: #fff3c4;
+  font-size: clamp(44px, 7vh, 76px);
+}
+.callout.cpos0 {
+  left: 50%;
+  bottom: 34%;
+  transform: translateX(-50%);
+}
+.callout.cpos2 {
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+}
+.callout.cpos1 {
+  right: 16%;
+  top: 40%;
+}
+.callout.cpos3 {
+  left: 16%;
+  top: 40%;
+}
+@keyframes callout-in {
+  0% {
+    opacity: 0;
+    scale: 1.8;
+  }
+  60% {
+    opacity: 1;
+    scale: 0.94;
+  }
+  100% {
+    scale: 1;
+  }
+}
+/* 胡牌爆字 */
+.hu-fx {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  z-index: 12;
+  pointer-events: none;
+  filter: drop-shadow(0 0 30px rgba(255, 170, 60, 0.7));
+}
+.hu-fx img {
+  width: clamp(180px, 26vh, 320px);
+  animation: hu-pop 600ms var(--ease-out);
+}
+@keyframes hu-pop {
+  0% {
+    transform: scale(0.2) rotate(-12deg);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.18) rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+.fx-enter-active,
+.fx-leave-active {
+  transition: opacity 260ms var(--ease-out);
+}
+.fx-enter-from,
+.fx-leave-to {
+  opacity: 0;
+}
 .trustee-bar {
   position: absolute;
   left: 50%;
@@ -1053,12 +1239,6 @@ function copyRoomNo(): void {
   position: absolute;
   right: max(var(--safe-right), 14px);
   top: 42%;
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  border: 1px solid var(--line-soft);
-  font-size: 17px;
-  cursor: pointer;
   z-index: 6;
 }
 .chat-panel {
@@ -1104,9 +1284,54 @@ function copyRoomNo(): void {
 }
 
 .settle {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  gap: 8px;
+  align-items: end;
+}
+.s-main {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
+}
+.s-mascot {
+  width: 112px;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
+}
+.s-bigwin {
+  align-self: center;
+  height: 88px;
+  filter: drop-shadow(0 0 16px rgba(255, 170, 60, 0.6));
+}
+.sname {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.srank {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffe9a6, #c98a1c);
+  color: #1a1206;
+  font-size: 12px;
+  font-weight: 900;
+}
+.sval {
+  font-weight: 900;
+  font-size: 16px;
+}
+.s-back {
+  margin-top: 16px;
+}
+.w-mascot {
+  align-self: center;
+  height: 96px;
+  margin-top: -56px;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.5));
 }
 .sdraw {
   text-align: center;
@@ -1190,6 +1415,29 @@ function copyRoomNo(): void {
   /* 短屏：自己的座位牌上移到托盘之上，避免压住第一张手牌 */
   .my-head {
     bottom: calc(100% - 4px);
+  }
+  .act {
+    --h: 54px;
+  }
+  .act.hu {
+    --h: 64px;
+  }
+  .act :deep(.gb-label) {
+    font-size: 22px;
+  }
+  .act.hu :deep(.gb-label) {
+    font-size: 28px;
+  }
+  .cmp-left-cap {
+    display: none;
+  }
+}
+@media (max-width: 560px) {
+  .settle {
+    grid-template-columns: 1fr;
+  }
+  .s-mascot {
+    display: none;
   }
 }
 </style>

@@ -167,6 +167,8 @@ export const ko: Record<string, string> = {
   'mj.settle.next': '다음 판이 곧 시작됩니다…',
   'mj.matchOver': '대국 종료',
   'mj.fan': '{n}판',
+  'mj.yourTurn': '내 차례',
+  'mj.bigWin': '대승',
 
   'hs.pass': '패스',
   'hs.hint': '힌트',
@@ -179,6 +181,14 @@ export const ko: Record<string, string> = {
   'hs.rank3': '3등',
   'hs.rank4': '꼴찌',
   'hs.settle.title': '이번 판 정산',
+  'hs.yourTurn': '내 차례',
+  'hs.bomb': '폭탄',
+  'hs.hasRed': '홍십 보유',
+  'hs.result': '이번 판 전적',
+  'hs.multiplier': '배수 ×{n}',
+  'hs.teamWin': '우리 팀 승리',
+  'hs.teamLose': '우리 팀 패배',
+  'hs.draw': '무승부',
 
   'fs.title': '피싱 헌터',
   'fs.auto': '자동',

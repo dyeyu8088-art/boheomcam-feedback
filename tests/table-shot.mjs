@@ -8,11 +8,11 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 const sizes = [
   { name: 'pc', w: 1920, h: 1080, dsf: 1 },
   { name: 'land', w: 960, h: 540, dsf: 2 },
-];
+].filter((s) => !process.env.SIZE || s.name === process.env.SIZE);
 const games = [
   { key: 'mahjong_yanbian', route: 'mahjong', tag: 'mahjong' },
   { key: 'hongshi', route: 'hongshi', tag: 'hongshi' },
-];
+].filter((g) => !process.env.ONLY || g.tag === process.env.ONLY);
 
 for (const s of sizes) {
   for (const g of games) {
@@ -26,7 +26,7 @@ for (const s of sizes) {
         await page.waitForURL('**/#/lobby', { timeout: 12000 }).catch(() => {});
       }
       await page.waitForTimeout(1200);
-      await page.locator(`.poster-card.${g.key}`).click();
+      await page.locator(`.gcard.${g.key}`).click();
       await page.waitForTimeout(700);
       await page.locator('.stage').first().click();
       await page.waitForURL(`**/#/game/${g.route}**`, { timeout: 10000 });

@@ -11,6 +11,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { assetByKey } from '../../assets/assets.js';
 
 const props = withDefaults(defineProps<{ card?: number; back?: boolean; selected?: boolean; size?: 'md' | 'sm' | 'xs' }>(), {
   card: 0,
@@ -26,8 +27,7 @@ const RANK_CODE = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 
 const suit = computed(() => Math.floor(props.card / 13));
 const rank = computed(() => (props.card % 13) + 1);
 const isRed = computed(() => suit.value === 0 || suit.value === 2);
-const isFace = computed(() => rank.value >= 11);
-const src = computed(() => `/assets/red10/cards/${RANK_CODE[rank.value - 1]}${SUIT_CODE[suit.value]}.${isFace.value ? 'webp' : 'svg'}`);
+const src = computed(() => assetByKey(`red10.card${RANK_CODE[rank.value - 1]}${SUIT_CODE[suit.value]}`));
 const label = computed(() => `${SUIT_NAME[suit.value]}${RANK_CODE[rank.value - 1]}`);
 /** 红十身份牌：红桃10 / 方块10 */
 const identity = computed(() => rank.value === 10 && isRed.value);

@@ -29,7 +29,7 @@
 | common/buttons/btn_arrow_yellow.png / btn_arrow_blue.png | 红十 / 麻将 | 出牌指示 | `TurnIndicator` | 轮到谁箭头 | 🔧 |
 | common/buttons/toggle_on.png / toggle_off.png | 全部 | 设置 / 自动 | `GameToggle` | 开关（自动 / 音乐 / 音效） | 🔧 |
 | common/buttons/btn_red_round.png | 全部 | 弹窗 | `GamePopup` | 关闭 | 📦 |
-| common/popup/popup_cream_red.png / popup_cream_blue.png / popup_blue.png / popup_ribbon_red.png | 全部 | 弹窗 | `GamePopup skin=…` | 结算 / 规则 / 确认弹窗底框（9-slice） | 🔧 |
+| common/popup/popup_cream_red.png / popup_cream_blue.png / popup_blue.png / popup_ribbon_red.png | 全部 | 弹窗 | `GamePopup skin=…` | 结算 / 规则 / 确认弹窗底框（9-slice） | ✅ |
 | common/frames/frame_*.png（black_wide / blue_wide / red_wide / blue_shield / red_ornate / round_black / *_tall / *_sm） | 全部 | 面板 | `GamePanel skin=…` | 列表 / 卡片底框 | 🔧 |
 | common/frames/plate_red_sm.png / plate_blue_sm.png | 全部 | 标签 | `GamePanel size=sm` | 标题条 | 📦 |
 | common/effects/progress_bar_dragon.png / progress_bar_chest.png | 全部 | 任务 / VIP 进度 | `ProgressBar` | 进度框（填充程序绘制） | 🔧 |
@@ -150,37 +150,37 @@
 | 素材文件 | 游戏 | 界面 | 组件 | 功能 | 状态 |
 | --- | --- | --- | --- | --- | --- |
 | mahjong/tiles/*.svg（CC0 riichi） | 麻将 | 牌桌 | `MjTile` | 万 / 筒 / 条 / 风 / 箭 牌面 | ✅ |
-| mahjong/effects/fx_hu.png | 麻将 | 演出 | `HuEffect` | `mahjong.hu` → 胡牌爆字 | 🔧 |
-| mahjong/effects/fx_big_win.png | 麻将 | 结算 | `RoundResultPopup` | 赢家大赢横幅 | 🔧 |
-| mahjong/ui/turn_pointer.png | 麻将 | 罗盘 | `TurnIndicator` | 指向当前出牌方 | 🔧 |
-| mahjong/character/caishen_fa_tile.png | 麻将 | 大厅卡 / 结算 | `GameEntryCard` / `RoundResultPopup` | 立绘 | 🔧 |
+| mahjong/effects/fx_hu.png | 麻将 | 演出 | `HuEffect` | `mahjong.hu` → 胡牌爆字 | ✅ |
+| mahjong/effects/fx_big_win.png | 麻将 | 结算 | `RoundResultPopup` | 赢家大赢横幅 | ✅ |
+| mahjong/ui/turn_pointer.png | 麻将 | 罗盘 | `TurnIndicator` | 指向当前出牌方 | ✅ |
+| mahjong/character/caishen_fa_tile.png | 麻将 | 大厅卡 / 结算 | `GameEntryCard` / `RoundResultPopup` | 立绘 | ✅ |
 | mahjong/buttons/btn_minus_orange.png / btn_plus_orange.png | 麻将 | 建房 | `BetStepper` | 底分 ± | 🔧 |
 | mahjong/ui/bet_plate.png | 麻将 | 建房 | `BetStepper` | 底分板（数字程序绘制） | 🔧 |
 | mahjong/ui/jackpot_banner.png | 麻将 | — | — | 装饰（麻将无奖池） | 📦 |
-| common/popup/popup_cream_red.png | 麻将 | 结算 | `GamePopup` | 结算面板底框 | 🔧 |
-| —（吃 / 碰 / 杠 / 胡 / 过 按钮） | 麻将 | 操作栏 | `GameButton variant=gold/red/green` | `sendAction('peng'|'gang'|'hu'|'pass')` → 服务端校验 → 广播 | 🔧 |
+| common/popup/popup_cream_red.png | 麻将 | 结算 | `GamePopup` | 结算面板底框 | ✅ |
+| —（吃 / 碰 / 杠 / 胡 / 过 按钮） | 麻将 | 操作栏 | `GameButton variant=gold/red/green` | `sendAction('peng'|'gang'|'hu'|'pass')` → 服务端校验 → 广播 | ✅ |
 
 ## 8. 红十（red10）
 
 | 素材文件 | 游戏 | 界面 | 组件 | 功能 | 状态 |
 | --- | --- | --- | --- | --- | --- |
 | red10/cards/*.svg / *.webp（公共领域） | 红十 | 牌桌 | `PlayCard` | 52 张牌面 | ✅ |
-| red10/cards/suit_heart / diamond / spade / club.png | 红十 | 身份 / 提示 | `IdentityBadge` | 红十身份（♥10 / ♦10）标志 | 🔧 |
-| red10/effects/fx_win.png | 红十 | 结算 | `RoundResultPopup` | 胜利演出 | 🔧 |
-| red10/effects/fx_x2.png / fx_x4.png | 红十 | 结算 | `MultiplierBadge` | 双上 ×2 / 独上 ×3(程序) / 上限 ×4 | 🔧 |
-| red10/effects/fx_bomb_zh.png | 红十 | 出牌演出 | `PlayCallout` | 打出炸弹（zh；ko 程序文字） | 🔧 |
-| red10/effects/fx_hongshi_zh.png | 红十 | 身份揭示 | `PlayCallout` | `hongshi.identityReveal` | 🔧 |
-| red10/effects/fx_pass_zh.png / fx_no_play_zh.png | 红十 | 出牌演出 | `PlayCallout` | `hongshi.pass` | 🔧 |
-| red10/ui/turn_arrow_zh.png | 红十 | 轮次 | `TurnIndicator` | 轮到我出牌（zh） | 🔧 |
-| red10/buttons/btn_ready_zh.png | 红十 | 等待 | `GameButton art(zh)` | `room.ready` | 🔧 |
-| red10/buttons/btn_start_zh.png | 红十 | 等待（房主） | `GameButton art(zh)` | `room.start` | 🔧 |
-| red10/buttons/btn_compare_zh.png | 红十 | 操作栏 | `GameButton art(zh)` | 出牌 `hongshi.play` | 🔧 |
-| red10/buttons/btn_settle_zh.png | 红十 | 结算 | `GameButton art(zh)` | 查看结算 | 🔧 |
+| red10/cards/suit_heart / diamond / spade / club.png | 红十 | 身份 / 提示 | `IdentityBadge` | 红十身份（♥10 / ♦10）标志 | ✅ |
+| red10/effects/fx_win.png | 红十 | 结算 | `RoundResultPopup` | 胜利演出 | ✅ |
+| red10/effects/fx_x2.png / fx_x4.png | 红十 | 结算 | `MultiplierBadge` | 双上 ×2 / 独上 ×3(程序) / 上限 ×4 | ✅ |
+| red10/effects/fx_bomb_zh.png | 红十 | 出牌演出 | `PlayCallout` | 打出炸弹（zh；ko 程序文字） | ✅ |
+| red10/effects/fx_hongshi_zh.png | 红十 | 身份揭示 | `PlayCallout` | `hongshi.identityReveal` | ✅ |
+| red10/effects/fx_pass_zh.png / fx_no_play_zh.png | 红十 | 出牌演出 | `PlayCallout` | `PlayCallout` | 不出：`fx_no_play_zh`（zh）/ 程序文字；`fx_pass_zh` 与之同义，留作备用 | ✅ |
+| red10/ui/turn_arrow_zh.png | 红十 | 轮次 | `TurnIndicator` | 轮到我出牌（zh） | ✅ |
+| red10/buttons/btn_ready_zh.png | 红十 | 等待 | `GameButton art(zh)` | `room.ready` | ✅ |
+| red10/buttons/btn_start_zh.png | 红十 | 等待（房主） | `GameButton art(zh)` | `GameButton art(zh)` | 房间为准备即自动开局，无「开始游戏」动作，不接入 | 📦 |
+| red10/buttons/btn_compare_zh.png | 红十 | 操作栏 | `GameButton art(zh)` | `GameButton art(zh)` | 烙字「比牌」与红十「出牌」语义不符；出牌按钮用 CSS 板件 + 程序文字 | 📦 |
+| red10/buttons/btn_settle_zh.png | 红十 | 结算 | `GameButton art(zh)` | `GameButton art(zh)` | 结算面板收起后重新查看本局战绩 | ✅ |
 | red10/ui/mode_icon_* + mode_plate_*.png | 红十 | 场次选择 | `StagePicker` | 经典场 / 比赛场 / 排位赛 / 好友房 / 创建房（文字程序绘制） | 🔧 |
 | red10/buttons/btn_minus_gold.png / btn_plus_gold.png + ui/bet_plate.png | 红十 | 建房 | `BetStepper` | 底分 ± | 🔧 |
-| red10/character/caishen_card.png | 红十 | 大厅卡 / 结算 | `GameEntryCard` / `RoundResultPopup` | 立绘 | 🔧 |
-| red10/ui/panel_result_zh.png | 红十 | 结算 | `RoundResultPopup` | 本局战绩面板（数字程序绘制） | 🔧 |
-| red10/ui/badge_master_zh.png | 红十 | 座位 | `IdentityBadge` | 主牌 / 先手标志（zh） | 🔧 |
+| red10/character/caishen_card.png | 红十 | 大厅卡 / 结算 | `GameEntryCard` / `RoundResultPopup` | 立绘 | ✅ |
+| red10/ui/panel_result_zh.png | 红十 | 结算 | `RoundResultPopup` | `RoundResultPopup` | 面板烙有「本局战绩」标题，改用 `GamePopup skin=red` + 程序标题（双语） | 📦 |
+| red10/ui/badge_master_zh.png | 红十 | 座位 | `IdentityBadge` | `IdentityBadge` | 「主牌」语义待与规则确认，不接入 | 📦 |
 | lobby/banners/logo_red10.png | 红十 | 大厅 | `GameEntryCard` | Logo | 🔧 |
 
 ## 9. 明确不接入

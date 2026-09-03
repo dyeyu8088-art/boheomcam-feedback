@@ -41,6 +41,24 @@
   素材切边残留（元宝 / 樱桃 / 葡萄）与财神立绘矩形光晕清理
 - 单测 `slot.test.ts` 7 项；E2E 新增 2 项 Jackpot 断言（合计 33 项）；新增 `tests/slot-shot.mjs`
 
+### P6 麻将与红十换皮（规则与服务端权威不变）
+- 两桌统一：顶栏成品退出钮 + 资产胶囊（`CurrencyBar`）、等待卡改 `sk-panel` + 立绘 + `GameButton`、
+  结算 / 总结算改 `GamePopup`（cream / red 皮肤、程序标题双语、名次徽章、财神立绘）、匹配取消钮
+- 麻将：罗盘指针改用素材 `turn_pointer`（指向当前出牌方）；「轮到你出牌」金牌标；吃 / 碰 / 杠 / 胡 / 过 改为
+  `GameButton round xl`（毛笔字程序文字，吃的变体在按钮下方以小牌展示）；吃碰杠胡按座位方位弹喊话；
+  胡牌 `fx_hu` 爆字 → 结算；三番及以上结算面板加 `fx_big_win`；本人得分走 `RewardAnimation`；
+  发牌 / 出牌 / 胡 / 过 音效；短屏隐藏罗盘「张」字避免与门风重叠
+- 红十：修复扑克牌面路径（素材迁至 `red10/cards/` 后经资源清单 `assetByKey` 读取，原先整手牌不显示）；
+  红十方身份徽章带 ♥ 图标；「我出牌」箭头（zh 素材 / ko 程序文字）；不出 / 提示 / 出牌改 `GameButton`（全部走服务端校验）；
+  炸弹 `fx_bomb_zh`、有红十 `fx_hongshi_zh`、不出 `fx_no_play_zh` 按座位弹出（其它语言程序文字）；
+  结算面板：本方获胜 `fx_win` / 平局 / 落败、倍数 `fx_x2` / `fx_x4`（其它倍数程序文字）、按名次排序；
+  面板收起后「结算」钮可重新查看本局战绩（zh 用 `btn_settle_zh`）；准备钮 zh 用 `btn_ready_zh`
+- 明确不接入：`btn_compare_zh`（「比牌」与出牌语义不符）、`btn_start_zh`（准备即自动开局）、
+  `panel_result_zh`（标题烙字，改程序标题）、`badge_master_zh`（「主牌」语义待确认）
+- 立绘类素材统一清理切边残留（财神 × 8）
+- 测试：`tests/table-shot.mjs` 选择器更新并支持 `ONLY` / `SIZE`；新增 `tests/settle-shot.mjs`（喊话 / 胡牌 / 结算面板截图）；
+  UI 冒烟 8/8
+
 ## [0.2.1] - 2026-09-03 GitHub 开源素材接入（PHASE 19 美术精修 · 续）
 
 ### 素材来源与合规（新增 `THIRD_PARTY_ASSETS.md`）
