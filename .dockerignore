@@ -1,0 +1,16 @@
+# docker build 上下文排除（构建镜像时在容器内重新 pnpm install / build）
+**/node_modules
+**/dist
+build
+.git
+.env
+.env.*
+!.env.example
+deploy/certs
+deploy/backup/data
+coverage
+*.log
+apps/client/android
+apps/client/ios
+tests
+docs

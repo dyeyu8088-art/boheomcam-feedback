@@ -18,10 +18,37 @@ docker compose -f deploy/docker-compose.prod.yml --env-file .env run --rm api np
 docker compose -f deploy/docker-compose.prod.yml --env-file .env up -d
 ```
 
+更新版本：`git pull && docker compose -f deploy/docker-compose.prod.yml --env-file .env up -d --build`；网关经 Docker DNS 动态解析上游，容器重建后无需重启 nginx。
+
 - 迁移器幂等可重复执行；首次运行打印初始管理员密码（或用 `ADMIN_INIT_PASSWORD`），首登强制改密。
 - 备份容器每日 02:00 自动 `pg_dump` + 账本/审计 CSV 导出，保留 30 天；每周手动跑 `deploy/backup/restore-verify.sh` 做恢复演练。
 - 监控：Prometheus 抓取 `/metrics`；接 Grafana 后按 docs/09 的告警项配置 Alertmanager。
 - 扩容：api 改 `deploy.replicas`；game 增加节点（`SERVER_ID`/`NODE_INDEX` 唯一，Nginx upstream 加行，ip_hash 保持粘性）。
+
+## 2.1 内测服务器：任意 Linux 主机一条命令（HTTP，无域名 / 无证书）
+
+没有域名和证书、只想让 APK / H5 连上来测试时，用这条路径。一台 2 vCPU / 2 GB 的云主机（安全组放行 TCP 80）即可：
+
+```bash
+git clone <仓库地址> yanbian && cd yanbian
+bash deploy/install-test-server.sh
+```
+
+脚本做的事：缺 Docker 时安装 → 生成 `.env`（随机数据库 / Redis 密码、JWT / 内部令牌、后台初始密码；不入 Git）→
+`deploy/docker-compose.test.yml` 构建 api / game / client-web / admin-web 镜像 → 建库迁移 → 启动 → 打印：
+
+```
+ APK / H5 登录页「服务器设置」填:  http://<主机IP>
+ 管理后台:                        http://<主机IP>/admin/   账号 admin   初始密码: …（首登强制改密）
+```
+
+- 与生产编排的差别：nginx 只监听 80（`deploy/nginx/gateway-http.conf`），api 单副本，没有备份 / 监控 / WAL 归档；
+  流量是 HTTP 明文，只能用于内部测试，对外正式发布回到 §2
+- 重复执行安全（`.env` 保留、迁移幂等、镜像增量构建）；更新代码后 `git pull && bash deploy/install-test-server.sh`
+- 换端口：`.env` 里 `HTTP_PORT=8080`，APK 里填 `http://<主机IP>:8080`
+- 国内主机：拉取基础镜像超时先配置 Docker 镜像加速（`/etc/docker/daemon.json` 的 `registry-mirrors`）；
+  `pnpm install` 慢则在 `.env` 加 `NPM_REGISTRY=https://registry.npmmirror.com` 后重跑脚本
+- 只有一台 Windows / macOS 电脑、没有云主机：手机与电脑连同一 Wi-Fi，电脑上 `pnpm dev:all`（见 §3.1），APK 填打印出的 `http://<电脑IP>:5173`
 
 ## 3. Android APK 打包
 
@@ -53,8 +80,9 @@ python3 tools/apk/build-test-apk.py           # → build/yanbian-test.apk（约
 - 原理：`tools/apk/src` 的 WebView 壳 + 内嵌 NanoHTTPD（127.0.0.1 随机端口）提供 `assets/www`（即 dist），页面以正常 http 源运行，
   localStorage / ES module / fetch / WebSocket 行为与浏览器一致。依赖（Robolectric android-all 作编译用 android.jar、dalvik-dx、NanoHTTPD）
   只从 Maven Central 下载到 `build/apk-cache`，不访问谷歌仓库；需要 JDK 11+（javac / keytool / jarsigner）与 python3
-- 服务器地址在运行时填写：登录页「服务器设置」→ `http://<开发机IP>:5173`（`pnpm dev:client` 已 `--host` 监听局域网，
-  自带 `/api`、`/ws` 代理并对跨源请求返回 CORS 头）或正式 `https://域名`（Nginx 同时反代 REST 与 WS）；
+- 服务器地址在运行时填写：登录页「服务器设置」→ 内测主机 `http://<主机IP>`（§2.1 一条命令部署）、
+  或同一 Wi-Fi 的开发电脑 `http://<电脑IP>:5173`（电脑上 `pnpm dev:all` 一键拉起 PG / Redis / api / game / client / admin 并打印该地址；
+  Vite 已 `--host` 监听局域网，自带 `/api`、`/ws` 代理并对跨源请求返回 CORS 头）、或正式 `https://域名`（Nginx 同时反代 REST 与 WS）；
   H5 也可用 `?server=http://host:port` 链接一次性写入。壳的 UA 含 `YanbianGameApp/`，未设置地址时登录页会高亮提示
 - 与正式包的差异（内测可接受，商店发布不可）：v1 调试签名（targetSdk 28，Android 7.0+ 可安装，不含 v2/v3 签名）、无图标 / 启动页、
   允许明文 HTTP、开启 WebView 远程调试（chrome://inspect）、`applicationId` 为 `com.yanbiangame.app`；正式发布仍走上面的 Capacitor 流程

@@ -45,6 +45,13 @@ pnpm dev:api                    # REST 服务群 :8080
 pnpm dev:game                   # 游戏服务群(WS) :8090
 pnpm dev:client                 # 游戏客户端 :5173（H5/PC，--host 监听局域网；APK 打包见 docs/10-deployment.md）
 pnpm dev:admin                  # 管理后台 :5174
+pnpm dev:all                    # 以上一键全部拉起（含 PG/Redis + 迁移），并打印手机 APK 要填的局域网地址
+```
+
+没有服务器？任意一台 Linux 云主机（2 vCPU / 2 GB，放行 TCP 80）一条命令起内测服务器（HTTP，无域名）：
+
+```bash
+git clone <仓库地址> yanbian && cd yanbian && bash deploy/install-test-server.sh   # 结束时打印 APK 要填的 http://<主机IP> 与后台初始密码
 ```
 
 ## 测试体系（当前全绿）
@@ -53,7 +60,7 @@ pnpm dev:admin                  # 管理后台 :5174
 pnpm --filter @yanbian/game-common test    # 引擎单元测试 39 项（含模糊测试/RTP 收敛/确定性回放）
 pnpm --filter @yanbian/api-service test    # 钱包集成测试 7 项（并发100扣款/幂等/防重复结算/触发器防篡改）
 node tests/e2e-smoke.mjs                   # 全栈 E2E 55 项（四游戏整局/防作弊路径/断线重连）
-node tests/ui-smoke.mjs                    # 客户端浏览器冒烟 10 项（Playwright）
+node tests/ui-smoke.mjs                    # 客户端浏览器冒烟 10 项（Playwright；BASE_URL=http://<内测主机> 可对网关跑）
 node tests/admin-ui-smoke.mjs              # 后台浏览器冒烟 9 项（需 ADMIN_PASSWORD）
 node tests/lobby-shot.mjs                  # 大厅四分辨率截图回归（1920/2560/Android 横屏/手机竖屏）
 node tests/table-shot.mjs                  # 麻将/红十牌桌截图回归（1920×1080 / 960×540@2x）

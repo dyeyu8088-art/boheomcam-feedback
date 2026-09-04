@@ -13,6 +13,7 @@
     "dev:game": "pnpm --filter @yanbian/game-service dev",
     "dev:client": "pnpm --filter @yanbian/client-game dev",
     "dev:admin": "pnpm --filter @yanbian/admin-web dev",
+    "dev:all": "node scripts/dev-all.mjs",
     "migrate": "pnpm --filter @yanbian/api-service migrate"
   },
   "devDependencies": {

@@ -6,7 +6,7 @@
 import { chromium } from 'playwright';
 
 const SHOT_DIR = process.env.SHOT_DIR ?? '/tmp/shots';
-const BASE = 'http://localhost:5173';
+const BASE = process.env.BASE_URL ?? 'http://localhost:5173'; // BASE_URL=http://<内测主机> 可对网关跑
 
 let passed = 0;
 let failed = 0;

@@ -121,6 +121,22 @@
   jarsigner 调试签名、androguard 回读校验包名 / 入口），产物 `build/yanbian-test.apk`（6 MB，minSdk 24 / targetSdk 28）；
   正式发布仍走 Capacitor + Android Studio（docs/10-deployment.md §3，内测壳见 §3.1）
 
+### P12 内测服务器一条命令部署
+- `deploy/docker-compose.test.yml` + `deploy/nginx/gateway-http.conf` + `deploy/install-test-server.sh`：任意 Linux 主机
+  `bash deploy/install-test-server.sh` 完成 装 Docker → 生成随机密钥 `.env` → 构建 → 迁移 → 启动，并打印 APK「服务器设置」要填的
+  `http://<主机IP>` 与后台初始密码；HTTP 无域名 / 无证书，仅内测（对外发布仍用 prod 编排）
+- `pnpm dev:all`（`scripts/dev-all.mjs`）：开发电脑一键拉起 PG / Redis / 迁移 / api / game / client / admin，打印同一 Wi-Fi 手机要填的
+  `http://<电脑IP>:5173`；Ctrl+C 全部退出（Windows 用 taskkill 级联）
+- 修复：`docker-compose.prod.yml` 的 Redis 开了 `requirepass` 但 `REDIS_URL` 未带密码，服务启动即 NOAUTH；现为 `redis://:<密码>@redis:6379`
+- 修复：管理后台经网关挂在 `/admin/` 下时静态资源按 `/assets/…` 请求被路由到游戏客户端（404，后台白屏）；
+  `admin-web` 镜像以 `VITE_BASE=/admin/` 构建（Dockerfile.web `BASE` 参数，test / prod 编排均已传），本地 dev 仍为 `/`
+- 修复：网关 nginx 用静态 `upstream` 在启动时缓存容器 IP，`up -d --build` 重建 api / 前端容器换 IP 后出现 502 或前后台串路由；
+  `gateway.conf` / `gateway-http.conf` 改为 Docker 内置 DNS 动态解析（`resolver 127.0.0.11` + 变量 `proxy_pass`），
+  容器重建后无需重启 nginx（本容器内实测：重建 api / client-web 后路由即刻正确）；`/admin` 无斜杠时 301 到 `/admin/`
+- Dockerfile 增加可选 `NPM_REGISTRY` 构建参数（`.env` 设 `NPM_REGISTRY=https://registry.npmmirror.com` 加速国内构建）
+- Dockerfile 基础镜像改为 `mirror.gcr.io/library/*`（与 compose 一致；Docker Hub 受限网络也可构建）；新增 `.dockerignore`
+  （排除 node_modules / dist / .git / .env，构建上下文从数 GB 降到源码体积）
+
 ## [0.2.1] - 2026-09-03 GitHub 开源素材接入（PHASE 19 美术精修 · 续）
 
 ### 素材来源与合规（新增 `THIRD_PARTY_ASSETS.md`）
