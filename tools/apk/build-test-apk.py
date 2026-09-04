@@ -3,6 +3,7 @@
 测试用 APK 打包（不依赖 Android SDK / Gradle / 谷歌仓库）：
 
   python3 tools/apk/build-test-apk.py [--dist apps/client-game/dist] [--out build/yanbian-test.apk]
+  python3 tools/apk/build-test-apk.py --server https://test.example.com   # 把服务器地址烧进客户端（先 vite build），测试者装上即连
 
 原理：WebView 壳（tools/apk/src）+ 内嵌 NanoHTTPD 提供 dist/ 静态文件。
   1. 依赖只从 Maven Central 下载：Robolectric android-all（作为 android.jar 编译）、dalvik-dx（dex）、NanoHTTPD
@@ -18,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import struct
 import subprocess
@@ -149,8 +151,20 @@ def main() -> None:
     ap.add_argument('--version-name', default='0.3.0-test')
     ap.add_argument('--label', default='延边娱乐 测试版')
     ap.add_argument('--keystore', default='')
+    ap.add_argument('--server', default='', help='服务器地址（http(s)://host[:port]）：以 VITE_SERVER_BASE 重新 vite build，APK 内置该地址，登录页仍可改')
     args = ap.parse_args()
 
+    if args.server:
+        server = args.server.strip().rstrip('/')
+        if not re.match(r'^https?://[^\s/]+$', server):
+            raise SystemExit('--server 需为 http(s)://host[:port]')
+        log(f'vite build (VITE_SERVER_BASE={server})')
+        env = dict(os.environ, VITE_SERVER_BASE=server)
+        env.pop('JAVA_TOOL_OPTIONS', None)
+        r = subprocess.run(['pnpm', '--filter', '@yanbian/client-game', 'exec', 'vite', 'build'], cwd=ROOT, env=env, capture_output=True, text=True)
+        if r.returncode != 0:
+            sys.stderr.write(r.stdout[-3000:] + r.stderr[-3000:])
+            raise SystemExit('vite build failed')
     dist = Path(args.dist)
     if not (dist / 'index.html').exists():
         raise SystemExit(f'dist 不存在：{dist}（先在 apps/client-game 执行 vite build）')
