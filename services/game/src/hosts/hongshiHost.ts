@@ -155,7 +155,7 @@ export class HongshiHost implements GameHost {
     const table = s.table;
     const player = room.playerByUid(uid);
     if (!table || !player) throw new ApiError(ErrorCode.GAME_NOT_RUNNING);
-    if (player.trustee && event !== 'game.trustee') {
+    if (player.trustee && event !== 'game.trustee' && event !== 'hongshi.hint') {
       player.trustee = false;
       room.broadcast(Ev.GameTrustee, { seat: player.seat, trustee: false });
     }

@@ -209,7 +209,8 @@ export class MahjongHost implements GameHost {
     const table = s.table;
     const player = room.playerByUid(uid);
     if (!table || !player) throw new ApiError(ErrorCode.GAME_NOT_RUNNING);
-    if (player.trustee && event !== 'game.trustee') {
+    // 只读查询（客户端每回合自动请求可选动作）不算手动操作，否则挂机玩家每回合都会被解除托管、全桌等满 15 s
+    if (player.trustee && event !== 'game.trustee' && event !== 'mahjong.options') {
       // 玩家手动操作 → 解除托管
       player.trustee = false;
       room.broadcast(Ev.GameTrustee, { seat: player.seat, trustee: false });
