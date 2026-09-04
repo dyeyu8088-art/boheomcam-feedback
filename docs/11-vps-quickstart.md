@@ -70,6 +70,39 @@ bash deploy/install-test-server.sh
 
 폰 브라우저에서 `http://<서버IP>/` 를 열면 설치 없이 H5로도 같은 서버에 붙습니다. 관리자 페이지는 `http://<서버IP>/admin/` 입니다.
 
+## 4-1. VPS 대신 내 PC를 서버로 쓰기 (같은 Wi-Fi 테스트, 인터넷 공개는 선택)
+
+돈을 쓰기 전에 PC 한 대로 시작할 수 있습니다. 필요한 것은 Docker Desktop 하나입니다 (Node 설치 불필요).
+
+**Windows**
+
+1. Docker Desktop 설치 (https://www.docker.com/products/docker-desktop/) → 설치 중 WSL 2 활성화에 동의 → 재부팅 → Docker Desktop 실행 (고래 아이콘이 켜질 때까지 대기).
+2. Microsoft Store에서 **Ubuntu** 설치 후 실행 (처음 한 번 사용자 이름·비밀번호 생성). Docker Desktop → Settings → Resources → WSL integration에서 Ubuntu를 켭니다.
+3. Ubuntu 터미널에서 (다운로드 폴더는 `/mnt/c/Users/<이름>/Downloads`):
+
+```bash
+cp /mnt/c/Users/<이름>/Downloads/yanbian-server-*.tar.gz ~/ && cd ~
+tar xzf yanbian-server-*.tar.gz && cd yanbian
+bash deploy/install-test-server.sh
+```
+
+4. Windows 방화벽 창이 뜨면 「허용」. 끝나면 `局域网` 줄에 `http://192.168.x.x` 형태의 주소가 나옵니다. 폰을 같은 Wi-Fi에 연결하고 APK 「服务器设置」에 그 주소를 넣습니다.
+
+**macOS**: Docker Desktop 설치 후 터미널에서 같은 세 줄을 실행합니다. **Linux**: VPS와 동일합니다.
+
+**인터넷에서도 접속하게 하려면 (선택)**
+
+- 방법 A: 공유기(라우터) 관리 페이지에서 포트포워딩 TCP 80 → PC 내부 IP. 통신사 회선이 공인 IP를 주는 경우에만 됩니다. APK에는 스크립트가 출력한 `公网` 주소를 넣습니다.
+- 방법 B: Cloudflare Tunnel (무료, 포트포워딩 불필요). https://github.com/cloudflare/cloudflared/releases 에서 cloudflared를 받아 실행:
+
+```bash
+cloudflared tunnel --url http://localhost:80
+```
+
+  출력되는 `https://xxxx.trycloudflare.com` 주소를 APK 「服务器设置」에 넣습니다 (https라 WebSocket도 wss로 자동 전환). 주소는 cloudflared를 다시 켤 때마다 바뀌고, PC와 cloudflared가 켜져 있는 동안만 접속됩니다.
+
+PC를 서버로 쓰는 동안은 PC가 잠자기 모드에 들어가지 않게 전원 설정을 바꿔 두세요. 사용자가 늘면 같은 tar 파일로 VPS에 옮기면 됩니다 (데이터 이전은 `docker compose … exec postgres pg_dump`).
+
 ## 5. 운영 명령
 
 ```bash

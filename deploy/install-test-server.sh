@@ -77,18 +77,27 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 
-IP="$(curl -fsS -m 5 https://api.ipify.org 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')"
-ADDR="http://${IP}"
-[ "$HTTP_PORT" != "80" ] && ADDR="${ADDR}:${HTTP_PORT}"
+# 局域网 IP（Linux: hostname -I；macOS: ipconfig getifaddr；Windows Git Bash / WSL: ipconfig.exe）
+lan_ip() {
+  local ip
+  ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
+  [ -z "$ip" ] && ip="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true)"
+  [ -z "$ip" ] && ip="$(ipconfig.exe 2>/dev/null | tr -d '\r' | grep -i 'IPv4' | grep -v '172\.\(1[6-9]\|2[0-9]\|3[01]\)\.' | head -1 | sed 's/.*: *//')"
+  echo "$ip"
+}
+LAN_IP="$(lan_ip)"
+PUB_IP="$(curl -fsS -m 5 https://api.ipify.org 2>/dev/null || true)"
+PORT_SUFFIX=""
+[ "$HTTP_PORT" != "80" ] && PORT_SUFFIX=":${HTTP_PORT}"
 
 cat <<MSGEOF
 
 ==============================================
- 内测服务器已启动
- APK / H5 登录页「服务器设置」填:  ${ADDR}
- 手机浏览器直接玩（H5）:          ${ADDR}/
- 管理后台:                        ${ADDR}/admin/   账号 admin   初始密码: ${ADMIN_INIT_PASSWORD}（首登强制改密）
- 云主机请在安全组 / 防火墙放行 TCP ${HTTP_PORT}
+ 内测服务器已启动（APK / H5 登录页「服务器设置」填下面任一可达地址）
+ 局域网（同一 Wi-Fi 的手机 / 本机）:  http://${LAN_IP:-<本机IP>}${PORT_SUFFIX}
+ 公网（云主机直接可用；家用电脑需路由器把 TCP ${HTTP_PORT} 映射到本机，或用 cloudflared）:  http://${PUB_IP:-<公网IP>}${PORT_SUFFIX}
+ 管理后台:  <地址>/admin/   账号 admin   初始密码: ${ADMIN_INIT_PASSWORD}（首登强制改密）
+ 云主机请在安全组 / 防火墙放行 TCP ${HTTP_PORT}；Windows 首次运行若弹防火墙提示请选择「允许」
  日志:  docker compose -f deploy/docker-compose.test.yml --env-file .env logs -f api game
  停止:  docker compose -f deploy/docker-compose.test.yml --env-file .env down
  更新:  重新上传 / git pull 新代码后再执行 bash deploy/install-test-server.sh（数据保留）

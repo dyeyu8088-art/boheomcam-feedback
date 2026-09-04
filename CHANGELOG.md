@@ -138,6 +138,8 @@
   `registry-mirrors` 即可），安装脚本自动探测 Docker Hub → `mirror.gcr.io` → 提示配置镜像加速；新增 `.dockerignore`
   （排除 node_modules / dist / .git / .env，构建上下文从数 GB 降到源码体积）
 - `tools/pack-server.sh`：按 git 追踪文件打源码 tar 包，无仓库权限的主机也能部署；`docs/11-vps-quickstart.md`（韩文 VPS 快速上手）
+- 安装脚本结束时同时打印局域网地址（Linux / macOS / Windows Git Bash、WSL 均可探测）与公网地址，说明家用电脑需端口映射或 cloudflared；
+  文档新增「用自己的电脑当服务器」（Docker Desktop + WSL、同一 Wi-Fi、Cloudflare Tunnel）
 
 ## [0.2.1] - 2026-09-03 GitHub 开源素材接入（PHASE 19 美术精修 · 续）
 
