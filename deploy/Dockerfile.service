@@ -1,5 +1,7 @@
 # 服务端镜像（api-service 与 game-service 共用；SERVICE 构建参数区分入口）
-FROM mirror.gcr.io/library/node:22-alpine AS base
+# IMAGE_PREFIX：基础镜像前缀，默认 Docker Hub（国内主机配置 registry-mirrors 即可）；Docker Hub 不可达时传 mirror.gcr.io/library/
+ARG IMAGE_PREFIX=
+FROM ${IMAGE_PREFIX}node:22-alpine AS base
 # 可选：npm 镜像源（国内主机可传 https://registry.npmmirror.com）
 ARG NPM_REGISTRY=https://registry.npmjs.org
 ENV npm_config_registry=${NPM_REGISTRY} COREPACK_NPM_REGISTRY=${NPM_REGISTRY}

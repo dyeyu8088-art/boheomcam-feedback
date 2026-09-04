@@ -3,7 +3,7 @@
 # 生产迁移 K8s 时按本文件的服务边界逐一转换为 Deployment/Service。
 services:
   nginx:
-    image: mirror.gcr.io/library/nginx:1.27-alpine
+    image: ${IMAGE_PREFIX:-}nginx:1.27-alpine
     ports:
       - "80:80"
       - "443:443"
@@ -17,7 +17,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.service
-      args: { SERVICE: api, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}" }
+      args: { SERVICE: api, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}", IMAGE_PREFIX: "${IMAGE_PREFIX:-}" }
     environment:
       NODE_ENV: production
       SERVER_ID: api-1
@@ -36,7 +36,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.service
-      args: { SERVICE: game, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}" }
+      args: { SERVICE: game, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}", IMAGE_PREFIX: "${IMAGE_PREFIX:-}" }
     environment:
       NODE_ENV: production
       SERVER_ID: game-1
@@ -52,18 +52,18 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.web
-      args: { APP: client-game, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}" }
+      args: { APP: client-game, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}", IMAGE_PREFIX: "${IMAGE_PREFIX:-}" }
     restart: unless-stopped
 
   admin-web:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.web
-      args: { APP: admin-web, BASE: /admin/, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}" }
+      args: { APP: admin-web, BASE: /admin/, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}", IMAGE_PREFIX: "${IMAGE_PREFIX:-}" }
     restart: unless-stopped
 
   postgres:
-    image: mirror.gcr.io/library/postgres:16-alpine
+    image: ${IMAGE_PREFIX:-}postgres:16-alpine
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
@@ -82,14 +82,14 @@ services:
     restart: unless-stopped
 
   redis:
-    image: mirror.gcr.io/library/redis:7-alpine
+    image: ${IMAGE_PREFIX:-}redis:7-alpine
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - redisdata:/data
     restart: unless-stopped
 
   backup:
-    image: mirror.gcr.io/library/postgres:16-alpine
+    image: ${IMAGE_PREFIX:-}postgres:16-alpine
     environment:
       PGPASSWORD: ${PG_PASSWORD}
     volumes:
@@ -100,7 +100,7 @@ services:
     restart: unless-stopped
 
   prometheus:
-    image: mirror.gcr.io/prom/prometheus:latest
+    image: ${IMAGE_PREFIX:-}prom/prometheus:latest
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - promdata:/prometheus

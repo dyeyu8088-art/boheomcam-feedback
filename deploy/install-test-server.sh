@@ -31,12 +31,32 @@ HTTP_PORT=80
 LOG_LEVEL=info
 # 国内主机构建慢可启用 npm 镜像源：
 # NPM_REGISTRY=https://registry.npmmirror.com
+# Docker Hub 不可达且已配 registry-mirrors 仍失败时可指定基础镜像前缀：
+# IMAGE_PREFIX=mirror.gcr.io/library/
 ENVEOF
   chmod 600 .env
   log "已生成 .env（随机密码 / 密钥）"
 fi
 set -a; . ./.env; set +a
 HTTP_PORT="${HTTP_PORT:-80}"
+
+# 基础镜像来源探测：Docker Hub（默认，国内可配 registry-mirrors）→ mirror.gcr.io → 提示配置镜像加速
+if [ -z "${IMAGE_PREFIX:-}" ] && ! docker pull -q alpine:3.20 >/dev/null 2>&1; then
+  if docker pull -q mirror.gcr.io/library/alpine:3.20 >/dev/null 2>&1; then
+    export IMAGE_PREFIX=mirror.gcr.io/library/
+    grep -q '^IMAGE_PREFIX=' .env || echo "IMAGE_PREFIX=${IMAGE_PREFIX}" >> .env
+    log "Docker Hub 不可达，基础镜像改从 mirror.gcr.io 拉取"
+  else
+    cat >&2 <<MSG
+[install] 无法拉取 Docker 镜像（Docker Hub 与 mirror.gcr.io 均不可达）。
+  国内主机请先配置镜像加速：编辑 /etc/docker/daemon.json，例如
+    { "registry-mirrors": ["https://<你的加速器地址>"] }
+  （阿里云 / 腾讯云控制台的「容器镜像服务 → 镜像加速器」可获取地址），然后
+    systemctl restart docker && bash deploy/install-test-server.sh
+MSG
+    exit 1
+  fi
+fi
 
 COMPOSE=(docker compose -f deploy/docker-compose.test.yml --env-file .env)
 
@@ -71,6 +91,6 @@ cat <<MSGEOF
  云主机请在安全组 / 防火墙放行 TCP ${HTTP_PORT}
  日志:  docker compose -f deploy/docker-compose.test.yml --env-file .env logs -f api game
  停止:  docker compose -f deploy/docker-compose.test.yml --env-file .env down
- 更新:  git pull && bash deploy/install-test-server.sh
+ 更新:  重新上传 / git pull 新代码后再执行 bash deploy/install-test-server.sh（数据保留）
 ==============================================
 MSGEOF

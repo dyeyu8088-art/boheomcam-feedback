@@ -6,7 +6,7 @@
 name: yanbian-test
 services:
   nginx:
-    image: mirror.gcr.io/library/nginx:1.27-alpine
+    image: ${IMAGE_PREFIX:-}nginx:1.27-alpine
     ports:
       - "${HTTP_PORT:-80}:80"
     volumes:
@@ -18,7 +18,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.service
-      args: { SERVICE: api, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}" }
+      args: { SERVICE: api, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}", IMAGE_PREFIX: "${IMAGE_PREFIX:-}" }
     environment:
       NODE_ENV: production
       SERVER_ID: api-1
@@ -38,7 +38,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.service
-      args: { SERVICE: game, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}" }
+      args: { SERVICE: game, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}", IMAGE_PREFIX: "${IMAGE_PREFIX:-}" }
     environment:
       NODE_ENV: production
       SERVER_ID: game-1
@@ -57,18 +57,18 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.web
-      args: { APP: client-game, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}" }
+      args: { APP: client-game, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}", IMAGE_PREFIX: "${IMAGE_PREFIX:-}" }
     restart: unless-stopped
 
   admin-web:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.web
-      args: { APP: admin-web, BASE: /admin/, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}" }
+      args: { APP: admin-web, BASE: /admin/, NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}", IMAGE_PREFIX: "${IMAGE_PREFIX:-}" }
     restart: unless-stopped
 
   postgres:
-    image: mirror.gcr.io/library/postgres:16-alpine
+    image: ${IMAGE_PREFIX:-}postgres:16-alpine
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
@@ -83,7 +83,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: mirror.gcr.io/library/redis:7-alpine
+    image: ${IMAGE_PREFIX:-}redis:7-alpine
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - redisdata:/data

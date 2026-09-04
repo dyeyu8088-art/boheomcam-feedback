@@ -79,6 +79,7 @@ pnpm --filter @yanbian/client-game build && python3 tools/apk/build-test-apk.py 
 ```
 
 生产部署 / APK 打包（正式 Capacitor 流程与内测壳 §3.1）/ RELEASE 检查表：见 [docs/10-deployment.md](docs/10-deployment.md)。
+VPS 快速上手（韩文：服务商选择 / 端口放行 / 源码包上传 / APK 填地址）：[docs/11-vps-quickstart.md](docs/11-vps-quickstart.md)；源码包：`bash tools/pack-server.sh`。
 
 ## 核心文档
 

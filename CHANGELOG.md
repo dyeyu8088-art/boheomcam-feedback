@@ -134,8 +134,10 @@
   `gateway.conf` / `gateway-http.conf` 改为 Docker 内置 DNS 动态解析（`resolver 127.0.0.11` + 变量 `proxy_pass`），
   容器重建后无需重启 nginx（本容器内实测：重建 api / client-web 后路由即刻正确）；`/admin` 无斜杠时 301 到 `/admin/`
 - Dockerfile 增加可选 `NPM_REGISTRY` 构建参数（`.env` 设 `NPM_REGISTRY=https://registry.npmmirror.com` 加速国内构建）
-- Dockerfile 基础镜像改为 `mirror.gcr.io/library/*`（与 compose 一致；Docker Hub 受限网络也可构建）；新增 `.dockerignore`
+- 基础镜像来源参数化 `IMAGE_PREFIX`（Dockerfile `ARG` 置于 `FROM` 之前 + compose 镜像名 / 构建参数）：默认 Docker Hub（国内主机配
+  `registry-mirrors` 即可），安装脚本自动探测 Docker Hub → `mirror.gcr.io` → 提示配置镜像加速；新增 `.dockerignore`
   （排除 node_modules / dist / .git / .env，构建上下文从数 GB 降到源码体积）
+- `tools/pack-server.sh`：按 git 追踪文件打源码 tar 包，无仓库权限的主机也能部署；`docs/11-vps-quickstart.md`（韩文 VPS 快速上手）
 
 ## [0.2.1] - 2026-09-03 GitHub 开源素材接入（PHASE 19 美术精修 · 续）
 
