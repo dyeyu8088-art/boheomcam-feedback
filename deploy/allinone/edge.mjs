@@ -8,8 +8,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const PORT = Number(process.env.PORT ?? 80);
-const API_PORT = Number(process.env.API_PORT ?? 8080);
-const GAME_PORT = Number(process.env.GAME_PORT ?? 8090);
+const API_PORT = Number(process.env.API_PORT ?? 18080);
+const GAME_PORT = Number(process.env.GAME_PORT ?? 18090);
 const CLIENT_ROOT = '/srv/www/client';
 const ADMIN_ROOT = '/srv/www/admin';
 
@@ -103,4 +103,8 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 server.keepAliveTimeout = 65000;
+server.on('error', (e) => {
+  console.error(`[edge] listen failed on ${PORT}: ${e.message}`);
+  process.exit(1);
+});
 server.listen(PORT, '0.0.0.0', () => console.log(`[edge] listening on ${PORT} (api ${API_PORT}, game ${GAME_PORT})`));

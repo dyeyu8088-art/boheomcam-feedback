@@ -25,8 +25,9 @@ export SERVER_ID="${SERVER_ID:-allinone}"
 export NODE_INDEX="${NODE_INDEX:-2}"
 export DATABASE_URL="postgres://yanbian@127.0.0.1:5432/yanbian"
 export REDIS_URL="redis://127.0.0.1:6379"
-export API_PORT=8080
-export GAME_PORT=8090
+# 内部端口避开常见平台注入的 PORT（8080 / 8000 / 3000 等），防止与边缘监听端口冲突
+export API_PORT=18080
+export GAME_PORT=18090
 export SERVICE_ROLES="${SERVICE_ROLES:-auth,user,wallet,activity,social,config,admin}"
 export LOG_LEVEL="${LOG_LEVEL:-info}"
 
@@ -53,12 +54,13 @@ GAME_PID=$!
 node /app/deploy/allinone/edge.mjs &
 EDGE_PID=$!
 
+EXIT_CODE=0
 shutdown() {
-  echo "[allinone] shutting down"
+  echo "[allinone] shutting down (exit $EXIT_CODE)"
   kill "$EDGE_PID" "$API_PID" "$GAME_PID" 2>/dev/null || true
   su-exec postgres pg_ctl -D "$PGDATA" -m fast -w stop >/dev/null 2>&1 || true
   kill "$(cat "$DATA/redis/redis.pid" 2>/dev/null || pgrep redis-server)" 2>/dev/null || true
-  exit 0
+  exit "$EXIT_CODE"
 }
 trap shutdown TERM INT
 
@@ -71,9 +73,12 @@ cat <<MSG
 ==============================================
 MSG
 
-# 任一核心进程退出即整体退出，交给平台重启
-while kill -0 "$API_PID" 2>/dev/null && kill -0 "$GAME_PID" 2>/dev/null && kill -0 "$EDGE_PID" 2>/dev/null; do
+# 任一核心进程退出即整体以非零码退出（平台按重启策略拉起），并指出是哪个进程
+while :; do
+  kill -0 "$API_PID" 2>/dev/null || { echo "[allinone] FATAL: api-service exited"; break; }
+  kill -0 "$GAME_PID" 2>/dev/null || { echo "[allinone] FATAL: game-service exited"; break; }
+  kill -0 "$EDGE_PID" 2>/dev/null || { echo "[allinone] FATAL: edge exited"; break; }
   sleep 5
 done
-echo "[allinone] a core process exited"
+EXIT_CODE=1
 shutdown
