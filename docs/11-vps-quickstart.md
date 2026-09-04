@@ -116,6 +116,21 @@ python3 tools/apk/build-test-apk.py --server https://xxxx.trycloudflare.com --ou
 
 주의: cloudflared 임시 주소는 재실행마다 바뀌므로, 여러 사람에게 오래 배포하려면 VPS(고정 IP)나 Cloudflare 계정에 등록한 고정 터널 주소를 쓰세요. 테스터는 각자 「游客快速开始」로 별도 계정(초기 코인 10만)을 받고, 관리자 페이지 `/admin/` 에서 접속·정산 기록을 볼 수 있습니다.
 
+## 4-3. 서버도 PC도 없이: 컨테이너 호스팅 한 번 클릭 (Railway / Render)
+
+GitHub 저장소를 연결하면 빌드·배포·HTTPS 도메인까지 자동으로 해 주는 서비스입니다. 저장소에 `deploy/Dockerfile.allinone`(PG + Redis + 서버 + 프론트가 한 컨테이너), `railway.json`, `render.yaml`이 들어 있어 별도 설정이 거의 없습니다.
+
+- **Railway** (https://railway.com): New Project → Deploy from GitHub repo → 이 저장소 선택. `railway.json`이 Dockerfile 경로를 알려 줍니다. Settings → Networking → Generate Domain 으로 `https://xxx.up.railway.app` 주소를 받고, Volumes에서 `/data`에 볼륨을 붙이면 데이터가 유지됩니다. 무료 체험 크레딧 후 월 5달러부터.
+- **Render** (https://render.com): New → Blueprint → 저장소 선택 → `render.yaml` 자동 인식(싱가포르 리전, 5 GB 디스크). Starter 플랜(월 7달러). 무료 플랜은 15분 유휴 시 잠들어 WebSocket 게임에 부적합합니다.
+
+받은 `https://…` 주소를 APK 「服务器设置」에 넣거나, 주소가 내장된 APK를 만들어 배포합니다:
+
+```bash
+python3 tools/apk/build-test-apk.py --server https://xxx.up.railway.app --out build/yanbian-tester.apk
+```
+
+배포 로그(또는 컨테이너 로그)에 `首次登录密码: …` 로 관리자 초기 비밀번호가 출력됩니다. 저장소가 비공개면 해당 서비스에 GitHub 앱 권한을 주면 됩니다.
+
 ## 5. 운영 명령
 
 ```bash

@@ -1,0 +1,13 @@
+# Render Blueprint：单容器一体化镜像（PG + Redis + api + game + 边缘）。Render 会注入 PORT；/data 挂持久盘。
+services:
+  - type: web
+    name: yanbian-game
+    runtime: docker
+    dockerfilePath: ./deploy/Dockerfile.allinone
+    plan: starter
+    region: singapore
+    healthCheckPath: /
+    disk:
+      name: yanbian-data
+      mountPath: /data
+      sizeGB: 5
