@@ -608,11 +608,20 @@ onBeforeUnmount(() => {
 @keyframes mascot-bob {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) rotate(-1deg) scaleY(1);
+  }
+  30% {
+    transform: translateY(-6px) rotate(0deg) scaleY(1.015);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-9px) rotate(1deg) scaleY(1.02);
   }
+  80% {
+    transform: translateY(-3px) rotate(0.4deg) scaleY(1.005);
+  }
+}
+.mascot {
+  transform-origin: 50% 100%;
 }
 .fs-banner {
   position: absolute;

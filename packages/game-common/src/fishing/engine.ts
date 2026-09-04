@@ -5,7 +5,7 @@
  */
 import type { Rng } from '../rng.js';
 import { bossMaxHp, fishTypeById, skillById, WAVE_TEMPLATES, type FishingStageConfig, type SkillId, type WaveTemplate } from './config.js';
-import { fishPositionAt, pathById } from './paths.js';
+import { fishPositionAt, laneForFish, pathById } from './paths.js';
 
 export interface ActiveFish {
   fishId: number;
@@ -157,7 +157,8 @@ export class FishingRoomEngine {
     const path = pathById.get(fish.pathId);
     if (!path) return null;
     const frozen = frozenOverlapMs(this.freezes, fish.spawnAtMs, nowMs);
-    return fishPositionAt(path, fish.spawnAtMs, fish.speedScale, Math.min(nowMs - frozen, fish.expireAtMs));
+    const size = fishTypeById.get(fish.typeId)?.size ?? 'small';
+    return fishPositionAt(path, fish.spawnAtMs, fish.speedScale, Math.min(nowMs - frozen, fish.expireAtMs), laneForFish(fish.fishId, size));
   }
 
   /** 射击频控：滑动窗口（1s） */

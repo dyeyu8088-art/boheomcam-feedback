@@ -85,3 +85,59 @@ describe('捕鱼引擎', () => {
     expect(e.rtpFactor).toBeGreaterThanOrEqual(stage.controller.minFactor);
   });
 });
+
+import { FISH_PATHS, headingOnPath, laneForFish, pathProgress, pointOnPath, pointOnPathLane } from '../src/fishing/paths.js';
+
+describe('鱼群路径库（共享）', () => {
+  it('每条路径进度单调不减、首尾闭合、坐标在出入场范围内', () => {
+    for (const p of FISH_PATHS) {
+      let last = -1;
+      for (let i = 0; i <= 200; i += 1) {
+        const t = i / 200;
+        const u = pathProgress(p, t);
+        expect(u).toBeGreaterThanOrEqual(last - 1e-9);
+        last = u;
+        const [x, y] = pointOnPath(p, t);
+        expect(x).toBeGreaterThanOrEqual(-0.2);
+        expect(x).toBeLessThanOrEqual(1.2);
+        expect(y).toBeGreaterThanOrEqual(-0.2);
+        expect(y).toBeLessThanOrEqual(1.2);
+      }
+      expect(pathProgress(p, 0)).toBe(0);
+      expect(pathProgress(p, 1)).toBe(1);
+      expect(pointOnPath(p, 0)).toEqual(p.points[0]);
+      expect(pointOnPath(p, 1)).toEqual(p.points[p.points.length - 1]);
+    }
+  });
+  it('停留变向路径中段静止且离开方向与进入方向相反', () => {
+    const p = FISH_PATHS.find((x) => x.ease === 'pause')!;
+    const a = pointOnPath(p, 0.42);
+    const b = pointOnPath(p, 0.54);
+    expect(Math.hypot(a[0] - b[0], a[1] - b[1])).toBeLessThan(1e-9);
+    const inA = headingOnPath(p, 0.2).angle;
+    const outA = headingOnPath(p, 0.8).angle;
+    expect(Math.sign(Math.cos(inA))).not.toBe(Math.sign(Math.cos(outA)));
+  });
+  it('拐点减速：turns 路径在控制点附近速度低于段中', () => {
+    const p = FISH_PATHS.find((x) => x.ease === 'turns' && x.points.length === 5)!;
+    const mid = headingOnPath(p, 0.125).speed; // 第一段中点
+    const knot = headingOnPath(p, 0.25).speed; // 第一个控制点
+    expect(knot).toBeLessThan(mid);
+  });
+  it('鱼群车道：小鱼 5 条对称车道、大鱼 / Boss 走中线；偏移沿法线且长度等于车道值', () => {
+    const lanes = new Set(Array.from({ length: 50 }, (_, i) => laneForFish(i + 1, 'small')));
+    expect([...lanes].sort((a, b) => a - b)).toEqual([-0.07, -0.035, 0, 0.035, 0.07]);
+    expect(laneForFish(9, 'large')).toBe(0);
+    expect(laneForFish(9, 'boss')).toBe(0);
+    const p = FISH_PATHS[0]!;
+    const [x0, y0] = pointOnPath(p, 0.5);
+    const [x1, y1] = pointOnPathLane(p, 0.5, 0.05);
+    expect(Math.hypot(x1 - x0, y1 - y0)).toBeCloseTo(0.05, 5);
+  });
+  it('路径 id 唯一且与 kind 覆盖直线 / 斜向 / 弧 / S / 停留 / 之字 / Boss 环绕', () => {
+    const ids = new Set(FISH_PATHS.map((p) => p.pathId));
+    expect(ids.size).toBe(FISH_PATHS.length);
+    const kinds = new Set(FISH_PATHS.map((p) => p.kind));
+    for (const k of ['straight', 'diagonal', 'arc', 's', 'pause', 'zigzag', 'boss-circle', 'boss-arc']) expect(kinds.has(k as never)).toBe(true);
+  });
+});

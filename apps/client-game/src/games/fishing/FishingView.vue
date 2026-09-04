@@ -72,9 +72,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Application, Container, FillGradient, Graphics, Sprite, Text, type Texture } from 'pixi.js';
+import { Application, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { Ev } from '@yanbian/protocol';
-import { FISH_TYPES, SKILLS, frozenOverlapMs, pathById, pointOnPath, type FreezeWindow, type SkillConfig, type SkillId } from '@yanbian/game-common/fishing';
+import { FISH_TYPES, SKILLS, frozenOverlapMs, headingOnPath, laneForFish, pathById, pointOnPathLane, type FreezeWindow, type SkillConfig, type SkillId } from '@yanbian/game-common/fishing';
 import { gameSocket } from '../../net/ws.js';
 import { api } from '../../net/api.js';
 import { useUserStore } from '../../stores/user.js';
@@ -84,6 +84,9 @@ import { fmt } from '../../ui/format.js';
 import { asset, pixiTextures, release } from '../../assets/assets.js';
 import { contentBounds } from '../../assets/bounds.js';
 import { audio } from '../../audio/AudioManager.js';
+import { reduceMotion } from '../../design/motion.js';
+import { FISH_RIGS, FishRig } from './fishRig.js';
+import { Ocean } from './ocean.js';
 import GameButton from '../../ui/GameButton.vue';
 import CurrencyBar from '../../ui/CurrencyBar.vue';
 import BetStepper from '../../ui/BetStepper.vue';
@@ -151,12 +154,16 @@ interface LiveFish {
   pathId: number;
   spawnAtMs: number;
   speedScale: number;
+  /** 网格骨骼动画（node = rig.node） */
+  rig: FishRig;
   node: Container;
-  sprite: Sprite;
   label: Text | null;
   size: number;
   dead: boolean;
   isBoss: boolean;
+  lastTrail: number;
+  /** 鱼群车道横向偏移（与服务端同一函数） */
+  lane: number;
 }
 interface LiveBullet {
   bulletId: string;
@@ -190,20 +197,10 @@ let mySeat = -1;
 let shake = 0;
 let tickTimer = 0;
 
-/** 鱼种 → 精灵素材 + 缩放/染色（素材不足的鱼种用同族素材染色区分） */
-const FISH_SPRITE: Record<string, { key: string; w: number; tint?: number; boss?: boolean }> = {
-  sardine: { key: 'fishClown', w: 64, tint: 0xa9d6ff },
-  clown: { key: 'fishClown', w: 84 },
-  butterfly: { key: 'fishClown', w: 92, tint: 0xffe58a },
-  puffer: { key: 'fishPuffer', w: 110 },
-  lionfish: { key: 'fishPuffer', w: 120, tint: 0xff9a86 },
-  ray: { key: 'fishTurtle', w: 140, tint: 0xb39cff },
-  turtle: { key: 'fishTurtle', w: 160 },
-  shark: { key: 'fishShark01', w: 220 },
-  goldenShark: { key: 'fishGolden', w: 200 },
-  whale: { key: 'fishSharkPurple', w: 320, boss: true },
-  dragonKing: { key: 'bossCaishenFish', w: 260, boss: true },
-};
+/** 设备分级：低端机减少网格列数 / 环境粒子 / 阴影 */
+const lowEnd = (navigator.hardwareConcurrency ?? 4) <= 4 || (navigator as unknown as { deviceMemory?: number }).deviceMemory !== undefined && ((navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 8) <= 4;
+let ocean: Ocean | null = null;
+let lastFrameAt = 0;
 
 function W(): number {
   return app?.renderer.width ?? 800;
@@ -218,17 +215,14 @@ function cannonPos(): [number, number] {
   return [W() / 2, H() - 40];
 }
 
-/* ───────── 鱼对象池 ───────── */
+/* ───────── 鱼对象池（rig 复用：网格 / 叠加层不重复创建） ───────── */
 function acquireFish(f: { fishId: number; typeId: string; pathId: number; spawnAtMs: number; speedScale: number }): LiveFish {
   const type = FISH_TYPES.find((x) => x.typeId === f.typeId);
-  const spec = FISH_SPRITE[f.typeId] ?? FISH_SPRITE.clown!;
+  const spec = FISH_RIGS[f.typeId] ?? FISH_RIGS.clown!;
   let lf = pool.pop();
   if (!lf) {
-    const node = new Container();
-    const sprite = new Sprite();
-    sprite.anchor.set(0.5);
-    node.addChild(sprite);
-    lf = { fishId: 0, typeId: '', pathId: 0, spawnAtMs: 0, speedScale: 1, node, sprite, label: null, size: 30, dead: false, isBoss: false };
+    const rig = new FishRig();
+    lf = { fishId: 0, typeId: '', pathId: 0, spawnAtMs: 0, speedScale: 1, rig, node: rig.node, label: null, size: 30, dead: false, isBoss: false, lastTrail: 0, lane: 0 };
   }
   lf.fishId = f.fishId;
   lf.typeId = f.typeId;
@@ -237,30 +231,25 @@ function acquireFish(f: { fishId: number; typeId: string; pathId: number; spawnA
   lf.speedScale = f.speedScale;
   lf.dead = false;
   lf.isBoss = !!spec.boss;
+  lf.lastTrail = 0;
   const texture = tex[spec.key];
-  if (texture) {
-    lf.sprite.texture = texture;
-    const b = contentBounds(texture); // 素材带透明安全边距：按内容宽度缩放、按内容中心锚定
-    lf.sprite.anchor.set(b.cx, b.cy);
-    lf.sprite.scale.set(spec.w / b.w);
-  }
-  lf.sprite.tint = spec.tint ?? 0xffffff;
-  lf.sprite.alpha = 1;
+  const path0 = pathById.get(f.pathId);
+  if (texture) lf.rig.setup(spec, texture, lowEnd, serverNow(), path0 ? headingOnPath(path0, 0.002).angle : 0);
+  lf.lane = laneForFish(f.fishId, type?.size ?? 'small');
   lf.size = spec.w * 0.45;
   lf.node.visible = false;
   lf.node.alpha = 1;
   lf.node.rotation = 0;
-  lf.node.scale.set(1);
   // 赔率标签（中大型鱼）
   if (type && type.size !== 'small') {
     if (!lf.label) {
       lf.label = new Text({ text: '', style: { fontSize: 14, fill: 0xffe9a6, fontWeight: '900', stroke: { color: 0x2a1500, width: 3 } } });
       lf.label.anchor.set(0.5);
-      lf.node.addChild(lf.label);
     }
     lf.label.text = `×${type.baseOdds}`;
     lf.label.y = spec.w * 0.32;
     lf.label.visible = true;
+    lf.node.addChild(lf.label);
   } else if (lf.label) lf.label.visible = false;
   fishLayer.addChild(lf.node);
   return lf;
@@ -279,15 +268,21 @@ function spawnFish(list: { fishId: number; typeId: string; pathId: number; spawn
   }
 }
 
-function updateFish(): void {
+function updateFish(dtMs: number): void {
   const now = serverNow();
   frozenActive.value = freezes.some((w) => w.startMs <= now && now < w.endMs);
+  const reduce = reduceMotion.value;
   for (const f of fishes.values()) {
     const path = pathById.get(f.pathId);
     if (!path) continue;
     const dur = path.durationMs / f.speedScale;
     const eff = now - frozenOverlapMs(freezes, f.spawnAtMs, now);
     const tt = (eff - f.spawnAtMs) / dur;
+    if (f.dead) {
+      // 死亡（被捕获）动画：原地播放到结束再回收
+      if (f.rig.update(now, dtMs, 0, false)) releaseFish(f);
+      continue;
+    }
     if (tt < 0) {
       f.node.visible = false;
       continue;
@@ -297,19 +292,21 @@ function updateFish(): void {
       if (boss.value?.fishId === f.fishId) boss.value = null;
       continue;
     }
-    const [nx, ny] = pointOnPath(path, tt);
-    const [nx2, ny2] = pointOnPath(path, Math.min(1, tt + 0.008));
+    const [nx, ny] = pointOnPathLane(path, tt, f.lane);
+    const head = headingOnPath(path, tt);
     f.node.visible = true;
     f.node.position.set(nx * W(), ny * H());
-    const dx = nx2 - nx;
-    const faceLeft = dx < 0;
-    f.sprite.scale.x = Math.abs(f.sprite.scale.x) * (faceLeft ? -1 : 1);
-    if (!f.isBoss) f.node.rotation = (faceLeft ? -1 : 1) * Math.atan2(ny2 - ny, Math.abs(dx)) * 0.5;
-    f.node.y += Math.sin(now / 260 + f.fishId) * (f.isBoss ? 6 : 2);
-    if (frozenActive.value) f.sprite.tint = 0x9fd8ff;
-    else f.sprite.tint = FISH_SPRITE[f.typeId]?.tint ?? 0xffffff;
-    // 尾部摆动（缩放呼吸模拟）
-    if (!frozenActive.value) f.node.scale.x = 1 + Math.sin(now / 140 + f.fishId) * 0.03;
+    // 归一化游速（1 ≈ 基准直线速度）；停留段 speed→0，局部摆尾随之放慢但不停止
+    const moveSpeed = Math.min(2.5, (head.speed * f.speedScale) / 1.35);
+    f.rig.faceTo(head.angle, now);
+    f.rig.angry = f.isBoss && !!boss.value && boss.value.fishId === f.fishId && boss.value.hp / boss.value.maxHp < 0.4;
+    f.rig.update(now, dtMs, moveSpeed, frozenActive.value);
+    // 尾迹气泡（中大型鱼，减少动态时关闭）
+    if (!reduce && ocean && f.size >= 40 && now - f.lastTrail > (f.isBoss ? 260 : 520) && Math.random() < 0.6) {
+      f.lastTrail = now;
+      const tp = f.rig.tailPoint();
+      ocean.emitBubble(tp.x, tp.y, 1.5 + Math.random() * 2, 0.4);
+    }
   }
   // 锁定：目标离开则重新选
   if (lockActive.value) {
@@ -413,15 +410,15 @@ function updateBullets(): void {
       if (dx * dx + dy * dy < f.size * f.size * 0.8) {
         b.node.destroy();
         bullets.splice(i, 1);
-        void resolveHit(b.bulletId, f);
+        void resolveHit(b.bulletId, f, Math.atan2(b.vy, b.vx));
         break;
       }
     }
   }
 }
 
-async function resolveHit(bulletId: string, f: LiveFish): Promise<void> {
-  hitFlash(f);
+async function resolveHit(bulletId: string, f: LiveFish, fromAngle = -Math.PI / 2): Promise<void> {
+  hitFlash(f, fromAngle);
   audio.sfx('hit', { volume: 0.5 });
   try {
     const r = await gameSocket.call<{ hit: boolean; dead: boolean; reward: number; balance?: number; boss?: { fishId: number; hp: number; maxHp: number; dead: boolean } }>(Ev.FsHit, { bulletId, fishId: f.fishId }, 6000);
@@ -441,12 +438,10 @@ function setBalance(v: number): void {
   user.setBalance(v);
 }
 
-function hitFlash(f: LiveFish): void {
-  f.sprite.tint = 0xffffff;
-  f.node.alpha = 0.6;
-  setTimeout(() => {
-    if (!destroyed) f.node.alpha = 1;
-  }, 70);
+/** 受击：闪白 + 局部光效 + 轻微位移（rig 状态机），不瞬间消失 */
+function hitFlash(f: LiveFish, fromAngle = -Math.PI / 2): void {
+  f.rig.hit(serverNow(), fromAngle);
+  if (!f.isBoss && Math.random() < 0.35) f.rig.setState('escape', serverNow());
 }
 function bossHitFx(f: LiveFish): void {
   const g = new Graphics();
@@ -499,7 +494,7 @@ function killFx(f: LiveFish, rewardAmt: number, mine: boolean): void {
   const { x, y } = f.node;
   audio.sfx(f.isBoss ? 'boss' : 'kill', { volume: 0.7 });
   if (mine) {
-    coinFly(x, y, Math.min(12, 3 + Math.floor(rewardAmt / 100)));
+    coinFly(x, y, Math.min(f.isBoss ? 28 : f.size >= 60 ? 18 : 12, 3 + Math.floor(rewardAmt / 100)));
     audio.sfx('coin', { volume: 0.5 });
   }
   const burst = new Graphics();
@@ -515,16 +510,12 @@ function killFx(f: LiveFish, rewardAmt: number, mine: boolean): void {
     else burst.destroy();
   };
   requestAnimationFrame(btick);
-  // 鱼体：翻白淡出
-  const s1 = performance.now();
-  const dtick = (): void => {
-    const p = Math.min(1, (performance.now() - s1) / 320);
-    f.node.alpha = 1 - p;
-    f.node.rotation += 0.08;
-    if (p < 1 && !destroyed) requestAnimationFrame(dtick);
-    else releaseFish(f);
-  };
-  requestAnimationFrame(dtick);
+  // 鱼体：翻肚 → 下沉 → 淡出（rig death 状态，updateFish 中播放完回收）
+  f.rig.setState('death', serverNow());
+  if (f.size >= 60 || f.isBoss) {
+    shake = Math.max(shake, f.isBoss ? 16 : 7);
+    for (let i = 0; i < (f.isBoss ? 14 : 6); i += 1) ocean?.emitBubble(x + (Math.random() - 0.5) * f.size, y + (Math.random() - 0.5) * f.size * 0.6, 2 + Math.random() * 3, 0.8);
+  }
   if (mine && rewardAmt > 0) {
     popSeq += 1;
     const id = popSeq;
@@ -774,71 +765,14 @@ onMounted(async () => {
   world = new Container();
   app.stage.addChild(world);
 
-  // 背景：水体渐变 + 焦散 + 微粒 + 暗角 + 海床
-  const bg = new Graphics();
-  const seabed = new Graphics();
-  const drawBg = (): void => {
-    const w = W();
-    const h = H();
-    bg.clear();
-    const water = new FillGradient(0, 0, 0, 1);
-    water.addColorStop(0, 0x1b6a8e);
-    water.addColorStop(0.18, 0x145575);
-    water.addColorStop(0.45, 0x0c3550);
-    water.addColorStop(0.75, 0x072033);
-    water.addColorStop(1, 0x03101a);
-    bg.rect(0, 0, w, h).fill(water);
-    bg.rect(0, 0, w, h * 0.05).fill({ color: 0xbfe8f2, alpha: 0.1 });
-    for (let r = 0; r < 5; r += 1) {
-      const y0 = h * (0.035 + r * 0.038);
-      const amp = 5 - r * 0.7;
-      const step = w / 26;
-      bg.moveTo(-step, y0);
-      for (let i = 0; i <= 27; i += 1) bg.quadraticCurveTo((i - 0.5) * step, y0 + (i % 2 === 0 ? -amp : amp), i * step, y0);
-      bg.stroke({ color: 0xbfe8f2, width: 1.6 - r * 0.2, alpha: 0.13 - r * 0.02 });
-    }
-    for (let i = 0; i < 46; i += 1) {
-      const px = ((i * 197) % 1000) / 1000;
-      const py = ((i * 421) % 1000) / 1000;
-      bg.circle(px * w, py * h, 0.7 + ((i * 13) % 5) * 0.34).fill({ color: 0xbfe8f2, alpha: 0.05 + ((i * 7) % 10) / 160 });
-    }
-    const edge = Math.max(90, Math.min(w, h) * 0.28);
-    const strips: [number, number, number, number, number, number, number, number][] = [
-      [0, 0, w, edge, 0, 0, 0, 1],
-      [0, h - edge, w, edge, 0, 1, 0, 0],
-      [0, 0, edge, h, 0, 0, 1, 0],
-      [w - edge, 0, edge, h, 1, 0, 0, 0],
-    ];
-    for (const [rx, ry, rw, rh, x0, y0, x1, y1] of strips) {
-      const gr = new FillGradient(x0, y0, x1, y1);
-      gr.addColorStop(0, 'rgba(2, 10, 16, 0.5)');
-      gr.addColorStop(1, 'rgba(2, 10, 16, 0)');
-      bg.rect(rx, ry, rw, rh).fill(gr);
-    }
-    seabed.clear();
-    seabed.poly([0, h, 0, h - 46, w * 0.18, h - 72, w * 0.4, h - 40, w * 0.62, h - 66, w * 0.85, h - 36, w, h - 58, w, h]).fill({ color: 0x0a1a2a, alpha: 0.9 });
-    seabed.poly([0, h, 0, h - 26, w * 0.12, h - 44, w * 0.22, h - 20, w * 0.3, h - 34, w * 0.4, h - 14, 0, h]).fill(0x061119);
-    seabed.poly([w, h, w, h - 30, w * 0.88, h - 52, w * 0.78, h - 22, w * 0.68, h - 36, w * 0.58, h - 12, w, h]).fill(0x061119);
-    for (const kx of [w * 0.07, w * 0.33, w * 0.7, w * 0.93]) {
-      seabed.moveTo(kx, h).quadraticCurveTo(kx - 8, h - 26, kx + 4, h - 48).stroke({ color: 0x14382e, width: 4, cap: 'round' });
-      seabed.moveTo(kx + 8, h).quadraticCurveTo(kx + 16, h - 20, kx + 8, h - 36).stroke({ color: 0x14382e, width: 3, cap: 'round' });
-    }
-  };
-  drawBg();
-  world.addChild(bg);
-  const rays = new Container();
-  for (let i = 0; i < 4; i += 1) {
-    const ray = new Graphics();
-    ray.moveTo(0, 0).lineTo(80, 0).lineTo(220, H()).lineTo(-60, H()).closePath().fill({ color: 0x9fd4e8, alpha: 0.05 });
-    ray.x = (i + 0.5) * (W() / 4);
-    ray.rotation = -0.12;
-    rays.addChild(ray);
-  }
-  world.addChild(rays, seabed);
+  // 海底环境层（远 / 中 / 近三层视差，程序绘制 + 对象池）
+  ocean = new Ocean({ lowEnd, reduceMotion: () => reduceMotion.value });
+  ocean.resize(W(), H());
+  world.addChild(ocean.far, ocean.mid);
   fishLayer = new Container();
   bulletLayer = new Container();
   fxLayer = new Container();
-  world.addChild(fishLayer, bulletLayer, fxLayer);
+  world.addChild(fishLayer, ocean.near, bulletLayer, fxLayer);
 
   // 炮台（素材精灵，随炮倍档位切换）
   cannonGlow = new Graphics();
@@ -868,42 +802,53 @@ onMounted(async () => {
   reticle.visible = false;
   fxLayer.addChild(reticle);
 
-  const bubbles: { g: Graphics; v: number }[] = [];
-  for (let i = 0; i < 14; i += 1) {
-    const b = new Graphics();
-    b.circle(0, 0, 2 + Math.random() * 3).stroke({ color: 0xbfe4f2, width: 1, alpha: 0.35 });
-    b.position.set(Math.random() * W(), Math.random() * H());
-    world.addChild(b);
-    bubbles.push({ g: b, v: 0.3 + Math.random() * 0.5 });
-  }
-
   let lastW = W();
   let lastH = H();
   app.ticker.add(() => {
+    const frameNow = performance.now();
+    const dtMs = lastFrameAt ? Math.min(100, frameNow - lastFrameAt) : 16.7;
+    lastFrameAt = frameNow;
     if (W() !== lastW || H() !== lastH) {
       lastW = W();
       lastH = H();
-      drawBg();
+      ocean?.resize(W(), H());
       applyCannon();
     }
-    updateFish();
+    const t0 = performance.now();
+    updateFish(dtMs);
     updateBullets();
-    for (const b of bubbles) {
-      b.g.y -= b.v;
-      if (b.g.y < -6) {
-        b.g.y = H() + 6;
-        b.g.x = Math.random() * W();
-      }
+    // 视差相机：随瞄准角与缓慢漂移
+    const drift = reduceMotion.value ? 0 : Math.sin(frameNow / 5200) * 6;
+    ocean?.setCamera(Math.cos((aimDeg * Math.PI) / 180) * -10 + drift, Math.sin(frameNow / 4100) * (reduceMotion.value ? 0 : 3));
+    ocean?.update(serverNow(), dtMs);
+    if (import.meta.env.DEV) {
+      const st = ((window as any).__fs ??= {}).stats ??= { frames: 0, updateMs: 0 };
+      st.frames += 1;
+      st.updateMs += performance.now() - t0;
     }
     const [cx, cy] = cannonPos();
     cannon!.position.set(cx, cy);
     cannonGlow!.position.set(cx, cy + 8);
-    if (shake > 0) {
+    if (shake > 0 && !reduceMotion.value) {
       world.position.set((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
       shake = Math.max(0, shake - 1);
-    } else world.position.set(0, 0);
+    } else {
+      shake = 0;
+      world.position.set(0, 0);
+    }
   });
   offs.push(() => app?.ticker.stop());
+  // 页面隐藏时暂停渲染（鱼位置按服务器时间计算，恢复后自动对齐）
+  const onVis = (): void => {
+    if (!app) return;
+    if (document.hidden) app.ticker.stop();
+    else {
+      lastFrameAt = 0;
+      app.ticker.start();
+    }
+  };
+  document.addEventListener('visibilitychange', onVis);
+  offs.push(() => document.removeEventListener('visibilitychange', onVis));
 
   // 炮倍切换 → 换炮
   const stopWatch = (() => {
@@ -939,7 +884,7 @@ onMounted(async () => {
     const me = (d.players ?? []).find((p: any) => p.seat === mySeat);
     if (me) myUid = me.uid;
     others.value = (d.players ?? []).filter((p: any) => p.seat !== mySeat);
-    if (import.meta.env.DEV) (window as any).__fs = { app, tex, fishes, W, H };
+    if (import.meta.env.DEV) (window as any).__fs = Object.assign((window as any).__fs ?? {}, { app, tex, fishes, W, H });
     freezes.splice(0, freezes.length, ...((d.freezes ?? []) as FreezeWindow[]));
     cooldowns.value = d.cooldowns ?? {};
     spawnFish(d.fish ?? []);
@@ -969,6 +914,7 @@ onMounted(async () => {
     gameSocket.on(Ev.FsBossWarning, () => {
       bossWarning.value = true;
       audio.sfx('boss');
+      shake = Math.max(shake, 12);
       setTimeout(() => (bossWarning.value = false), 3200);
     }),
     gameSocket.on(Ev.FsFishKilled, (m) => {
@@ -1006,7 +952,7 @@ onMounted(async () => {
       const d = m.data as any;
       freezes.push({ startMs: d.startMs, endMs: d.untilMs });
       if (freezes.length > 8) freezes.shift();
-      for (const f of fishes.values()) void f;
+      for (const f of fishes.values()) if (!f.dead) f.rig.setState('stun', serverNow());
       if (d.byUid !== myUid) audio.sfx('freeze');
     }),
     gameSocket.on(Ev.FsSkillUsed, (m) => {
@@ -1035,6 +981,7 @@ onBeforeUnmount(() => {
   window.clearInterval(autoTimer);
   window.clearInterval(tickTimer);
   offs.forEach((off) => off());
+  ocean = null;
   app?.destroy(true, { children: true });
   app = null;
   void release('fishing');

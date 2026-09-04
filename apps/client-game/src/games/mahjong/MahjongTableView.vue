@@ -1209,7 +1209,59 @@ function copyRoomNo(): void {
     scale: 1;
   }
 }
-/* 胡牌爆字 */
+/* 喊话冲击波（环）+ 火花（放射短线）：纯程序动效，不是静态发光图 */
+.callout::before,
+.callout::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+.callout::before {
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 226, 138, 0.9);
+  transform: translate(-50%, -50%);
+  animation: callout-ring 520ms var(--ease-out) both;
+}
+.callout::after {
+  width: 2.6em;
+  height: 2.6em;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background:
+    repeating-conic-gradient(from 0deg, rgba(255, 226, 138, 0.95) 0 4deg, transparent 4deg 30deg);
+  mask: radial-gradient(circle, transparent 38%, #000 42%, #000 60%, transparent 64%);
+  animation: callout-sparks 560ms var(--ease-out) both;
+}
+.callout.gang::before,
+.callout.hu::before {
+  border-color: rgba(255, 120, 80, 0.95);
+}
+@keyframes callout-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3.2);
+    opacity: 0;
+  }
+}
+@keyframes callout-sparks {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.6) rotate(40deg);
+    opacity: 0;
+  }
+}
+/* 胡牌爆字：爆字弹入 + 双层冲击波 + 金色火花 + 桌面震动 */
 .hu-fx {
   position: absolute;
   left: 50%;
@@ -1218,6 +1270,52 @@ function copyRoomNo(): void {
   z-index: 12;
   pointer-events: none;
   filter: drop-shadow(0 0 30px rgba(255, 170, 60, 0.7));
+}
+.hu-fx::before,
+.hu-fx::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+.hu-fx::before {
+  width: 160px;
+  height: 160px;
+  border: 6px solid rgba(255, 226, 138, 0.95);
+  box-shadow: 0 0 40px rgba(255, 200, 80, 0.8);
+  transform: translate(-50%, -50%);
+  animation: hu-ring 900ms var(--ease-out) both;
+}
+.hu-fx::after {
+  width: 420px;
+  height: 420px;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, rgba(255, 226, 138, 1) 0 3deg, transparent 3deg 18deg);
+  mask: radial-gradient(circle, transparent 30%, #000 34%, #000 58%, transparent 62%);
+  animation: hu-sparks 1000ms var(--ease-out) both;
+}
+@keyframes hu-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3.4);
+    opacity: 0;
+  }
+}
+@keyframes hu-sparks {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5) rotate(60deg);
+    opacity: 0;
+  }
 }
 .hu-fx img {
   width: clamp(180px, 26vh, 320px);

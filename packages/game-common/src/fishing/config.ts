@@ -83,11 +83,11 @@ export const WAVE_TEMPLATES: WaveTemplate[] = [
     waveId: 'wave_school_small',
     durationMs: 30000,
     spawns: [
-      { typeId: 'sardine', pathId: 0, delayMs: 0, count: 12, gapMs: 350 },
-      { typeId: 'clown', pathId: 1, delayMs: 2000, count: 8, gapMs: 500 },
-      { typeId: 'butterfly', pathId: 2, delayMs: 5000, count: 6, gapMs: 600 },
-      { typeId: 'puffer', pathId: 3, delayMs: 8000, count: 4, gapMs: 900 },
-      { typeId: 'ray', pathId: 4, delayMs: 12000, count: 3, gapMs: 1200 },
+      { typeId: 'sardine', pathId: 14, delayMs: 0, count: 12, gapMs: 320 }, // 之字快游鱼群
+      { typeId: 'clown', pathId: 9, delayMs: 2000, count: 8, gapMs: 480 }, // 深 S
+      { typeId: 'butterfly', pathId: 10, delayMs: 5000, count: 6, gapMs: 600 }, // 上弧
+      { typeId: 'puffer', pathId: 12, delayMs: 8000, count: 3, gapMs: 1100 }, // 停留后变向
+      { typeId: 'ray', pathId: 4, delayMs: 12000, count: 3, gapMs: 1200 }, // 斜向
       { typeId: 'shark', pathId: 5, delayMs: 18000, count: 1, gapMs: 0 },
     ],
   },
@@ -96,20 +96,20 @@ export const WAVE_TEMPLATES: WaveTemplate[] = [
     durationMs: 32000,
     spawns: [
       { typeId: 'clown', pathId: 2, delayMs: 0, count: 10, gapMs: 400 },
-      { typeId: 'lionfish', pathId: 0, delayMs: 3000, count: 5, gapMs: 800 },
-      { typeId: 'turtle', pathId: 6, delayMs: 7000, count: 2, gapMs: 2000 },
-      { typeId: 'goldenShark', pathId: 5, delayMs: 15000, count: 1, gapMs: 0 },
+      { typeId: 'lionfish', pathId: 11, delayMs: 3000, count: 5, gapMs: 800 }, // 下弧
+      { typeId: 'turtle', pathId: 13, delayMs: 7000, count: 2, gapMs: 2200 }, // 停留后变向
+      { typeId: 'goldenShark', pathId: 3, delayMs: 15000, count: 1, gapMs: 0 },
       { typeId: 'sardine', pathId: 1, delayMs: 20000, count: 14, gapMs: 300 },
     ],
   },
   {
     waveId: 'wave_boss_whale',
-    durationMs: 40000,
+    durationMs: 48000,
     isBossWave: true,
     spawns: [
-      { typeId: 'whale', pathId: 7, delayMs: 5000, count: 1, gapMs: 0 },
+      { typeId: 'whale', pathId: 15, delayMs: 5000, count: 1, gapMs: 0 }, // Boss 绕场
       { typeId: 'sardine', pathId: 0, delayMs: 8000, count: 10, gapMs: 400 },
-      { typeId: 'butterfly', pathId: 3, delayMs: 12000, count: 8, gapMs: 500 },
+      { typeId: 'butterfly', pathId: 14, delayMs: 12000, count: 8, gapMs: 500 },
     ],
   },
   {
@@ -117,9 +117,9 @@ export const WAVE_TEMPLATES: WaveTemplate[] = [
     durationMs: 45000,
     isBossWave: true,
     spawns: [
-      { typeId: 'dragonKing', pathId: 8, delayMs: 5000, count: 1, gapMs: 0 },
-      { typeId: 'clown', pathId: 2, delayMs: 9000, count: 10, gapMs: 400 },
-      { typeId: 'ray', pathId: 4, delayMs: 15000, count: 3, gapMs: 1500 },
+      { typeId: 'dragonKing', pathId: 16, delayMs: 5000, count: 1, gapMs: 0 }, // Boss 慢 S
+      { typeId: 'clown', pathId: 6, delayMs: 9000, count: 8, gapMs: 450 },
+      { typeId: 'puffer', pathId: 9, delayMs: 14000, count: 4, gapMs: 900 },
     ],
   },
 ];

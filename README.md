@@ -90,6 +90,7 @@ VPS 快速上手（韩文：服务商选择 / 端口放行 / 源码包上传 / A
 - [大厅视觉规范](docs/11-lobby-design.md)（Design Token / Icon / 游戏卡 / 动效 / 多分辨率适配）
 - [第三方开源素材清单](THIRD_PARTY_NOTICES.md)（麻将牌面 CC0 / 扑克牌公共领域 / 四款 OFL 字体 / Fluent UI Emoji MIT，含许可证与复现命令）
 - [大厅视觉规范 · v4 四游戏大厅](docs/11-lobby-design.md)（2×2 横向卡片 / HTML Logo / 公告滚动 / 5 导航 + 4 快捷 + 更多 / 客服工单 / 响应式 / 减少动态）
+- [捕鱼动画系统 v2](docs/13-fishing-animation.md)（网格骨骼局部动作 + 共享路径 + 状态机 + 海底环境 + 验收记录 + 素材临时标记）
 - [素材完整性规范与检查流程](docs/12-asset-guidelines.md)（`tools/assets/audit.py` 全量检查 → `pad_margins.py` 补边 → PNG 检查表；显示规则 `object-fit: contain` + `contentBounds()`）
 - 规则确认表：[延边麻将](docs/05-game-rules/yanbian-mahjong-rules-confirmation.md) ｜ [红十](docs/05-game-rules/hongshi-rules-confirmation.md)
 - 游戏架构：[捕鱼](docs/05-game-rules/fishing-architecture.md) ｜ [水果机](docs/05-game-rules/slots-architecture.md)

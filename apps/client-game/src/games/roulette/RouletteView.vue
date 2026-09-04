@@ -1315,4 +1315,31 @@ onBeforeUnmount(() => {
     display: none;
   }
 }
+/* 结果面板吉祥物弹入 + 待机呼吸（整图动画，素材待拆分） */
+.rp-mascot {
+  animation: rp-mascot-in 520ms var(--ease-out) both, mascot-breathe 3.2s ease-in-out 520ms infinite;
+  transform-origin: 50% 100%;
+}
+@keyframes rp-mascot-in {
+  0% {
+    transform: translateY(24px) scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(-4px) scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes mascot-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateY(-4px) scaleY(1.02);
+  }
+}
 </style>

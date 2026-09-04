@@ -118,10 +118,10 @@
         <div v-if="result" class="settle">
           <div class="s-main">
             <div class="s-head">
-              <img v-if="myTeamWon" class="s-win" :src="winArt" alt="" draggable="false" />
+              <img v-if="myTeamWon" class="s-win fx-pop" :src="winArt" alt="" draggable="false" />
               <span v-else-if="isDraw" class="s-lose draw">{{ t('hs.draw') }}</span>
               <span v-else class="s-lose">{{ t('hs.teamLose') }}</span>
-              <img v-if="result.multiplier === 2" class="s-mult" :src="x2Art" alt="" draggable="false" />
+              <img v-if="result.multiplier === 2" class="s-mult fx-pop" :src="x2Art" alt="" draggable="false" />
               <img v-else-if="result.multiplier >= 4" class="s-mult" :src="x4Art" alt="" draggable="false" />
               <span v-else-if="result.multiplier > 1" class="s-mult-text num">×{{ result.multiplier }}</span>
             </div>
@@ -957,6 +957,28 @@ function cancelTrustee(): void {
   }
   .s-mascot {
     display: none;
+  }
+}
+/* 结算特效：弹入 + 冲击波，不是静态图 */
+.fx-pop {
+  animation: fx-pop 620ms var(--ease-out) both;
+}
+.s-mult.fx-pop {
+  animation-delay: 220ms;
+}
+@keyframes fx-pop {
+  0% {
+    transform: scale(0.2) rotate(-14deg);
+    opacity: 0;
+    filter: brightness(2);
+  }
+  55% {
+    transform: scale(1.18) rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    filter: brightness(1);
   }
 }
 </style>

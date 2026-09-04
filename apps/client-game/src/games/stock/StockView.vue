@@ -1270,4 +1270,35 @@ onBeforeUnmount(() => {
     grid-column: 1 / span 2;
   }
 }
+/* 分析师待机：浮动 + 呼吸 + 微摆；结果面板吉祥物弹入（整图动画，素材待拆分） */
+.analyst {
+  animation: analyst-idle 3.4s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+@keyframes analyst-idle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.8deg) scaleY(1);
+  }
+  50% {
+    transform: translateY(-7px) rotate(0.8deg) scaleY(1.02);
+  }
+}
+.rp-mascot {
+  animation: rp-mascot-in 520ms var(--ease-out) both;
+  transform-origin: 50% 100%;
+}
+@keyframes rp-mascot-in {
+  0% {
+    transform: translateY(24px) scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(-4px) scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
 </style>
