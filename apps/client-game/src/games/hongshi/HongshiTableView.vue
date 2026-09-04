@@ -33,7 +33,7 @@
         <div class="opp-head" :class="{ active: turnSeat === p.seat, off: !p.online }">
           <AvatarBadge :id="p.avatarId" :size="30" />
           <div class="ocol">
-            <div class="oname">{{ p.nickname }}</div>
+            <div class="oname">{{ displayName(p.nickname) }}</div>
             <div class="obadges">
               <span v-if="identityOf(p.seat) !== null" class="camp" :class="{ red: identityOf(p.seat) }">
                 <img v-if="identityOf(p.seat)" class="suit-ic" :src="suitHeartArt" alt="" draggable="false" />{{ identityOf(p.seat) ? t('hs.red') : t('hs.blue') }}
@@ -147,7 +147,7 @@
       <GamePopup v-model="showMatchOver" :title="t('mj.matchOver')" skin="cream" size="md" :closable="false">
         <div class="srows">
           <div v-for="(row, i) in matchTotals" :key="row.seat" class="srow">
-            <span class="sname"><span class="srank">{{ i + 1 }}</span>{{ row.nickname }}</span>
+            <span class="sname"><span class="srank">{{ i + 1 }}</span>{{ displayName(row.nickname) }}</span>
             <span class="num sval" :class="row.score > 0 ? 'win' : row.score < 0 ? 'lose' : ''">{{ fmtSigned(row.score) }}</span>
           </div>
         </div>
@@ -163,6 +163,7 @@ import { Ev } from '@yanbian/protocol';
 import { gameSocket } from '../../net/ws.js';
 import { useUserStore } from '../../stores/user.js';
 import { t } from '../../i18n/index.js';
+import { displayName } from '../../i18n/names.js';
 import { toast } from '../../ui/toast.js';
 import GamePopup from '../../ui/GamePopup.vue';
 import GameButton from '../../ui/GameButton.vue';
@@ -242,7 +243,7 @@ const seatsRel = computed(() =>
   (room.value?.players ?? []).map((p) => ({ seat: p.seat, pos: relativePos(p.seat, mySeat.value) })),
 );
 const anyPlay = computed(() => lastPlays.value.size > 0 || passedSeats.value.size > 0);
-const nameOf = (seat: number): string => room.value?.players.find((p) => p.seat === seat)?.nickname ?? `#${seat}`;
+const nameOf = (seat: number): string => displayName(room.value?.players.find((p) => p.seat === seat)?.nickname) || `#${seat}`;
 const lastPlayOf = (seat: number): number[] | null => lastPlays.value.get(seat) ?? null;
 const identityOf = (seat: number): boolean | null => (identities.value.has(seat) ? identities.value.get(seat)! : null);
 const rankOf = (seat: number): number | undefined => finishRanks.value.get(seat);

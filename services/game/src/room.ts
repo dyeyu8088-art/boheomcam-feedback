@@ -2,6 +2,7 @@
  * 房间系统：创建/加入/准备/离开/解散、座位、断线标记、重连快照、持久化。
  * 对局逻辑由 GameHost（mahjong/hongshi）驱动；捕鱼水果机使用独立房间模型。
  */
+import { BOT_NAMES as BOT_NAMES_I18N } from '@yanbian/game-common/names';
 import { ApiError, ErrorCode, Ev } from '@yanbian/protocol';
 import { getLogger, getRedis, hashPassword, nextId, nextRoomNo, query, verifyPassword, loadEnv } from '@yanbian/server-core';
 import { getBalances } from '@yanbian/wallet';
@@ -33,7 +34,7 @@ export interface RoomPlayer {
   left: boolean;
 }
 
-const BOT_NAMES = ['金达莱', '海兰江畔', '长白雪松', '图们渔火', '延吉夜风', '珲春晨光', '和龙月色', '敦化松涛'];
+const BOT_NAMES = BOT_NAMES_I18N.map((n) => n.zh);
 let botSeq = 0;
 
 /** 陪练机器人（不参与钱包结算） */

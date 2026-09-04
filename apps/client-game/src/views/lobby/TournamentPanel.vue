@@ -31,7 +31,7 @@
             <summary>{{ t('tour.leaderboard') }}</summary>
             <ol>
               <li v-for="row in tt.top" :key="row.uid" :class="{ me: row.uid === myUid }">
-                <span class="rk num">{{ row.rank }}</span><span class="nk">{{ row.nickname }}</span><span class="sc num">{{ row.score }}</span>
+                <span class="rk num">{{ row.rank }}</span><span class="nk">{{ displayName(row.nickname) }}</span><span class="sc num">{{ row.score }}</span>
               </li>
             </ol>
           </details>
@@ -49,6 +49,7 @@
 import { computed, onActivated, onBeforeUnmount, onMounted, ref } from 'vue';
 import { api } from '../../net/api.js';
 import { t, currentLocale } from '../../i18n/index.js';
+import { displayName } from '../../i18n/names.js';
 import { asset } from '../../assets/assets.js';
 import { useUserStore } from '../../stores/user.js';
 import { toast } from '../../ui/toast.js';

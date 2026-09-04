@@ -30,7 +30,7 @@
           <span class="dim">{{ detail.round ? fmtTime(detail.round.started_at) : '' }}</span>
         </div>
         <div v-for="p in detail.players" :key="p.user_id" class="drow">
-          <span class="person"><AvatarBadge :id="p.avatar_id" :size="26" :ring="false" /> {{ p.nickname }}</span>
+          <span class="person"><AvatarBadge :id="p.avatar_id" :size="26" :ring="false" /> {{ displayName(p.nickname) }}</span>
           <span class="num" :class="p.score_change > 0 ? 'win' : p.score_change < 0 ? 'lose' : ''">{{ fmtSigned(p.score_change) }}</span>
         </div>
       </div>
@@ -42,6 +42,7 @@
 import { onActivated, onMounted, ref } from 'vue';
 import { api } from '../../net/api.js';
 import { t } from '../../i18n/index.js';
+import { displayName } from '../../i18n/names.js';
 import ModalSheet from '../../ui/ModalSheet.vue';
 import AvatarBadge from '../../ui/AvatarBadge.vue';
 import { fmtSigned, fmtTime } from '../../ui/format.js';

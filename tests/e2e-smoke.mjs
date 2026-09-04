@@ -82,19 +82,37 @@ class Client {
     return this.seq;
   }
 
-  /** 请求-响应 */
+  /** 请求-响应：回包按 ack（= 请求 seq）匹配，避免把前一条请求的迟到回包 / 广播当成本次结果 */
   call(event, data = {}, replyEvent, timeoutMs = 15000) {
     const expect = replyEvent ?? `${event}.ok`;
     const requestId = `rq-${this.name}-${this.seq + 1}-${Math.random().toString(36).slice(2, 8)}`;
-    const p = Promise.race([
-      this.once(expect, timeoutMs),
-      this.once('sys.error', timeoutMs + 1).then((m) => {
-        if (m.data?.event === event) throw new Error(`sys.error for ${event}: ${m.data.code} ${m.data.msg}`);
-        return new Promise(() => undefined);
-      }),
-    ]);
-    this.send(event, data, requestId);
-    return p;
+    return new Promise((resolve, reject) => {
+      const seq = this.seq + 1;
+      const off = () => {
+        this.handlers.set(expect, (this.handlers.get(expect) ?? []).filter((x) => x !== onReply));
+        this.handlers.set('sys.error', (this.handlers.get('sys.error') ?? []).filter((x) => x !== onErr));
+      };
+      const timer = setTimeout(() => {
+        off();
+        reject(new Error(`timeout waiting ${expect} (${this.name})`));
+      }, timeoutMs);
+      const onReply = (m) => {
+        if (m.ack !== undefined && m.ack !== seq) return; // 其它请求的回包
+        off();
+        clearTimeout(timer);
+        resolve(m);
+      };
+      const onErr = (m) => {
+        if (m.ack !== undefined && m.ack !== seq) return;
+        if (m.data?.event && m.data.event !== event) return;
+        off();
+        clearTimeout(timer);
+        reject(new Error(`sys.error for ${event}: ${m.data?.code} ${m.data?.msg}`));
+      };
+      this.on(expect, onReply);
+      this.on('sys.error', onErr);
+      this.send(event, data, requestId);
+    });
   }
 
   close() {

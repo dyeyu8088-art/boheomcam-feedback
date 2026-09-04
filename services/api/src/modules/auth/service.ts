@@ -22,7 +22,8 @@ import { ensureAccounts, postTransactionInTx, SYS } from '@yanbian/wallet';
 
 const log = getLogger('auth');
 
-const NICK_POOL = ['长白山客', '图们江畔', '金达莱', '海兰江', '延吉之星', '珲春旅人', '和龙牌手', '敦化雅士'];
+import { NICK_POOL as NICK_POOL_I18N } from '@yanbian/game-common/names';
+const NICK_POOL = NICK_POOL_I18N.map((n) => n.zh);
 
 export interface DeviceInfo {
   deviceId: string;

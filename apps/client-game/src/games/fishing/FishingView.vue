@@ -9,7 +9,7 @@
       <div class="players">
         <span v-for="p in others" :key="p.uid" class="pl">
           <AvatarBadge :id="p.avatarId" :size="26" />
-          <span class="pl-name">{{ p.nickname }}</span>
+          <span class="pl-name">{{ displayName(p.nickname) }}</span>
           <span class="pl-mult num">×{{ p.multiplier }}</span>
         </span>
       </div>
@@ -79,6 +79,7 @@ import { gameSocket } from '../../net/ws.js';
 import { api } from '../../net/api.js';
 import { useUserStore } from '../../stores/user.js';
 import { currentLocale, t } from '../../i18n/index.js';
+import { displayName } from '../../i18n/names.js';
 import { toast } from '../../ui/toast.js';
 import { fmt } from '../../ui/format.js';
 import { asset, pixiTextures, release } from '../../assets/assets.js';

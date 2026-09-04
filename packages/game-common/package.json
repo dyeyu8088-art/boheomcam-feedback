@@ -11,6 +11,7 @@
     "./hongshi": "./src/hongshi/index.ts",
     "./fishing": "./src/fishing/index.ts",
     "./slot": "./src/slot/index.ts",
+    "./names": "./src/names.ts",
     "./roulette": "./src/roulette/index.ts",
     "./stock": "./src/stock/index.ts"
   },

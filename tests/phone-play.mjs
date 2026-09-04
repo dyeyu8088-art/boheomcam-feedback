@@ -41,7 +41,7 @@ const waitFor = async (sel, ms) => {
   }
 };
 const closePopup = async () => {
-  const c = page.locator('.gp-close');
+  const c = page.locator('.gp-close, .ms-close, button.x');
   if ((await c.count()) > 0 && (await c.first().isVisible())) await c.first().click();
   await page.waitForTimeout(400);
 };

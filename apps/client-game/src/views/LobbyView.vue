@@ -5,7 +5,7 @@
     <!-- ══ 顶栏：左 玩家 / 中 HTML Logo / 右 金币 · 钻石 · 语言 · 设置 · 菜单（竖屏） ══ -->
     <header class="topbar">
       <PlayerProfile
-        :nickname="me?.nickname ?? '—'"
+        :nickname="displayName(me?.nickname) || '—'"
         :uid="me?.uid ?? ''"
         :level="me?.level ?? 1"
         :vip="me?.vip ?? 0"
@@ -133,6 +133,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/user.js';
 import { api } from '../net/api.js';
 import { t, setLocale, currentLocale } from '../i18n/index.js';
+import { displayName } from '../i18n/names.js';
 import { asset, GAME_PRELOAD } from '../assets/assets.js';
 import { audio } from '../audio/AudioManager.js';
 import { reduceMotion, setReduceMotion } from '../design/motion.js';

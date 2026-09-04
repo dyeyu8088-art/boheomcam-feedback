@@ -390,4 +390,87 @@ async function submit(): Promise<void> {
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
+
+/* ── 响应式：短屏缩小徽记 / 字标并允许滚动；手机横屏改为左右两栏（品牌 | 登录卡） ── */
+.login {
+  overflow-y: auto;
+}
+@media (max-height: 700px) {
+  .emblem {
+    width: 84px;
+    height: 84px;
+  }
+  .mark {
+    font-size: 36px;
+  }
+  .panel {
+    gap: 14px;
+  }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .login {
+    align-items: center;
+  }
+  .panel {
+    width: min(760px, 94vw);
+    display: grid;
+    grid-template-columns: 44% 1fr;
+    grid-template-rows: auto auto auto;
+    column-gap: 28px;
+    row-gap: 8px;
+    align-items: center;
+    justify-items: stretch;
+    padding: calc(var(--safe-top) + 8px) var(--safe-right) calc(var(--safe-bottom) + 8px) var(--safe-left);
+  }
+  .brand {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+  .card,
+  .lang,
+  .agreement {
+    grid-column: 2;
+  }
+  .lang {
+    justify-content: center;
+  }
+  .agreement {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .emblem {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 2px;
+    animation: none;
+  }
+  .mark {
+    font-size: 30px;
+  }
+  .mark.ko {
+    font-size: 26px;
+  }
+  .slogan {
+    font-size: 11px;
+  }
+  .card {
+    flex: 1 1 auto;
+    max-width: 360px;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+  .big {
+    padding: 10px;
+    font-size: 15px;
+  }
+}
+@media (max-width: 360px) {
+  .mark {
+    font-size: 30px;
+  }
+  .emblem {
+    width: 72px;
+    height: 72px;
+  }
+}
 </style>

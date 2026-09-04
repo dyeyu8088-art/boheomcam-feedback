@@ -16,7 +16,7 @@
         <div class="wplayers">
           <div v-for="p in room?.players ?? []" :key="p.uid" class="wp">
             <AvatarBadge :id="p.avatarId" :size="34" />
-            <div class="wname">{{ p.nickname }}</div>
+            <div class="wname">{{ displayName(p.nickname) }}</div>
             <div class="wready" :class="{ on: p.ready }">{{ p.ready ? '✓' : '…' }}</div>
           </div>
           <div v-for="n in 4 - (room?.players.length ?? 0)" :key="`e${n}`" class="wp empty-seat">
@@ -50,7 +50,7 @@
         <div class="opp-head" :class="{ active: turnSeat === p.seat, off: !p.online }">
           <div class="oavatar"><AvatarBadge :id="p.avatarId" :size="30" /><span v-if="p.seat === dealerSeat" class="dealer">{{ t('mj.dealer') }}</span></div>
           <span class="wind-badge">{{ windOfSeat(p.seat) }}</span>
-          <div class="oname">{{ p.nickname }}</div>
+          <div class="oname">{{ displayName(p.nickname) }}</div>
           <div class="ocount num">×{{ p.handCount }}</div>
           <div class="oscore num">{{ p.score }}</div>
           <CountdownRing v-if="turnSeat === p.seat" :deadline="deadlineAt" />
@@ -231,7 +231,7 @@
       <GamePopup v-model="showMatchOver" :title="t('mj.matchOver')" skin="red" size="md" :closable="false">
         <div class="srows">
           <div v-for="(row, i) in matchTotals" :key="row.seat" class="srow">
-            <span class="sname"><span class="srank num">{{ i + 1 }}</span>{{ row.nickname }}</span>
+            <span class="sname"><span class="srank num">{{ i + 1 }}</span>{{ displayName(row.nickname) }}</span>
             <span class="num sval" :class="row.score > 0 ? 'win' : row.score < 0 ? 'lose' : ''">{{ fmtSigned(row.score) }}</span>
           </div>
         </div>
@@ -247,6 +247,7 @@ import { Ev } from '@yanbian/protocol';
 import { gameSocket } from '../../net/ws.js';
 import { useUserStore } from '../../stores/user.js';
 import { t } from '../../i18n/index.js';
+import { displayName } from '../../i18n/names.js';
 import { toast } from '../../ui/toast.js';
 import GamePopup from '../../ui/GamePopup.vue';
 import GameButton from '../../ui/GameButton.vue';
@@ -355,7 +356,7 @@ function windAt(pos: number): string {
   const p = allPlayers.value.find((x) => relPos(x.seat) === pos);
   return p ? windOfSeat(p.seat) : '';
 }
-const nameOf = (seat: number): string => room.value?.players.find((p) => p.seat === seat)?.nickname ?? `#${seat}`;
+const nameOf = (seat: number): string => displayName(room.value?.players.find((p) => p.seat === seat)?.nickname) || `#${seat}`;
 const scoreOf = (seat: number): number => (roundResult.value?.scoreChanges?.[seat] as number) ?? 0;
 
 function ensureSeat(seat: number): OppState {
@@ -1550,6 +1551,51 @@ function copyRoomNo(): void {
     display: none;
   }
 }
+/* ── 手机横屏（高 ≤ 450）：牌河缩小成环、中央罗盘缩小并置于牌河之上、对家座位牌上移、托管条移到手牌上方 ── */
+@media (orientation: landscape) and (max-height: 450px) {
+  .river-zone {
+    inset: 27% 26% 25%;
+  }
+  .river {
+    grid-template-columns: repeat(8, auto);
+    gap: 1px;
+  }
+  .river.rpos0 {
+    transform: translateX(-50%) scale(0.62);
+    transform-origin: 50% 100%;
+  }
+  .river.rpos2 {
+    transform: translateX(-50%) rotate(180deg) scale(0.62);
+    transform-origin: 50% 0%;
+  }
+  .river.rpos1 {
+    transform: translateY(-50%) rotate(-90deg) scale(0.62);
+    transform-origin: 100% 50%;
+  }
+  .river.rpos3 {
+    transform: translateY(-50%) rotate(90deg) scale(0.62);
+    transform-origin: 0% 50%;
+  }
+  .center-disc {
+    width: 76px;
+    height: 76px;
+    z-index: 3;
+  }
+  .opp.pos1,
+  .opp.pos3 {
+    top: 34%;
+    transform: translateY(-50%);
+  }
+  .opp.pos2 {
+    top: calc(var(--safe-top) + 34px);
+  }
+  .trustee-bar {
+    bottom: calc(var(--safe-bottom) + 96px);
+    padding: 4px 14px;
+    font-size: 12px;
+  }
+}
+
 @media (max-width: 560px) {
   .settle {
     grid-template-columns: 1fr;

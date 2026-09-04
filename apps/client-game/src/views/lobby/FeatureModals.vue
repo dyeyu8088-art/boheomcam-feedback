@@ -8,7 +8,7 @@
       <div class="ranklist">
         <div v-for="it in rankItems" :key="it.rank" class="rrow" :class="{ top3: it.rank <= 3 }">
           <span class="rk num" :class="`r${it.rank}`">{{ it.rank }}</span>
-          <span class="rn"><AvatarBadge :id="it.avatar_id ?? 1" :size="28" :ring="it.rank <= 3" /> {{ it.nickname ?? it.uid }}</span>
+          <span class="rn"><AvatarBadge :id="it.avatar_id ?? 1" :size="28" :ring="it.rank <= 3" /> {{ displayName(it.nickname) || it.uid }}</span>
           <span class="rv num">{{ fmt(it.value) }}</span>
         </div>
         <EmptyState v-if="rankItems.length === 0" :title="t('rank.empty')" />
@@ -53,6 +53,7 @@
 import { ref } from 'vue';
 import { api } from '../../net/api.js';
 import { t, currentLocale } from '../../i18n/index.js';
+import { displayName } from '../../i18n/names.js';
 import ModalSheet from '../../ui/ModalSheet.vue';
 import { toast } from '../../ui/toast.js';
 import AvatarBadge from '../../ui/AvatarBadge.vue';
