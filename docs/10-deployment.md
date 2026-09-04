@@ -74,7 +74,8 @@ cd android && ./gradlew assembleRelease
 ```bash
 pnpm --filter @yanbian/client-game build      # 生成 apps/client-game/dist
 python3 -m pip install pyaxml androguard       # androguard 只用于回读校验，可省略
-python3 tools/apk/build-test-apk.py           # → build/yanbian-test.apk（约 6 MB）
+python3 tools/apk/build-test-apk.py           # → build/yanbian-test.apk（约 6 MB；登录页手填服务器地址）
+python3 tools/apk/build-test-apk.py --server https://你的地址   # 先以 VITE_SERVER_BASE 重新 vite build，APK 内置地址，分发给测试者装上即连
 ```
 
 - 原理：`tools/apk/src` 的 WebView 壳 + 内嵌 NanoHTTPD（127.0.0.1 随机端口）提供 `assets/www`（即 dist），页面以正常 http 源运行，

@@ -103,6 +103,19 @@ cloudflared tunnel --url http://localhost:80
 
 PC를 서버로 쓰는 동안은 PC가 잠자기 모드에 들어가지 않게 전원 설정을 바꿔 두세요. 사용자가 늘면 같은 tar 파일로 VPS에 옮기면 됩니다 (데이터 이전은 `docker compose … exec postgres pg_dump`).
 
+## 4-2. 다른 사람에게 보내서 테스트하기
+
+서버가 인터넷에서 접속 가능한 주소(VPS의 `http://<IP>`, 또는 cloudflared의 `https://xxxx.trycloudflare.com`)를 갖고 있으면 두 가지 방법으로 테스터에게 보낼 수 있습니다.
+
+- **설치 없이 (가장 쉬움)**: 그 주소를 카톡 등으로 보내면 폰 브라우저에서 바로 H5로 플레이됩니다. 같은 서버, 같은 봇, 같은 계정 체계입니다.
+- **APK로**: 주소를 내장한 APK를 만들어 보냅니다 (테스터가 주소를 입력할 필요 없음).
+
+```bash
+python3 tools/apk/build-test-apk.py --server https://xxxx.trycloudflare.com --out build/yanbian-tester.apk
+```
+
+주의: cloudflared 임시 주소는 재실행마다 바뀌므로, 여러 사람에게 오래 배포하려면 VPS(고정 IP)나 Cloudflare 계정에 등록한 고정 터널 주소를 쓰세요. 테스터는 각자 「游客快速开始」로 별도 계정(초기 코인 10만)을 받고, 관리자 페이지 `/admin/` 에서 접속·정산 기록을 볼 수 있습니다.
+
 ## 5. 운영 명령
 
 ```bash
