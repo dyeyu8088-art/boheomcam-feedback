@@ -37,8 +37,8 @@ COPY --from=build /srv/www /srv/www
 COPY deploy/allinone/edge.mjs /app/deploy/allinone/edge.mjs
 COPY deploy/allinone/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh && node --version && redis-server --version >/dev/null && postgres --version
+# 数据目录 /data：在平台侧挂卷（Railway Volumes / Render Disk / docker -v）。不写 VOLUME 指令：Railway 构建器拒绝含 VOLUME 的 Dockerfile
 ENV NODE_ENV=production PORT=80
-VOLUME /data
 EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh"]
 CMD []
