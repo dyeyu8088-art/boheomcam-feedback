@@ -43,7 +43,7 @@ docker compose -f deploy/docker-compose.yml up -d postgres redis   # 基础设�
 pnpm migrate                    # 建库+种子；首次运行会打印初始管理员(admin)密码，首登强制改密
 pnpm dev:api                    # REST 服务群 :8080
 pnpm dev:game                   # 游戏服务群(WS) :8090
-pnpm dev:client                 # 游戏客户端 :5173（H5/PC；APK 打包见 docs/10-deployment.md）
+pnpm dev:client                 # 游戏客户端 :5173（H5/PC，--host 监听局域网；APK 打包见 docs/10-deployment.md）
 pnpm dev:admin                  # 管理后台 :5174
 ```
 
@@ -65,7 +65,13 @@ node tests/stock-shot.mjs                  # 股票涨跌截图回归（下注 /
 node tests/load-ws.mjs 500 0.1             # WS 负载（本机阶梯；生产压测见 docs/09）
 ```
 
-生产部署 / APK 打包 / RELEASE 检查表：见 [docs/10-deployment.md](docs/10-deployment.md)。
+内测 APK（WebView 壳，不需要 Android SDK；服务器地址在登录页「服务器设置」运行时填写，如 `http://<开发机IP>:5173`）：
+
+```bash
+pnpm --filter @yanbian/client-game build && python3 tools/apk/build-test-apk.py   # → build/yanbian-test.apk
+```
+
+生产部署 / APK 打包（正式 Capacitor 流程与内测壳 §3.1）/ RELEASE 检查表：见 [docs/10-deployment.md](docs/10-deployment.md)。
 
 ## 核心文档
 

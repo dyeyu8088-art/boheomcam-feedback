@@ -68,9 +68,25 @@
         <a :class="{ on: locale === 'zh' }" @click="setLocale('zh')">中文</a>
         <span>·</span>
         <a :class="{ on: locale === 'ko' }" @click="setLocale('ko')">한국어</a>
+        <span>·</span>
+        <a :class="{ on: !!serverBase }" @click="showServer = true">{{ t('login.server') }}</a>
       </div>
+      <p v-if="nativeShell && !serverBase" class="server-warn" @click="showServer = true">{{ t('login.server.required') }}</p>
       <p class="agreement">{{ t('login.agreement') }}</p>
     </div>
+
+    <!-- 服务器地址（APK / 独立测试用；Web 默认同源） -->
+    <GamePopup v-model="showServer" :title="t('login.server')" skin="blue" size="sm">
+      <div class="server-form">
+        <p class="server-hint">{{ t('login.server.hint') }}</p>
+        <input v-model="serverInput" class="input" :placeholder="t('login.server.placeholder')" inputmode="url" autocapitalize="off" spellcheck="false" />
+        <p class="server-cur">{{ t('login.server.current') }}: <b>{{ serverBase || t('login.server.sameOrigin') }}</b></p>
+        <div class="row">
+          <GameButton variant="dark" size="md" sfx="close" @click="applyServer('')">{{ t('login.server.reset') }}</GameButton>
+          <GameButton variant="gold" size="md" block sfx="confirm" @click="applyServer(serverInput)">{{ t('login.server.save') }}</GameButton>
+        </div>
+      </div>
+    </GamePopup>
   </div>
 </template>
 
@@ -81,6 +97,9 @@ import { useUserStore } from '../stores/user.js';
 import { api } from '../net/api.js';
 import { t, setLocale, currentLocale } from '../i18n/index.js';
 import { toast } from '../ui/toast.js';
+import GamePopup from '../ui/GamePopup.vue';
+import GameButton from '../ui/GameButton.vue';
+import { getServerBase, isNativeShell, setServerBase } from '../net/config.js';
 
 const router = useRouter();
 const user = useUserStore();
@@ -106,6 +125,28 @@ function moteStyle(n: number): Record<string, string> {
     width: `${size}px`,
     height: `${size}px`,
   };
+}
+
+const showServer = ref(false);
+const serverBase = ref(getServerBase());
+const serverInput = ref(serverBase.value);
+const nativeShell = isNativeShell();
+/** 保存服务器地址后整页重载，让 REST / WS 客户端重新读取 */
+function applyServer(v: string): void {
+  const t0 = v.trim();
+  if (t0 && !/^https?:\/\/[^\s/]+/i.test(t0)) {
+    toast(t('login.server.invalid'), 'error');
+    return;
+  }
+  setServerBase(t0);
+  location.reload();
+}
+// ?server=http://host:port 一次性写入（扫码 / 链接分发测试地址）
+const qs = new URLSearchParams(location.search);
+if (qs.get('server')) {
+  setServerBase(qs.get('server') ?? '');
+  qs.delete('server');
+  location.replace(`${location.pathname}${qs.toString() ? `?${qs}` : ''}${location.hash}`);
 }
 
 async function guest(): Promise<void> {
@@ -152,6 +193,31 @@ async function submit(): Promise<void> {
 </script>
 
 <style scoped>
+.server-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.server-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+.server-cur {
+  font-size: 12px;
+  color: var(--text-disabled);
+  margin: 0;
+  word-break: break-all;
+}
+.server-warn {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #ffd25a;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+}
 .login {
   height: 100%;
   position: relative;

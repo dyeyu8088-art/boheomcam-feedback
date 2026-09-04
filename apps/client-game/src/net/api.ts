@@ -1,7 +1,6 @@
 /** REST 客户端：统一响应解包、401 自动刷新重试、设备标识 */
 import { ApiError, type ApiResp } from '@yanbian/protocol';
-
-const API_BASE = import.meta.env.VITE_API_BASE ?? '';
+import { apiBase } from './config.js';
 
 export function deviceId(): string {
   let id = localStorage.getItem('deviceId');
@@ -41,7 +40,7 @@ async function tryRefresh(): Promise<boolean> {
   if (!refreshing) {
     refreshing = (async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
+        const res = await fetch(`${apiBase()}/api/v1/auth/refresh`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ refreshToken: tokens!.refreshToken, deviceId: deviceId(), deviceType: platformType() }),
@@ -71,7 +70,7 @@ export function platformType(): string {
 }
 
 export async function api<T = Record<string, unknown>>(path: string, body?: unknown, retry = true): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${apiBase()}${path}`, {
     method: body !== undefined ? 'POST' : 'GET',
     headers: {
       'content-type': 'application/json',

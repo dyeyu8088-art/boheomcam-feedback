@@ -3,10 +3,10 @@
  */
 import { Ev, type WsDown } from '@yanbian/protocol';
 import { getAccessToken } from './api.js';
+import { wsBase } from './config.js';
 
 type Handler = (msg: WsDown) => void;
 
-const WS_BASE = import.meta.env.VITE_WS_BASE ?? `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
 
 export class GameSocket {
   private ws: WebSocket | null = null;
@@ -31,7 +31,7 @@ export class GameSocket {
     if (!token) return Promise.reject(new Error('no token'));
     this.setStatus(this.reconnectAttempt > 0 ? 'reconnecting' : 'connecting');
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(`${WS_BASE}/ws?token=${encodeURIComponent(token)}`);
+      const ws = new WebSocket(`${wsBase()}/ws?token=${encodeURIComponent(token)}`);
       this.ws = ws;
       const failTimer = window.setTimeout(() => {
         try {

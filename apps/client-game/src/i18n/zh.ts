@@ -28,6 +28,15 @@ export const zh: Record<string, string> = {
   'login.mode.password': '密码登录',
   'login.submit': '进入游戏',
   'login.agreement': '登录即代表同意《用户协议》与《隐私政策》。平台内金币钻石均为虚拟娱乐资产，不可兑换现金。',
+  'login.server': '服务器设置',
+  'login.server.required': '请先设置服务器地址（点此填写）',
+  'login.server.hint': '填写游戏服务器地址。开发测试可填开发机 Vite 地址（自带 /api、/ws 代理），例如 http://192.168.1.10:5173；正式环境填 https://你的域名。留空则使用当前页面同源。',
+  'login.server.placeholder': 'http://192.168.1.10:5173',
+  'login.server.current': '当前',
+  'login.server.sameOrigin': '同源（当前页面地址）',
+  'login.server.save': '保存并重启',
+  'login.server.reset': '清除',
+  'login.server.invalid': '地址格式不正确，需以 http:// 或 https:// 开头',
 
   // 大厅
   'lobby.online': '{n} 人在线',

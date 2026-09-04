@@ -112,6 +112,15 @@
 - 测试：E2E 新增 10 项（进桌 / 扣款 / 幂等 / 非法号 / 超额 / 锁盘开奖 / 开奖后拒投 / 派彩一致 / 余额一致 / 历史），合计 43；
   新增 `tests/roulette-shot.mjs`；UI 冒烟 +1（9 项）；`docs/05-game-rules/roulette-architecture.md`
 
+### P11 内测 APK 与运行时服务器地址
+- 客户端新增 `net/config.ts`：REST / WS 地址改为运行时解析（localStorage `serverBase` > `VITE_SERVER_BASE` > `VITE_API_BASE` / `VITE_WS_BASE` > 同源），
+  `api.ts` / `ws.ts` 不再在模块加载时固化地址；登录页新增「服务器设置」弹窗（校验 http(s):// 格式、保存后整页重载、可清除），
+  支持 `?server=` 链接一次性写入；原生壳（UA 含 `YanbianGameApp/`）未设置地址时登录页高亮提示
+- 新增 `tools/apk/build-test-apk.py` + `tools/apk/src/…/MainActivity.java`：不依赖 Android SDK / Gradle / 谷歌仓库的内测 APK 打包
+  （WebView 壳 + 内嵌 NanoHTTPD 提供 dist；Robolectric android-all 编译、dx 生成 dex、pyaxml 生成二进制清单并按属性定义改写枚举 / 标志位、
+  jarsigner 调试签名、androguard 回读校验包名 / 入口），产物 `build/yanbian-test.apk`（6 MB，minSdk 24 / targetSdk 28）；
+  正式发布仍走 Capacitor + Android Studio（docs/10-deployment.md §3，内测壳见 §3.1）
+
 ## [0.2.1] - 2026-09-03 GitHub 开源素材接入（PHASE 19 美术精修 · 续）
 
 ### 素材来源与合规（新增 `THIRD_PARTY_ASSETS.md`）

@@ -42,6 +42,23 @@ cd android && ./gradlew assembleRelease
 - [ ] 崩溃收集（Sentry 等）与性能监控接入
 - [ ] 商店合规：虚拟娱乐资产声明、无现金交易、目标市场分级政策核对
 
+### 3.1 内测 APK（不需要 Android SDK / Gradle，调试签名，仅内部测试）
+
+```bash
+pnpm --filter @yanbian/client-game build      # 生成 apps/client-game/dist
+python3 -m pip install pyaxml androguard       # androguard 只用于回读校验，可省略
+python3 tools/apk/build-test-apk.py           # → build/yanbian-test.apk（约 6 MB）
+```
+
+- 原理：`tools/apk/src` 的 WebView 壳 + 内嵌 NanoHTTPD（127.0.0.1 随机端口）提供 `assets/www`（即 dist），页面以正常 http 源运行，
+  localStorage / ES module / fetch / WebSocket 行为与浏览器一致。依赖（Robolectric android-all 作编译用 android.jar、dalvik-dx、NanoHTTPD）
+  只从 Maven Central 下载到 `build/apk-cache`，不访问谷歌仓库；需要 JDK 11+（javac / keytool / jarsigner）与 python3
+- 服务器地址在运行时填写：登录页「服务器设置」→ `http://<开发机IP>:5173`（`pnpm dev:client` 已 `--host` 监听局域网，
+  自带 `/api`、`/ws` 代理并对跨源请求返回 CORS 头）或正式 `https://域名`（Nginx 同时反代 REST 与 WS）；
+  H5 也可用 `?server=http://host:port` 链接一次性写入。壳的 UA 含 `YanbianGameApp/`，未设置地址时登录页会高亮提示
+- 与正式包的差异（内测可接受，商店发布不可）：v1 调试签名（targetSdk 28，Android 7.0+ 可安装，不含 v2/v3 签名）、无图标 / 启动页、
+  允许明文 HTTP、开启 WebView 远程调试（chrome://inspect）、`applicationId` 为 `com.yanbiangame.app`；正式发布仍走上面的 Capacitor 流程
+
 ## 4. Web 兼容目标
 
 Chrome / Edge / Android Chrome / Samsung Browser 最近两个大版本；Safari 16+（backdrop-filter/WS 均可用，发布前真机核）。
