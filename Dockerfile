@@ -1,8 +1,8 @@
-# 单容器一体化镜像：PostgreSQL 16 + Redis 7 + api-service + game-service + Node 静态/反代边缘（deploy/allinone/edge.mjs）
+# 单容器一体化镜像（仓库根目录 Dockerfile，Railway / Render / Fly.io 等平台自动识别）：PostgreSQL 16 + Redis 7 + api-service + game-service + Node 静态/反代边缘（deploy/allinone/edge.mjs）
 # 适用于只给「一个容器 + 一个端口」的托管平台（Railway / Render / Fly.io / Manufact 等）与快速内测；
 # 数据在 /data（挂卷即持久化；不挂卷则重建容器后清空）。对外正式发布仍用 docker-compose.prod.yml（HTTPS / 备份 / 监控）。
 #
-#   docker build -f deploy/Dockerfile.allinone -t yanbian-allinone .
+#   docker build -t yanbian-allinone .          # 仓库根目录的 Dockerfile 即本文件（托管平台自动识别）
 #   docker run -d -p 80:80 -v yanbian-data:/data yanbian-allinone       # 日志里打印后台初始密码
 #
 # 运行时基础镜像取 postgres:16-alpine（含 PG、libstdc++、openssl），Node / Redis 二进制从官方同版本 Alpine 镜像拷入，

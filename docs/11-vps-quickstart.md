@@ -118,7 +118,7 @@ python3 tools/apk/build-test-apk.py --server https://xxxx.trycloudflare.com --ou
 
 ## 4-3. 서버도 PC도 없이: 컨테이너 호스팅 한 번 클릭 (Railway / Render)
 
-GitHub 저장소를 연결하면 빌드·배포·HTTPS 도메인까지 자동으로 해 주는 서비스입니다. 저장소에 `deploy/Dockerfile.allinone`(PG + Redis + 서버 + 프론트가 한 컨테이너), `railway.json`, `render.yaml`이 들어 있어 별도 설정이 거의 없습니다.
+GitHub 저장소를 연결하면 빌드·배포·HTTPS 도메인까지 자동으로 해 주는 서비스입니다. 저장소에 根目录 `Dockerfile`(PG + Redis + 서버 + 프론트가 한 컨테이너), `railway.json`, `render.yaml`이 들어 있어 별도 설정이 거의 없습니다.
 
 - **Railway** (https://railway.com): New Project → Deploy from GitHub repo → 이 저장소 선택. `railway.json`이 Dockerfile 경로를 알려 줍니다. Settings → Networking → Generate Domain 으로 `https://xxx.up.railway.app` 주소를 받고, Volumes에서 `/data`에 볼륨을 붙이면 데이터가 유지됩니다. 무료 체험 크레딧 후 월 5달러부터.
 - **Render** (https://render.com): New → Blueprint → 저장소 선택 → `render.yaml` 자동 인식(싱가포르 리전, 5 GB 디스크). Starter 플랜(월 7달러). 무료 플랜은 15분 유휴 시 잠들어 WebSocket 게임에 부적합합니다.

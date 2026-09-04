@@ -139,7 +139,7 @@
   （排除 node_modules / dist / .git / .env，构建上下文从数 GB 降到源码体积）
 - `tools/pack-server.sh`：按 git 追踪文件打源码 tar 包，无仓库权限的主机也能部署；`docs/11-vps-quickstart.md`（韩文 VPS 快速上手）
 - `tools/apk/build-test-apk.py --server <地址>`：以 `VITE_SERVER_BASE` 重新构建并把服务器地址烧进 APK，分发给测试者装上即连（登录页仍可改）
-- 新增单容器一体化镜像 `deploy/Dockerfile.allinone`（PostgreSQL 16 + Redis 7 + api + game + Node 边缘 `deploy/allinone/edge.mjs`：
+- 新增单容器一体化镜像 根目录 `Dockerfile`（PostgreSQL 16 + Redis 7 + api + game + Node 边缘 `deploy/allinone/edge.mjs`：
   静态 / `/api` 反代 / `/ws` 升级转发；`PORT` 可配；密钥自动生成并持久化到 `/data/secrets.env`；`/data` 挂卷持久化），
   运行时以 `postgres:16-alpine` 为基底、Node / Redis 二进制自官方同版本 Alpine 镜像拷入，构建不依赖 apk 仓库；
   根目录 `railway.json` / `render.yaml` 一键部署配置；文档 §2.2 与韩文快速上手 §4-3

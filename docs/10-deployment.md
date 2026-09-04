@@ -52,11 +52,11 @@ bash deploy/install-test-server.sh
 
 ## 2.2 单容器一体化镜像（托管平台一键部署：Railway / Render / Fly.io / Manufact 等）
 
-只提供「一个容器 + 一个端口 + 一个域名」的托管平台，用 `deploy/Dockerfile.allinone`：一个镜像内含 PostgreSQL 16、Redis 7、
+只提供「一个容器 + 一个端口 + 一个域名」的托管平台，用 根目录 `Dockerfile`：一个镜像内含 PostgreSQL 16、Redis 7、
 api-service、game-service 与 Node 边缘（静态文件 + `/api` 反代 + `/ws` 升级转发，`deploy/allinone/edge.mjs`）。
 
 ```bash
-docker build -f deploy/Dockerfile.allinone -t yanbian-allinone .
+docker build -t yanbian-allinone .
 docker run -d --name yanbian -p 80:80 -v yanbian-data:/data yanbian-allinone
 docker logs yanbian | grep 首次登录密码          # 后台初始密码（也持久化在 /data/secrets.env）
 ```
@@ -64,7 +64,7 @@ docker logs yanbian | grep 首次登录密码          # 后台初始密码（�
 - 平台注入 `PORT` 即监听该端口；`ADMIN_INIT_PASSWORD` / `JWT_SECRET` / `INTERNAL_TOKEN` 可作为环境变量传入，缺省自动生成并持久化到 `/data/secrets.env`
 - `/data` 挂卷即持久化（PG 数据 + Redis AOF + 密钥）；不挂卷则容器重建后清空（仅适合短期内测）
 - 仓库根目录已带 `railway.json`（Railway 直接识别 Dockerfile 路径）与 `render.yaml`（Render Blueprint，含 5 GB 持久盘）；
-  Fly.io：`fly launch --dockerfile deploy/Dockerfile.allinone` 后挂卷到 `/data`
+  Fly.io：`fly launch` 后挂卷到 `/data`
 - 平台通常自带 HTTPS 域名，APK「服务器设置」直接填 `https://<域名>`（WebSocket 自动走 wss）
 - 运行时基础镜像为 `postgres:16-alpine`，Node / Redis 二进制从同版本 Alpine 官方镜像拷入，构建不依赖 apk 仓库；
   单容器无水平扩展、无独立备份 / 监控，用户量上来后迁移到 §2 的 compose / K8s 拓扑（`pg_dump` 导出 `/data` 即可迁移）
