@@ -495,11 +495,40 @@ async function testReconnect() {
   c2.close();
 }
 
+// ── 对局中离开：本局托管打完并结算、可立即匹配别的游戏、重连快照不再指向旧桌 ─────
+async function testLeaveDuringPlay() {
+  console.log('▶ 对局中离开');
+  const u = await makeUser('lv');
+  const c = new Client(u.accessToken, 'lv');
+  await c.connect();
+  await c.once('sys.hello');
+  await c.call('match.start', { gameCode: 'mahjong_yanbian', stageId: 'mj_bronze' });
+  await c.once('match.found', 20000);
+  await c.once('room.gameStart', 20000);
+  await c.once('mahjong.deal', 10000);
+  const trusteeP = c.once('game.trustee', 5000).catch(() => null);
+  const leave = await c.call('room.leave', {}, 'room.leave.ok', 5000);
+  assert(leave.event === 'room.leave.ok', '对局中离开被接受（本局托管打完）');
+  const tr = await trusteeP;
+  assert(tr === null || tr.data.reason === 'leave' || tr.data.trustee === true, '离开后座位进入托管');
+  const hs = await c.call('match.start', { gameCode: 'hongshi', stageId: 'hs_bronze' }, 'match.start.ok', 5000);
+  assert(hs.event === 'match.start.ok', '离开后可立即匹配其它游戏');
+  await c.call('match.cancel', {}, 'match.cancel.ok', 5000);
+  c.ws.terminate();
+  await new Promise((r) => setTimeout(r, 500));
+  const c2 = new Client(u.accessToken, 'lv2');
+  await c2.connect();
+  const hello = await c2.once('sys.hello');
+  assert(!hello.data.resume || hello.data.snapshot?.room?.gameCode !== 'mahjong_yanbian', '重连快照不再指向已离开的麻将桌');
+  c2.close();
+}
+
 const t0 = Date.now();
 try {
-  if (process.env.ONLY === 'roulette' || process.env.ONLY === 'stock') {
+  if (process.env.ONLY === 'roulette' || process.env.ONLY === 'stock' || process.env.ONLY === 'leave') {
     if (process.env.ONLY === 'roulette') await testRoulette();
-    else await testStock();
+    else if (process.env.ONLY === 'stock') await testStock();
+    else await testLeaveDuringPlay();
     console.log(`\nE2E 结果: ${passed} 通过 / ${failed} 失败`);
     process.exit(failed ? 1 : 0);
   }
@@ -510,6 +539,7 @@ try {
   await testMahjong();
   await testHongshi();
   await testReconnect();
+  await testLeaveDuringPlay();
 } catch (e) {
   failed += 1;
   console.error('  ✗ 异常:', e.message);

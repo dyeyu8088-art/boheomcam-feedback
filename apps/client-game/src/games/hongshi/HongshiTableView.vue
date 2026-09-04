@@ -23,7 +23,7 @@
     <template v-else>
       <TableSurface tone="wine" />
       <div class="hud-top">
-        <GameButton round size="md" :art="exitArt" class="hback" sfx="close" @click="leaveToLobby()" />
+        <GameButton round size="md" :art="exitArt" class="hback" sfx="close" @click="askLeave()" />
         <div class="hinfo num">{{ t('room.round', { a: room?.currentRound ?? 1, b: room?.totalRounds ?? 4 }) }}</div>
         <CurrencyBar kind="coin" :value="user.me?.coins ?? 0" class="hcoins" />
       </div>
@@ -39,6 +39,7 @@
                 <img v-if="identityOf(p.seat)" class="suit-ic" :src="suitHeartArt" alt="" draggable="false" />{{ identityOf(p.seat) ? t('hs.red') : t('hs.blue') }}
               </span>
               <span v-if="rankOf(p.seat)" class="frank">{{ t(`hs.rank${rankOf(p.seat)}`) }}</span>
+              <span v-if="p.left" class="frank left">{{ t('room.left') }}</span>
             </div>
           </div>
           <div class="ocount num">×{{ p.handCount }}</div>
@@ -103,6 +104,15 @@
         {{ t('room.trustee') }} — {{ t('room.trustee.cancel') }}
       </div>
 
+
+      <!-- 对局中退出确认：本局托管打完并照常结算 -->
+      <GamePopup v-model="showLeave" :title="t('room.leave')" skin="blue" size="sm">
+        <p class="leave-hint">{{ t('room.leave.hint') }}</p>
+        <div class="leave-row">
+          <GameButton variant="dark" size="md" sfx="close" @click="showLeave = false">{{ t('common.cancel') }}</GameButton>
+          <GameButton variant="gold" size="md" block sfx="confirm" @click="leaveToLobby()">{{ t('room.leave.confirm') }}</GameButton>
+        </div>
+      </GamePopup>
       <!-- 结算 -->
       <GamePopup v-model="showSettle" :title="t('hs.result')" skin="red" size="md">
         <div v-if="result" class="settle">
@@ -169,7 +179,7 @@ import AvatarBadge from '../../ui/AvatarBadge.vue';
 import { fmtSigned } from '../../ui/format.js';
 
 const user = useUserStore();
-const { room, phase, mySeat, on, begin, ready, leaveToLobby, cancelMatch } = useGameRoom('hongshi');
+const { room, phase, mySeat, on, begin, ready, leaveToLobby, cancelMatch, showLeave, askLeave } = useGameRoom('hongshi');
 
 const hand = ref<number[]>([]);
 const selected = ref(new Set<number>());
@@ -393,6 +403,16 @@ function cancelTrustee(): void {
 </script>
 
 <style scoped>
+.leave-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.leave-row {
+  display: flex;
+  gap: 10px;
+}
 .hs-root {
   height: 100%;
   position: relative;

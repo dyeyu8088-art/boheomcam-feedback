@@ -18,6 +18,8 @@ export interface RoomPlayerView {
   online: boolean;
   trustee: boolean;
   score: number;
+  /** 对局中离开（本局托管打完，局末由机器人接替） */
+  left?: boolean;
 }
 
 export interface RoomView {
@@ -43,6 +45,8 @@ export function useGameRoom(gameCode: 'mahjong_yanbian' | 'hongshi') {
   const myUid = ref(0);
   const offs: (() => void)[] = [];
   const state = reactive({ snapshotGame: null as Record<string, unknown> | null });
+  /** 对局中点退出：先确认（本局托管打完并照常结算） */
+  const showLeave = ref(false);
 
   function on(event: string, handler: (data: any, full?: any) => void): void {
     offs.push(gameSocket.on(event, (m) => handler(m.data, m)));
@@ -81,7 +85,10 @@ export function useGameRoom(gameCode: 'mahjong_yanbian' | 'hongshi') {
     });
     on(Ev.GameTrustee, (d) => {
       const p = room.value?.players.find((x) => x.seat === d.seat);
-      if (p) p.trustee = d.trustee;
+      if (p) {
+        p.trustee = d.trustee;
+        if (d.reason === 'leave') p.left = true;
+      }
     });
     on(Ev.RoomDissolve, () => {
       toast(t('room.dissolve'), 'info');
@@ -100,6 +107,12 @@ export function useGameRoom(gameCode: 'mahjong_yanbian' | 'hongshi') {
       const resync = await gameSocket.call<{ snapshot: Record<string, unknown> | null }>('sys.resync');
       if (resync.snapshot && (resync.snapshot as { room?: RoomView }).room) {
         const snap = resync.snapshot as { room: RoomView; game?: Record<string, unknown>; mySeat: number };
+        // 仍在另一种游戏的牌桌上：不能把那桌的快照套进本视图，直接带回那桌
+        if (snap.room.gameCode !== gameCode) {
+          toast(t('room.otherTable'), 'info');
+          void router.replace(snap.room.gameCode === 'hongshi' ? '/game/hongshi' : '/game/mahjong');
+          return null;
+        }
         applyRoom(snap.room);
         mySeat.value = snap.mySeat;
         state.snapshotGame = snap.game ?? null;
@@ -147,8 +160,15 @@ export function useGameRoom(gameCode: 'mahjong_yanbian' | 'hongshi') {
   }
 
   async function leaveToLobby(callServer = true): Promise<void> {
+    showLeave.value = false;
     if (callServer) await gameSocket.call('room.leave').catch(() => undefined);
     void router.replace('/lobby');
+  }
+
+  /** 退出按钮：对局中先弹确认，其它阶段直接离开 */
+  function askLeave(): void {
+    if (phase.value === 'playing' && room.value?.state !== 'waiting') showLeave.value = true;
+    else void leaveToLobby();
   }
 
   function cancelMatch(): void {
@@ -160,7 +180,7 @@ export function useGameRoom(gameCode: 'mahjong_yanbian' | 'hongshi') {
     for (const off of offs) off();
   });
 
-  return { room, phase, mySeat, myUid, state, on, begin, ready, leaveToLobby, cancelMatch, refreshFromServer };
+  return { room, phase, mySeat, myUid, state, showLeave, on, begin, ready, leaveToLobby, askLeave, cancelMatch, refreshFromServer };
 }
 
 function codeName(code: number): string {

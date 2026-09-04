@@ -5,7 +5,7 @@
 import { ApiError, ErrorCode, Ev } from '@yanbian/protocol';
 import { getLogger } from '@yanbian/server-core';
 import { hub, type GameSession } from './hub.js';
-import { roomManager, Room, type GameHost, type RoomPlayer, type StageConf } from './room.js';
+import { roomManager, Room, makeBot, type GameHost, type StageConf } from './room.js';
 import { loadMahjongRule, loadHongshiRule, loadStages } from './configs.js';
 import { mahjongHost } from './hosts/mahjongHost.js';
 import { hongshiHost } from './hosts/hongshiHost.js';
@@ -13,7 +13,6 @@ import { hongshiHost } from './hosts/hongshiHost.js';
 const log = getLogger('match');
 
 const BOT_FILL_WAIT_MS = 4000;
-const BOT_NAMES = ['金达莱', '海兰江畔', '长白雪松', '图们渔火', '延吉夜风', '珲春晨光', '和龙月色', '敦化松涛'];
 
 interface QueueItem {
   uid: number;
@@ -21,7 +20,6 @@ interface QueueItem {
 }
 
 const queues = new Map<string, QueueItem[]>();
-let botSeq = 0;
 
 function hostOf(gameCode: string): GameHost {
   if (gameCode === 'mahjong_yanbian') return mahjongHost;
@@ -53,22 +51,7 @@ export function cancelMatch(uid: number): void {
   hub.send(uid, Ev.MatchCancel, {});
 }
 
-export function makeBot(seat: number): RoomPlayer {
-  botSeq += 1;
-  return {
-    uid: 900000000 + botSeq,
-    seat,
-    nickname: BOT_NAMES[botSeq % BOT_NAMES.length]!,
-    avatarId: (botSeq % 12) + 1,
-    vip: 0,
-    ready: true,
-    online: true,
-    trustee: false,
-    score: 0,
-    isBot: true,
-    coins: 0,
-  };
-}
+export { makeBot };
 
 async function tryAssemble(key: string): Promise<void> {
   const q = queues.get(key);

@@ -29,6 +29,30 @@ export interface RoomPlayer {
   score: number;
   isBot: boolean;
   coins: number;
+  /** 对局中离开：本局托管打完并照常结算，局末由机器人接替座位 */
+  left: boolean;
+}
+
+const BOT_NAMES = ['金达莱', '海兰江畔', '长白雪松', '图们渔火', '延吉夜风', '珲春晨光', '和龙月色', '敦化松涛'];
+let botSeq = 0;
+
+/** 陪练机器人（不参与钱包结算） */
+export function makeBot(seat: number, score = 0): RoomPlayer {
+  botSeq += 1;
+  return {
+    uid: 900000000 + botSeq,
+    seat,
+    nickname: BOT_NAMES[botSeq % BOT_NAMES.length]!,
+    avatarId: (botSeq % 12) + 1,
+    vip: 0,
+    ready: true,
+    online: true,
+    trustee: false,
+    score,
+    isBot: true,
+    coins: 0,
+    left: false,
+  };
 }
 
 export interface GameHost {
@@ -95,13 +119,17 @@ export class Room {
 
   broadcast(event: string, data: unknown): void {
     for (const p of this.players) {
-      if (!p.isBot) hub.send(p.uid, event, data);
+      if (!p.isBot && !p.left) hub.send(p.uid, event, data);
     }
   }
 
   sendSeat(seat: number, event: string, data: unknown): void {
     const p = this.playerBySeat(seat);
-    if (p && !p.isBot) hub.send(p.uid, event, data);
+    if (p && !p.isBot && !p.left) hub.send(p.uid, event, data);
+  }
+
+  humans(): RoomPlayer[] {
+    return this.players.filter((p) => !p.isBot && !p.left);
   }
 
   info(): Record<string, unknown> {
@@ -129,6 +157,7 @@ export class Room {
         online: p.online,
         trustee: p.trustee,
         score: p.score,
+        left: p.left,
       })),
     };
   }
@@ -193,6 +222,7 @@ export class RoomManager {
       score: 0,
       isBot: false,
       coins: balances.COIN,
+      left: false,
     };
     room.players.push(player);
     room.players.sort((a, b) => a.seat - b.seat);
@@ -212,7 +242,10 @@ export class RoomManager {
   async removePlayer(room: Room, uid: number, reason: string): Promise<void> {
     const idx = room.players.findIndex((p) => p.uid === uid);
     if (idx < 0) return;
-    if (room.state === 'playing') throw new ApiError(ErrorCode.INVALID_ACTION, '对局中不能退出（可托管）');
+    if (room.state === 'playing' || room.state === 'settling') {
+      await this.leaveDuringPlay(room, room.players[idx]!);
+      return;
+    }
     room.players.splice(idx, 1);
     this.byUid.delete(uid);
     const session = hub.get(uid);
@@ -226,6 +259,41 @@ export class RoomManager {
     if (room.players.filter((p) => !p.isBot).length === 0) {
       await this.destroyRoom(room, 'empty');
     }
+  }
+
+  /**
+   * 对局中离开：座位立即托管并标记 left（本局照常结算，玩家仍对本局负责），玩家会话立刻脱离房间可去别处；
+   * 局末由 settleLeavers 用机器人接替该座位。不广播 playerLeft（座位仍在打），只广播托管标记（reason=leave）。
+   */
+  private async leaveDuringPlay(room: Room, p: RoomPlayer): Promise<void> {
+    if (p.left) return;
+    p.left = true;
+    p.trustee = true;
+    this.byUid.delete(p.uid);
+    const session = hub.get(p.uid);
+    if (session) {
+      session.roomId = null;
+      session.gameCode = null;
+    }
+    await query(`UPDATE room_players SET left_at=now(), state='left' WHERE room_id=$1 AND user_id=$2`, [room.roomId, p.uid]);
+    await getRedis().del(`playing:${p.uid}`).catch(() => undefined);
+    room.broadcast(Ev.GameTrustee, { seat: p.seat, trustee: true, reason: 'leave' });
+    log.info({ roomId: room.roomId, uid: p.uid, state: room.state }, 'player left during play (trustee until round end)');
+  }
+
+  /**
+   * 局末处理离开者：机器人接替座位（保留累计分，机器人不参与钱包结算）。返回 true 表示房间已无真人，调用方应销毁房间。
+   */
+  settleLeavers(room: Room): boolean {
+    for (let i = 0; i < room.players.length; i += 1) {
+      const p = room.players[i]!;
+      if (!p.left) continue;
+      const bot = makeBot(p.seat, p.score);
+      room.players[i] = bot;
+      room.broadcast(Ev.RoomPlayerLeft, { uid: p.uid, reason: 'leave' });
+      room.broadcast(Ev.RoomPlayerJoined, { player: bot });
+    }
+    return room.humans().length === 0;
   }
 
   async destroyRoom(room: Room, reason: string): Promise<void> {

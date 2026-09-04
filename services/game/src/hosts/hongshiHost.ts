@@ -230,6 +230,12 @@ export class HongshiHost implements GameHost {
       totals: room.players.map((p) => ({ seat: p.seat, score: p.score })),
     });
     s.roundsPlayed += 1;
+    // 对局中离开的玩家：本局已结算，此处由机器人接替；全员离开则直接散桌
+    if (roomManager.settleLeavers(room)) {
+      s.table = null;
+      setTimeout(() => void roomManager.destroyRoom(room, 'empty'), 1500);
+      return;
+    }
     s.table = null;
     if (s.roundsPlayed >= room.totalRounds) {
       room.broadcast(Ev.GameMatchOver, {

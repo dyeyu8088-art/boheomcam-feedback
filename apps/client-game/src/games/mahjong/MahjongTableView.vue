@@ -36,7 +36,7 @@
       <TableSurface tone="emerald" />
       <!-- 顶部信息 -->
       <div class="hud-top">
-        <GameButton round size="md" :art="exitArt" class="hback" sfx="close" @click="leaveToLobby()" />
+        <GameButton round size="md" :art="exitArt" class="hback" sfx="close" @click="askLeave()" />
         <div class="hinfo">
           <span class="num">{{ t('room.round', { a: room?.currentRound ?? 1, b: room?.totalRounds ?? 4 }) }}</span>
           <span class="sep">·</span>
@@ -54,7 +54,8 @@
           <div class="ocount num">×{{ p.handCount }}</div>
           <div class="oscore num">{{ p.score }}</div>
           <CountdownRing v-if="turnSeat === p.seat" :deadline="deadlineAt" />
-          <span v-if="p.trustee" class="tflag">{{ t('room.trustee') }}</span>
+          <span v-if="p.left" class="tflag">{{ t('room.left') }}</span>
+          <span v-else-if="p.trustee" class="tflag">{{ t('room.trustee') }}</span>
         </div>
         <div class="opp-hand">
           <MjTile v-for="n in p.handCount" :key="n" back size="xs" />
@@ -194,6 +195,15 @@
         <div v-for="b in chatBubbles" :key="b.id" class="bubble glass">{{ b.text }}</div>
       </transition-group>
 
+
+      <!-- 对局中退出确认：本局托管打完并照常结算 -->
+      <GamePopup v-model="showLeave" :title="t('room.leave')" skin="blue" size="sm">
+        <p class="leave-hint">{{ t('room.leave.hint') }}</p>
+        <div class="leave-row">
+          <GameButton variant="dark" size="md" sfx="close" @click="showLeave = false">{{ t('common.cancel') }}</GameButton>
+          <GameButton variant="gold" size="md" block sfx="confirm" @click="leaveToLobby()">{{ t('room.leave.confirm') }}</GameButton>
+        </div>
+      </GamePopup>
       <!-- 单局结算 -->
       <GamePopup v-model="showSettle" :title="t('mj.settle.title')" skin="cream" size="md" :closable="false">
         <div v-if="roundResult" class="settle">
@@ -253,7 +263,7 @@ import { fmtSigned } from '../../ui/format.js';
 
 const user = useUserStore();
 const me = computed(() => user.me);
-const { room, phase, mySeat, state, on, begin, ready, leaveToLobby, cancelMatch } = useGameRoom('mahjong_yanbian');
+const { room, phase, mySeat, state, on, begin, ready, leaveToLobby, cancelMatch, showLeave, askLeave } = useGameRoom('mahjong_yanbian');
 
 const kindOf = (tile: number): number => Math.floor(tile / 4);
 
@@ -603,6 +613,16 @@ function copyRoomNo(): void {
 </script>
 
 <style scoped>
+.leave-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.leave-row {
+  display: flex;
+  gap: 10px;
+}
 .mj-root {
   height: 100%;
   position: relative;

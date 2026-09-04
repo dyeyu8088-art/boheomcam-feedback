@@ -330,6 +330,12 @@ export class MahjongHost implements GameHost {
     });
 
     s.roundsPlayed += 1;
+    // 对局中离开的玩家：本局已结算，此处由机器人接替；全员离开则直接散桌
+    if (roomManager.settleLeavers(room)) {
+      s.table = null;
+      setTimeout(() => void roomManager.destroyRoom(room, 'empty'), 1500);
+      return;
+    }
     // 轮庄
     if (s.rule) {
       if (result.winners.length > 0) {

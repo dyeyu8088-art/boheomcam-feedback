@@ -121,6 +121,13 @@
   jarsigner 调试签名、androguard 回读校验包名 / 入口），产物 `build/yanbian-test.apk`（6 MB，minSdk 24 / targetSdk 28）；
   正式发布仍走 Capacitor + Android Studio（docs/10-deployment.md §3，内测壳见 §3.1）
 
+### P11 游戏本体打磨（手机实机走查）
+- 修复（严重）：对局中点退出，服务端拒绝但客户端仍回大厅，玩家被困在原桌（托管到整场结束且照常结算），
+  再进别的游戏时视图套用了旧桌快照（红十界面渲染麻将牌、图片全裂）。现在：对局中离开 = 本局托管打完并照常结算、
+  会话立即脱离房间可去别处、局末由陪练接替座位（保留累计分，机器人不参与钱包）、全员离开即散桌；
+  客户端退出前弹确认（说明托管与结算规则），视图只接受同游戏的快照，若仍在另一桌则直接带回那桌；对手席显示「已离开」
+- 新增 `tests/phone-play.mjs`（手机横屏触屏走查：ko/zh × 844×390 / 800×360，六游戏全流程截图 + 控制台错误）；E2E 新增「对局中离开」4 项
+
 ### P12 内测服务器一条命令部署
 - `deploy/docker-compose.test.yml` + `deploy/nginx/gateway-http.conf` + `deploy/install-test-server.sh`：任意 Linux 主机
   `bash deploy/install-test-server.sh` 完成 装 Docker → 生成随机密钥 `.env` → 构建 → 迁移 → 启动，并打印 APK「服务器设置」要填的
