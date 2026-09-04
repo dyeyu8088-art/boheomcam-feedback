@@ -578,6 +578,46 @@ async function exit(): Promise<void> {
   void router.replace('/lobby');
 }
 
+/** 进场 / 断线重连后重新进场：全部状态以服务端返回为准 */
+let enteredOnce = false;
+async function enterTable(initial: boolean): Promise<void> {
+  try {
+    stakes.value = new Map();
+    actions.value = [];
+    const r = await gameSocket.call<{
+      config: Config;
+      round: RoundInfo & { serverTime: number };
+      myBets: Bet[];
+      history: number[];
+      balance: number;
+      players: number;
+      serverTime: number;
+    }>(Ev.RlEnter, {}, 8000);
+    config.value = r.config;
+    serverOffset.value = r.serverTime - Date.now();
+    chip.value = r.config.chips.includes(100) ? 100 : r.config.chips[0]!;
+    history.value = r.history ?? [];
+    players.value = r.players ?? 1;
+    setBalance(r.balance);
+    round.value = r.round;
+    lastResult.value = r.round.result ?? r.history?.[0] ?? null;
+    if (r.round.result !== null && r.round.result !== undefined) {
+      ballLocal = r.config.wheelOrder.indexOf(r.round.result) * SEG + SEG / 2;
+    }
+    for (const b of r.myBets ?? []) {
+      const key = `${b.type}:${b.selection}`;
+      const cur = stakes.value.get(key) ?? { confirmed: 0, staged: 0 };
+      cur.confirmed += b.amount;
+      stakes.value.set(key, cur);
+    }
+    touch();
+    enteredOnce = true;
+  } catch (e) {
+    toast((e as Error).message, 'error');
+    if (initial) void router.replace('/lobby');
+  }
+}
+
 onMounted(async () => {
   if (gameSocket.status !== 'open') await gameSocket.connect();
   audio.setScene('roulette');
@@ -619,40 +659,14 @@ onMounted(async () => {
     }),
   );
 
-  try {
-    const r = await gameSocket.call<{
-      config: Config;
-      round: RoundInfo & { serverTime: number };
-      myBets: Bet[];
-      history: number[];
-      balance: number;
-      players: number;
-      serverTime: number;
-    }>(Ev.RlEnter, {}, 8000);
-    config.value = r.config;
-    serverOffset.value = r.serverTime - Date.now();
-    chip.value = r.config.chips.includes(100) ? 100 : r.config.chips[0]!;
-    history.value = r.history ?? [];
-    players.value = r.players ?? 1;
-    setBalance(r.balance);
-    round.value = r.round;
-    lastResult.value = r.round.result ?? r.history?.[0] ?? null;
-    if (r.round.result !== null && r.round.result !== undefined) {
-      ballLocal = r.config.wheelOrder.indexOf(r.round.result) * SEG + SEG / 2;
-    }
-    for (const b of r.myBets ?? []) {
-      const key = `${b.type}:${b.selection}`;
-      const cur = stakes.value.get(key) ?? { confirmed: 0, staged: 0 };
-      cur.confirmed += b.amount;
-      stakes.value.set(key, cur);
-    }
-    touch();
-  } catch (e) {
-    toast((e as Error).message, 'error');
-    void router.replace('/lobby');
-  }
+  // 断线重连：网关每次连接都会下发 sys.hello，重新进场以刷新回合 / 余额 / 注单
+  offs.push(
+    gameSocket.on(Ev.SysHello, () => {
+      if (enteredOnce) void enterTable(false);
+    }),
+  );
+  await enterTable(true);
 });
-
 onBeforeUnmount(() => {
   cancelAnimationFrame(raf);
   window.removeEventListener('resize', resizeWheel);

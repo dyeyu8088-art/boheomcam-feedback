@@ -22,6 +22,18 @@
       </el-col>
     </el-row>
 
+    <el-card shadow="never" header="今日街机回合（水果机 / 轮盘 / 股票：投入产出）" style="margin-top: 14px">
+      <el-table :data="arcade" size="small">
+        <el-table-column prop="name" label="游戏" width="160" />
+        <el-table-column prop="n" label="回合数" width="110" />
+        <el-table-column label="总投注" width="160"><template #default="{ row }">{{ Number(row.bet).toLocaleString() }}</template></el-table-column>
+        <el-table-column label="总派彩" width="160"><template #default="{ row }">{{ Number(row.payout).toLocaleString() }}</template></el-table-column>
+        <el-table-column label="实际返还率">
+          <template #default="{ row }">{{ Number(row.bet) > 0 ? ((Number(row.payout) / Number(row.bet)) * 100).toFixed(1) + '%' : '—' }}</template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
     <el-card shadow="never" header="服务器节点" style="margin-top: 14px">
       <el-table :data="nodes" size="small">
         <el-table-column prop="node_id" label="节点" />
@@ -47,6 +59,8 @@ import { api } from '../api.js';
 const loading = ref(true);
 const cards = ref<{ label: string; value: string | number }[]>([]);
 const nodes = ref<Record<string, unknown>[]>([]);
+const arcade = ref<{ name: string; n: number; bet: string; payout: string }[]>([]);
+const GAME_NAMES: Record<string, string> = { mahjong_yanbian: '延边麻将', hongshi: '红十', fishing: '捕鱼', slot_fruit: '黄金水果', roulette: '幸运轮盘', stock_updown: '股市风云' };
 const lineEl = ref<HTMLDivElement | null>(null);
 const barEl = ref<HTMLDivElement | null>(null);
 let lineChart: echarts.ECharts | null = null;
@@ -67,6 +81,8 @@ async function load(): Promise<void> {
     { label: '今日金币消耗', value: d.coinConsumedToday.toLocaleString() },
   ];
   nodes.value = d.serverNodes;
+  const at = (d.arcadeToday ?? {}) as Record<string, { n: number; bet: string; payout: string }>;
+  arcade.value = ['slot_fruit', 'roulette', 'stock_updown'].filter((g) => at[g]).map((g) => ({ name: GAME_NAMES[g] ?? g, ...at[g]! }));
   loading.value = false;
 
   const hours = (d.txPerHour as { h: string; n: number }[]).map((x) => new Date(x.h).getHours() + ':00');
@@ -82,7 +98,7 @@ async function load(): Promise<void> {
   barChart?.setOption({
     grid: { left: 90, right: 20, top: 12, bottom: 28 },
     xAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef0f3' } } },
-    yAxis: { type: 'category', data: games.map(([g]) => ({ mahjong_yanbian: '延边麻将', hongshi: '红十', fishing: '捕鱼', slot_fruit: '黄金水果', roulette: '幸运轮盘', stock_updown: '股市风云' })[g] ?? g) },
+    yAxis: { type: 'category', data: games.map(([g]) => GAME_NAMES[g] ?? g) },
     tooltip: {},
     series: [{ type: 'bar', data: games.map(([, n]) => n), barWidth: 18, itemStyle: { color: GOLD, borderRadius: [0, 6, 6, 0] } }],
   });

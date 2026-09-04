@@ -517,6 +517,43 @@ async function exit(): Promise<void> {
   void router.replace('/lobby');
 }
 
+/** 进场 / 断线重连后重新进场：全部状态以服务端返回为准 */
+let enteredOnce = false;
+async function enterTable(initial: boolean): Promise<void> {
+  try {
+    const r = await gameSocket.call<{
+      config: Config;
+      rounds: RoundInfo[];
+      prices: Record<string, number>;
+      history: Record<string, Point[]>;
+      results: Record<string, RoundResult[]>;
+      myBets: Record<string, MyBet[]>;
+      balance: number;
+      players: number;
+      serverTime: number;
+    }>(Ev.StEnter, {}, 8000);
+    config.value = r.config;
+    serverOffset.value = r.serverTime - Date.now();
+    const rm: Record<string, RoundInfo> = {};
+    for (const x of r.rounds) rm[x.instrument] = x;
+    rounds.value = rm;
+    prices.value = r.prices;
+    series.value = r.history;
+    results.value = r.results;
+    myBetsAll.value = r.myBets ?? {};
+    setBalance(r.balance);
+    players.value = r.players ?? 1;
+    selected.value = r.config.instruments[0]?.id ?? '';
+    chip.value = r.config.chips.includes(100) ? 100 : r.config.chips[0]!;
+    animPrice = prices.value[selected.value] ?? 0;
+    resizeChart();
+    enteredOnce = true;
+  } catch (e) {
+    toast((e as Error).message, 'error');
+    if (initial) void router.replace('/lobby');
+  }
+}
+
 onMounted(async () => {
   if (gameSocket.status !== 'open') await gameSocket.connect();
   audio.setScene('stock');
@@ -561,39 +598,14 @@ onMounted(async () => {
     }),
   );
 
-  try {
-    const r = await gameSocket.call<{
-      config: Config;
-      rounds: RoundInfo[];
-      prices: Record<string, number>;
-      history: Record<string, Point[]>;
-      results: Record<string, RoundResult[]>;
-      myBets: Record<string, MyBet[]>;
-      balance: number;
-      players: number;
-      serverTime: number;
-    }>(Ev.StEnter, {}, 8000);
-    config.value = r.config;
-    serverOffset.value = r.serverTime - Date.now();
-    const rm: Record<string, RoundInfo> = {};
-    for (const x of r.rounds) rm[x.instrument] = x;
-    rounds.value = rm;
-    prices.value = r.prices;
-    series.value = r.history;
-    results.value = r.results;
-    myBetsAll.value = r.myBets ?? {};
-    setBalance(r.balance);
-    players.value = r.players ?? 1;
-    selected.value = r.config.instruments[0]?.id ?? '';
-    chip.value = r.config.chips.includes(100) ? 100 : r.config.chips[0]!;
-    animPrice = prices.value[selected.value] ?? 0;
-    resizeChart();
-  } catch (e) {
-    toast((e as Error).message, 'error');
-    void router.replace('/lobby');
-  }
+  // 断线重连：网关每次连接都会下发 sys.hello，重新进场以刷新回合 / 余额 / 注单
+  offs.push(
+    gameSocket.on(Ev.SysHello, () => {
+      if (enteredOnce) void enterTable(false);
+    }),
+  );
+  await enterTable(true);
 });
-
 onBeforeUnmount(() => {
   cancelAnimationFrame(raf);
   if (clock) clearInterval(clock);
