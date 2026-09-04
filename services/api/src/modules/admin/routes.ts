@@ -28,7 +28,7 @@ async function loadPerms(adminId: number): Promise<Set<string>> {
   return new Set(r.rows.map((x) => x.code as string));
 }
 
-async function requireAdmin(req: FastifyRequest): Promise<void> {
+export async function requireAdmin(req: FastifyRequest): Promise<void> {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) throw new ApiError(ErrorCode.ADMIN_AUTH_REQUIRED, undefined, 401);
   const payload = verifyJwt(header.slice(7), loadEnv().jwtSecret);
@@ -37,11 +37,11 @@ async function requireAdmin(req: FastifyRequest): Promise<void> {
   req.adminPerms = await loadPerms(payload.sub);
 }
 
-function need(req: FastifyRequest, perm: string): void {
+export function need(req: FastifyRequest, perm: string): void {
   if (!req.adminPerms?.has(perm)) throw new ApiError(ErrorCode.ADMIN_FORBIDDEN, `缺少权限 ${perm}`, 403);
 }
 
-async function audit(req: FastifyRequest, action: string, target: string, before: unknown, after: unknown, reason?: string): Promise<void> {
+export async function audit(req: FastifyRequest, action: string, target: string, before: unknown, after: unknown, reason?: string): Promise<void> {
   await query(
     `INSERT INTO audit_logs (admin_id, action, target, before, after, reason, admin_ip)
      VALUES ($1,$2,$3,$4,$5,$6,$7)`,

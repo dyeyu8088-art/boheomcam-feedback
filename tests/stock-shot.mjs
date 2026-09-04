@@ -13,7 +13,7 @@ for (const v of [
   await page.locator('button:has-text("游客快速开始")').click();
   await page.waitForURL('**/#/lobby', { timeout: 10000 });
   await page.waitForTimeout(800);
-  await page.locator('.gcard.stock_updown').click();
+  await page.goto(`${BASE}/#/game/stock`);
   await page.waitForURL('**/#/game/stock**', { timeout: 10000 });
   await page.waitForTimeout(3000);
   for (let i = 0; i < 80; i += 1) {

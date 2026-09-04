@@ -1,4 +1,4 @@
-# YANBIAN GAME / 延边娱乐 — 综合在线棋牌游戏平台
+# YANBIAN GAME / 延边游戏 — 综合在线棋牌游戏平台
 
 > 商业级多端游戏平台：**延边麻将 · 红十 · 捕鱼 · 黄金水果（水果机）· 幸运轮盘 · 股市风云（模拟行情）**
 > 同一账号覆盖 Android APK / 手机 H5 / PC Web，另含 Web 运营管理后台。
@@ -89,6 +89,7 @@ VPS 快速上手（韩文：服务商选择 / 端口放行 / 源码包上传 / A
 - [钱包账本](docs/04-wallet.md) ｜ [安全与防作弊](docs/06-security.md) ｜ [设计系统](docs/07-design-system.md)
 - [大厅视觉规范](docs/11-lobby-design.md)（Design Token / Icon / 游戏卡 / 动效 / 多分辨率适配）
 - [第三方开源素材清单](THIRD_PARTY_NOTICES.md)（麻将牌面 CC0 / 扑克牌公共领域 / 四款 OFL 字体 / Fluent UI Emoji MIT，含许可证与复现命令）
+- [大厅视觉规范 · v4 四游戏大厅](docs/11-lobby-design.md)（2×2 横向卡片 / HTML Logo / 公告滚动 / 5 导航 + 4 快捷 + 更多 / 客服工单 / 响应式 / 减少动态）
 - [素材完整性规范与检查流程](docs/12-asset-guidelines.md)（`tools/assets/audit.py` 全量检查 → `pad_margins.py` 补边 → PNG 检查表；显示规则 `object-fit: contain` + `contentBounds()`）
 - 规则确认表：[延边麻将](docs/05-game-rules/yanbian-mahjong-rules-confirmation.md) ｜ [红十](docs/05-game-rules/hongshi-rules-confirmation.md)
 - 游戏架构：[捕鱼](docs/05-game-rules/fishing-architecture.md) ｜ [水果机](docs/05-game-rules/slots-architecture.md)

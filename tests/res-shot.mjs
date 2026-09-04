@@ -15,8 +15,8 @@ const PRESET = {
 };
 const ENTRY = {
   lobby: null,
-  roulette: { card: '.gcard.roulette', url: '**/#/game/roulette**', wait: 3000 },
-  stock: { card: '.gcard.stock_updown', url: '**/#/game/stock**', wait: 3500 },
+  roulette: { goto: '/#/game/roulette', url: '**/#/game/roulette**', wait: 3000 },
+  stock: { goto: '/#/game/stock', url: '**/#/game/stock**', wait: 3500 },
   slot: { card: '.gcard.slot_fruit', url: '**/#/game/slot**', wait: 2500 },
   fishing: { card: '.gcard.fishing', url: '**/#/game/fishing**', wait: 5000, stage: true },
 };
@@ -35,7 +35,8 @@ for (const sz of sizes) {
     await page.waitForTimeout(1200);
     const e = ENTRY[g];
     if (e) {
-      await page.locator(e.card).click();
+      if (e.goto) await page.goto(`${BASE}${e.goto}`);
+      else await page.locator(e.card).click();
       if (e.stage) {
         await page.waitForTimeout(500);
         await page.locator('.stage').first().click();

@@ -13,7 +13,7 @@ await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.locator('button:has-text("游客快速开始")').click();
 await page.waitForURL('**/#/lobby', { timeout: 10000 });
 await page.waitForTimeout(1200);
-const tabs = ['games', 'tournament', 'friends', 'bag', 'shop'];
+const tabs = ['games', 'friends', 'bag', 'shop'];
 for (let i = 0; i < tabs.length; i += 1) {
   await page.locator(`.gn-item:nth-child(${i + 2})`).click();
   await page.waitForTimeout(900);
@@ -26,7 +26,9 @@ await page.waitForTimeout(2200);
 await page.screenshot({ path: `${SHOT_DIR}/panel-shop-bought.png` });
 console.log('shot: panel-shop-bought.png');
 // VIP 弹窗
-await page.locator('.side .feat:nth-child(7)').click();
+await page.locator('.side .feat.more').click();
+await page.waitForTimeout(500);
+await page.locator('.more-item').first().click();
 await page.waitForTimeout(900);
 await page.screenshot({ path: `${SHOT_DIR}/popup-vip.png` });
 console.log('shot: popup-vip.png');

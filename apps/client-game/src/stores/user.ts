@@ -21,7 +21,7 @@ export interface MeData {
 export const useUserStore = defineStore('user', {
   state: () => ({
     me: null as MeData | null,
-    brand: { nameZh: '延边娱乐', nameKo: '연변오락', nameEn: 'YANBIAN GAME' } as Record<string, string>,
+    brand: { nameZh: '延边游戏', nameKo: '연변 게임', nameEn: 'YANBIAN GAME' } as Record<string, string>,
     loggedIn: hasSession(),
   }),
   actions: {

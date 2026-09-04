@@ -80,12 +80,12 @@ async function run(): Promise<void> {
   // 品牌配置（白标）
   await pool.query(
     `INSERT INTO game_configs (game_id, config_key, rule_version, config, status)
-     VALUES ('mahjong_yanbian','brand','brand_v1',$1,'active')
+     VALUES ('mahjong_yanbian','brand','brand_v2',$1,'active')
      ON CONFLICT (game_id, config_key, rule_version) DO NOTHING`,
     [
       JSON.stringify({
-        nameZh: '延边娱乐',
-        nameKo: '연변오락',
+        nameZh: '延边游戏',
+        nameKo: '연변 게임',
         nameEn: 'YANBIAN GAME',
         slogan: '高级 · 稳定 · 精致',
         sloganKo: '프리미엄 · 안정 · 정교함',
@@ -93,6 +93,7 @@ async function run(): Promise<void> {
       }),
     ],
   );
+  await pool.query(`UPDATE game_configs SET status='retired' WHERE config_key='brand' AND rule_version='brand_v1' AND status='active'`);
 
   // 默认管理员
   const admins = await pool.query('SELECT COUNT(*)::int AS n FROM admins');

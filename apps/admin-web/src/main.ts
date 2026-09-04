@@ -20,6 +20,7 @@ const routes = [
       { path: 'arcade', component: () => import('./views/ArcadePage.vue'), meta: { perm: 'record.view', title: '街机记录' } },
       { path: 'configs', component: () => import('./views/ConfigsPage.vue'), meta: { perm: 'config.view', title: '游戏配置' } },
       { path: 'ops', component: () => import('./views/OpsPage.vue'), meta: { perm: 'announce.manage', title: '公告/邮件' } },
+      { path: 'support', component: () => import('./views/SupportPage.vue'), meta: { perm: 'support.manage', title: '客服工单' } },
       { path: 'risk', component: () => import('./views/RiskPage.vue'), meta: { perm: 'risk.view', title: '风控' } },
       { path: 'audit', component: () => import('./views/AuditPage.vue'), meta: { perm: 'audit.view', title: '操作日志' } },
       { path: 'admins', component: () => import('./views/AdminsPage.vue'), meta: { perm: 'admin.manage', title: '后台账号' } },

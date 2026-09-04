@@ -16,6 +16,7 @@
 | 拉丁品牌字体（YANBIAN GAME） | Cinzel | https://github.com/google/fonts/tree/main/ofl/cinzel | **SIL OFL 1.1** | `apps/client-game/public/fonts/cinzel-brand.woff2`（子集）+ `OFL-cinzel.txt` |
 | 水果机符号：西瓜 / 樱桃 / 柠檬 / 橙子 / 葡萄 / 蓝宝石 / 星（WILD）/ 礼盒（BONUS）；奖励特效星光 | Fluent UI Emoji — 3D 风格（Microsoft） | https://github.com/microsoft/fluentui-emoji （`assets/<Name>/3D/<name>_3d.png`） | **MIT** | `apps/client-game/public/assets/slots/symbols/slot_{watermelon,cherry,lemon,orange,grape,diamond,wild,bonus}.png`、`common/effects/sparkle_coin.png` + `slots/symbols/LICENSE-fluentui-emoji.txt`（生成脚本：`tools/assets/build-slot-symbols.py`，只裁包围盒 + 补透明边，不重绘） |
 | 水果机符号：数字 7 / BAR；平台金币（无货币符号，长白山 + 江水徽记） | 本项目原创 SVG | `tools/assets/svg/{seven,bar,coin}.svg`（`render-svg.mjs` 光栅化） | **项目自有素材** | `slots/symbols/slot_{seven,bar,gold}.png`、`common/currency/coin_yanbian.png` |
+| 大厅四张游戏卡插画（程序合成） | 麻将牌面（CC0）+ 扑克牌（公共领域）+ 用户自供鱼 / 炮台 + Fluent 3D 符号（MIT）+ 原创 7 / BAR / 金币；背景 / Logo / 徽记为原创 SVG | 见各条目 | 见各条目 | `views/lobby/GameGrid.vue`、`LobbyBackdrop.vue`、`ui/LobbyLogo.vue`、`public/favicon.svg` |
 
 ## 素材完整性规范
 

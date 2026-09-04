@@ -1,4 +1,4 @@
-# YANBIAN GAME / 延边娱乐 — 总体技术架构（PHASE 1）
+# YANBIAN GAME / 延边游戏 — 总体技术架构（PHASE 1）
 
 > 状态：已评审定稿 v1.0 ｜ 规则版本体系见 §10 ｜ 本文是全项目技术决策的唯一权威来源（Single Source of Truth）。
 >

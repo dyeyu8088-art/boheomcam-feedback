@@ -3,7 +3,7 @@
     <el-card class="card">
       <template #header>
         <div class="head">
-          <div class="brand">延边娱乐 · 运营管理后台</div>
+          <div class="brand">延边游戏 · 运营管理后台</div>
           <div class="sub">YANBIAN GAME ADMIN</div>
         </div>
       </template>

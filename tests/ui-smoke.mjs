@@ -35,7 +35,8 @@ try {
   await page.locator('button:has-text("游客快速开始")').click();
   await page.waitForURL('**/#/lobby', { timeout: 10000 });
   await page.waitForTimeout(1200);
-  ok((await page.locator('.gcard').count()) === 6, '大厅六游戏卡片');
+  ok((await page.locator('.gcard').count()) === 4, '大厅四游戏卡片（麻将 / 红十 / 捕鱼 / 水果机）');
+  ok((await page.locator('.gn-item').count()) === 5 && (await page.locator('.side .feat').count()) === 5, '底部 5 导航 + 右侧 4 快捷 + 更多');
   ok(await page.locator('.pp-name').first().isVisible(), '顶栏用户信息');
   await page.screenshot({ path: `${SHOT_DIR}/02-lobby.png` });
 
@@ -64,7 +65,8 @@ try {
   await page.waitForURL('**/#/lobby', { timeout: 8000 });
 
   // 轮盘（共享回合：进桌即有当前回合与投注台）
-  await page.locator('.gcard.roulette').click();
+  // 轮盘不在大厅卡片中（路由保留），直接进入
+  await page.goto(`${BASE}/#/game/roulette`, { waitUntil: 'networkidle' });
   await page.waitForURL('**/#/game/roulette', { timeout: 8000 });
   await page.waitForTimeout(2500);
   ok((await page.locator('.table .cell').count()) >= 49 && (await page.locator('.phase').isVisible()), '轮盘投注台与回合阶段加载');
@@ -74,7 +76,8 @@ try {
   await page.waitForTimeout(600);
 
   // 股票涨跌（服务端模拟行情：进场即有三品种走势与回合）
-  await page.locator('.gcard.stock_updown').click();
+  // 股票不在大厅卡片中（路由保留），直接进入
+  await page.goto(`${BASE}/#/game/stock`, { waitUntil: 'networkidle' });
   await page.waitForURL('**/#/game/stock', { timeout: 8000 });
   await page.waitForTimeout(3000);
   ok((await page.locator('.inst').count()) === 3 && (await page.locator('.chart').isVisible()), '股票涨跌三品种与走势图加载');

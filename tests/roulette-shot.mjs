@@ -13,7 +13,7 @@ for (const v of [
   await page.locator('button:has-text("游客快速开始")').click();
   await page.waitForURL('**/#/lobby', { timeout: 10000 });
   await page.waitForTimeout(800);
-  await page.locator('.gcard.roulette').click();
+  await page.goto(`${BASE}/#/game/roulette`);
   await page.waitForURL('**/#/game/roulette**', { timeout: 10000 });
   await page.waitForTimeout(2500);
   // 等到下注阶段且剩余 ≥ 8s

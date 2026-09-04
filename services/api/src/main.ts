@@ -17,6 +17,7 @@ import { registerVipRoutes } from './modules/vip/routes.js';
 import { registerInventoryRoutes } from './modules/inventory/routes.js';
 import { registerShopRoutes } from './modules/shop/routes.js';
 import { registerTournamentRoutes, startTournamentScheduler } from './modules/tournament/routes.js';
+import { registerSupportAdminRoutes, registerSupportRoutes } from './modules/support/routes.js';
 
 const log = getLogger('api-main');
 
@@ -42,9 +43,15 @@ async function main(): Promise<void> {
       registerTournamentRoutes(a);
       startTournamentScheduler();
     },
-    social: registerSocialRoutes,
+    social: (a) => {
+      registerSocialRoutes(a);
+      registerSupportRoutes(a);
+    },
     config: registerConfigRoutes,
-    admin: registerAdminRoutes,
+    admin: (a) => {
+      registerAdminRoutes(a);
+      registerSupportAdminRoutes(a);
+    },
   };
   for (const role of roles) {
     const fn = registry[role];

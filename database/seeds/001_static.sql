@@ -1,10 +1,10 @@
 -- 静态种子：游戏、RBAC、任务、公告（幂等）
 INSERT INTO games (game_id, name, name_ko, status, sort) VALUES
  ('mahjong_yanbian','延边麻将','연변 마작','online',1),
- ('hongshi','红十','홍십','online',2),
- ('fishing','捕鱼','피싱 헌터','online',3),
- ('slot_fruit','黄金水果','골든 프루트','online',4)
-ON CONFLICT (game_id) DO NOTHING;
+ ('hongshi','延边红十','연변 홍십','online',2),
+ ('fishing','捕鱼达人','물고기 잡기','online',3),
+ ('slot_fruit','水果机','과일 슬롯','online',4)
+ON CONFLICT (game_id) DO UPDATE SET name = EXCLUDED.name, name_ko = EXCLUDED.name_ko;
 
 INSERT INTO roles (code, name) VALUES
  ('super','超级管理员'),('ops','运营'),('cs','客服'),('finance','财务/资产审核'),
@@ -19,6 +19,7 @@ INSERT INTO permissions (code, name) VALUES
  ('room.view','查看房间'),('room.dissolve','解散房间'),
  ('record.view','查看战绩/回放'),
  ('activity.manage','管理活动/任务'),('mail.send','发送邮件'),('announce.manage','管理公告'),
+ ('support.manage','处理客服工单'),
  ('risk.view','查看风控'),('risk.handle','处理风控事件'),
  ('audit.view','查看审计日志'),
  ('admin.manage','管理后台账号与角色'),
@@ -32,12 +33,12 @@ ON CONFLICT DO NOTHING;
 -- 运营
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r JOIN permissions p ON p.code IN
- ('dashboard.view','user.view','game.view','config.view','room.view','record.view','activity.manage','mail.send','announce.manage','server.view')
+ ('dashboard.view','user.view','game.view','config.view','room.view','record.view','activity.manage','mail.send','announce.manage','support.manage','server.view')
 WHERE r.code='ops' ON CONFLICT DO NOTHING;
 -- 客服
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r JOIN permissions p ON p.code IN
- ('user.view','record.view','mail.send','wallet.view')
+ ('user.view','record.view','mail.send','wallet.view','support.manage')
 WHERE r.code='cs' ON CONFLICT DO NOTHING;
 -- 财务
 INSERT INTO role_permissions (role_id, permission_id)
@@ -73,8 +74,13 @@ INSERT INTO activities (type, name, name_ko, config) VALUES
  ('sign_in','每日签到','매일 출석체크','{"rewards":[{"day":1,"currency":"COIN","amount":2000},{"day":2,"currency":"COIN","amount":3000},{"day":3,"currency":"COIN","amount":4000},{"day":4,"currency":"COIN","amount":5000},{"day":5,"currency":"COIN","amount":6000},{"day":6,"currency":"COIN","amount":8000},{"day":7,"currency":"DIAMOND","amount":30}]}')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO announcements (title, title_ko, body, body_ko, sort) VALUES
- ('欢迎来到延边娱乐','연변오락에 오신 것을 환영합니다',
+-- 品牌更名（延边娱乐 → 延边游戏）：已有库中的欢迎公告同步改名（幂等）
+-- 旧种子无唯一约束导致每次启动重复插入欢迎公告：去重（保留最早一条）
+DELETE FROM announcements a USING announcements b WHERE a.title=b.title AND a.body=b.body AND a.id>b.id;
+UPDATE announcements SET title='欢迎来到延边游戏大厅', title_ko='연변 게임에 오신 것을 환영합니다' WHERE title='欢迎来到延边娱乐';
+
+INSERT INTO announcements (title, title_ko, body, body_ko, sort)
+SELECT '欢迎来到延边游戏大厅','연변 게임에 오신 것을 환영합니다',
   '平台内所有金币、钻石、积分均为虚拟娱乐资产，仅供游戏娱乐，不可兑换现金或任何实物。祝您游戏愉快！',
-  '플랫폼 내 모든 코인, 다이아몬드, 포인트는 가상 오락 자산으로 게임 오락용으로만 사용되며 현금이나 실물로 교환할 수 없습니다. 즐거운 게임 되세요!',1)
-ON CONFLICT DO NOTHING;
+  '플랫폼 내 모든 코인, 다이아몬드, 포인트는 가상 오락 자산으로 게임 오락용으로만 사용되며 현금이나 실물로 교환할 수 없습니다. 즐거운 게임 되세요!',1
+WHERE NOT EXISTS (SELECT 1 FROM announcements WHERE title='欢迎来到延边游戏大厅');

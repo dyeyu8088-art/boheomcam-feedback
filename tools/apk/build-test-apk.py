@@ -149,7 +149,7 @@ def main() -> None:
     ap.add_argument('--cache', default=str(ROOT / 'build/apk-cache'))
     ap.add_argument('--version-code', type=int, default=1)
     ap.add_argument('--version-name', default='0.3.0-test')
-    ap.add_argument('--label', default='延边娱乐 测试版')
+    ap.add_argument('--label', default='延边游戏 测试版')
     ap.add_argument('--keystore', default='')
     ap.add_argument('--server', default='', help='服务器地址（http(s)://host[:port]）：以 VITE_SERVER_BASE 重新 vite build，APK 内置该地址，登录页仍可改')
     args = ap.parse_args()

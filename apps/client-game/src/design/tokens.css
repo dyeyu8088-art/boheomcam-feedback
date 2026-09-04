@@ -270,3 +270,18 @@ img {
   padding: var(--icon-pad, 6%);
   display: block;
 }
+
+/* ── 减少动态（设置开关 / 系统偏好）：关闭装饰性 CSS 动画与过渡；需要保留末态的元素自行用 .keep-motion-end 声明 ── */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+html.reduce-motion .motion-loop {
+  animation: none !important;
+  transform: none !important;
+}

@@ -197,7 +197,7 @@ if (only.includes('slot')) {
 
 if (only.includes('roulette')) {
   console.log('▶ roulette');
-  await page.locator('.gcard.roulette').click();
+  await page.goto(`${BASE}/#/game/roulette`);
   await page.waitForURL('**/#/game/roulette**', { timeout: 10000 });
   await page.waitForTimeout(3000);
   await shot('rl-idle');
@@ -218,7 +218,7 @@ if (only.includes('roulette')) {
 
 if (only.includes('stock')) {
   console.log('▶ stock');
-  await page.locator('.gcard.stock_updown').click();
+  await page.goto(`${BASE}/#/game/stock`);
   await page.waitForURL('**/#/game/stock**', { timeout: 10000 });
   await page.waitForTimeout(3500);
   await shot('st-idle');

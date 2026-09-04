@@ -8,7 +8,7 @@ export function registerConfigRoutes(app: FastifyInstance): void {
     const r = await query(
       `SELECT config FROM game_configs WHERE config_key='brand' AND status='active' ORDER BY id DESC LIMIT 1`,
     );
-    return ok(r.rows[0]?.config ?? { nameZh: '延边娱乐', nameKo: '연변오락', nameEn: 'YANBIAN GAME' });
+    return ok(r.rows[0]?.config ?? { nameZh: '延边游戏', nameKo: '연변 게임', nameEn: 'YANBIAN GAME' });
   });
 
   /** 大厅：游戏列表 + 场次 + 实时在线 */

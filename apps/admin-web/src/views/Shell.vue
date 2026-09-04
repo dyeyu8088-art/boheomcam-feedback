@@ -2,7 +2,7 @@
   <el-container class="shell">
     <el-aside width="220px" class="aside">
       <div class="logo">
-        <div class="mark">延边娱乐</div>
+        <div class="mark">延边游戏</div>
         <div class="sub">ADMIN CONSOLE</div>
       </div>
       <el-menu :default-active="route.path" router background-color="#10151f" text-color="#9aa3b2" active-text-color="#e6cfa3">
@@ -44,6 +44,7 @@ const all = [
   { path: '/arcade', title: '街机 / 奖池', icon: 'rooms', perm: 'record.view' },
   { path: '/configs', title: '游戏 / 配置', icon: 'configs', perm: 'config.view' },
   { path: '/ops', title: '公告 / 邮件', icon: 'ops', perm: 'announce.manage' },
+  { path: '/support', title: '客服工单', icon: 'ops', perm: 'support.manage' },
   { path: '/risk', title: '风控 / 封禁', icon: 'risk', perm: 'risk.view' },
   { path: '/audit', title: '操作日志', icon: 'audit', perm: 'audit.view' },
   { path: '/admins', title: '后台账号', icon: 'admins', perm: 'admin.manage' },

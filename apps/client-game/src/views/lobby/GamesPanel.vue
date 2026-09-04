@@ -5,9 +5,8 @@
       <button v-for="g in games" :key="g.gameId" class="gp-item sk-panel" :class="{ off: g.status !== 'online' }" type="button" @click="$emit('open', g.gameId)">
         <img class="gp-icon" :src="icon(g.gameId)" alt="" draggable="false" />
         <span class="gp-meta">
-          <span class="gp-name">{{ locale === 'ko' ? g.nameKo : g.name }}</span>
+          <span class="gp-name">{{ gameName(g) }}</span>
           <span class="gp-desc">{{ t(`game.${g.gameId}.desc`) }}</span>
-          <span class="gp-online num"><i class="dot" />{{ t('lobby.online', { n: g.online }) }}</span>
         </span>
         <span class="gp-state" :class="g.status">{{ g.status === 'online' ? t('lobby.enter') : g.status === 'maintenance' ? t('game.maintenance') : t('lobby.comingSoon') }}</span>
       </button>
@@ -34,22 +33,27 @@ interface GameItem {
 defineEmits<{ (e: 'open', gameId: string): void }>();
 const locale = currentLocale;
 const games = ref<GameItem[]>([]);
-const ORDER = ['mahjong_yanbian', 'hongshi', 'fishing', 'slot_fruit', 'roulette', 'stock_updown'];
+/** 「游戏」页只列大厅四款游戏；图标用无烙字素材（牌面 / 扑克 / 鱼 / 符号） */
+const ORDER = ['mahjong_yanbian', 'hongshi', 'fishing', 'slot_fruit'];
 const ICONS: Record<string, string> = {
-  mahjong_yanbian: asset('common', 'navIconMahjong'),
-  hongshi: asset('red10', 'modeIconClassic'),
-  fishing: asset('lobby', 'iconGameFishing'),
-  slot_fruit: asset('lobby', 'iconGameSlots'),
-  roulette: asset('lobby', 'iconGameRoulette'),
-  stock_updown: asset('lobby', 'iconGameStock'),
+  mahjong_yanbian: asset('mahjong', 'tileHatsu'),
+  hongshi: asset('red10', 'card10H'),
+  fishing: asset('fishing', 'fishClown'),
+  slot_fruit: asset('slots', 'slotSeven'),
 };
+/** 名称走 i18n（与大厅卡片一致），服务器名称兜底 */
+function gameName(g: GameItem): string {
+  const key = `game.${g.gameId}`;
+  const s = t(key);
+  return s === key ? (locale.value === 'ko' ? g.nameKo : g.name) : s;
+}
 function icon(id: string): string {
-  return ICONS[id] ?? asset('lobby', 'iconTournament');
+  return ICONS[id] ?? asset('common', 'iconCrownRound');
 }
 async function load(): Promise<void> {
   try {
     const d = await api<{ games: GameItem[] }>('/api/v1/lobby');
-    games.value = [...d.games].sort((a, b) => ORDER.indexOf(a.gameId) - ORDER.indexOf(b.gameId));
+    games.value = d.games.filter((g) => ORDER.includes(g.gameId)).sort((a, b) => ORDER.indexOf(a.gameId) - ORDER.indexOf(b.gameId));
   } catch {
     /* noop */
   }

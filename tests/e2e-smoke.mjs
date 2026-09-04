@@ -523,11 +523,61 @@ async function testLeaveDuringPlay() {
   c2.close();
 }
 
+/** 客服工单：玩家创建 → 列表 / 详情 → 追加留言 → 关闭；有后台密码时再验证客服回复 → 玩家看到「已回复」 */
+async function testSupport() {
+  console.log('▶ 客服工单');
+  const u = await makeUser('support');
+  const tk = u.accessToken;
+  const sup = async (path, payload) => {
+    const r = await api(path, payload, tk);
+    if (r.code !== 0) throw new Error(`${path}: ${r.code} ${r.msg}`);
+    return r.data;
+  };
+  const created = await sup('/api/v1/support/tickets', { category: 'coins', subject: 'E2E 工单', body: '进入水果机后金币数字不刷新' });
+  assert(Number.isInteger(created.ticketId), '创建工单返回 ticketId');
+  const list = await sup('/api/v1/support/tickets', undefined);
+  assert(list.items.some((x) => x.id === created.ticketId && x.status === 'open'), '工单列表含新工单（open）');
+  let detail = await sup(`/api/v1/support/tickets/${created.ticketId}`, undefined);
+  assert(detail.messages.length === 1 && detail.messages[0].sender === 'user', '工单详情含首条留言');
+  const adminPwd = process.env.ADMIN_PASSWORD ?? 'YanbianAdmin2026x';
+  let adminToken = null;
+  try {
+    const res = await fetch(`${API}/api/admin/v1/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'admin', password: adminPwd }) });
+    const body = await res.json();
+    adminToken = body.code === 0 ? body.data.token ?? body.data.accessToken : null;
+  } catch {
+    adminToken = null;
+  }
+  if (adminToken) {
+    const q = (await api('/api/admin/v1/support/tickets?status=open', undefined, adminToken)).data;
+    assert(q.items.some((x) => x.id === created.ticketId), '后台待处理列表含该工单');
+    await api(`/api/admin/v1/support/tickets/${created.ticketId}/reply`, { body: '已收到，正在核查' }, adminToken);
+    detail = await sup(`/api/v1/support/tickets/${created.ticketId}`, undefined);
+    assert(detail.status === 'answered' && detail.messages.at(-1).sender === 'admin', '客服回复后玩家侧状态为已回复');
+  } else {
+    console.log('  · 未提供 ADMIN_PASSWORD，跳过后台回复断言');
+  }
+  await sup(`/api/v1/support/tickets/${created.ticketId}/messages`, { body: '补充说明' });
+  detail = await sup(`/api/v1/support/tickets/${created.ticketId}`, undefined);
+  assert(detail.status === 'open' && detail.messages.at(-1).sender === 'user', '玩家追加留言后重新变为处理中');
+  await sup(`/api/v1/support/tickets/${created.ticketId}/close`, {});
+  detail = await sup(`/api/v1/support/tickets/${created.ticketId}`, undefined);
+  assert(detail.status === 'closed', '玩家可关闭工单');
+  let rejected = false;
+  try {
+    await sup(`/api/v1/support/tickets/${created.ticketId}/messages`, { body: 'x' });
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, '已关闭工单拒绝追加留言');
+}
+
 const t0 = Date.now();
 try {
-  if (process.env.ONLY === 'roulette' || process.env.ONLY === 'stock' || process.env.ONLY === 'leave') {
+  if (['roulette', 'stock', 'leave', 'support'].includes(process.env.ONLY ?? '')) {
     if (process.env.ONLY === 'roulette') await testRoulette();
     else if (process.env.ONLY === 'stock') await testStock();
+    else if (process.env.ONLY === 'support') await testSupport();
     else await testLeaveDuringPlay();
     console.log(`\nE2E 结果: ${passed} 通过 / ${failed} 失败`);
     process.exit(failed ? 1 : 0);
@@ -540,6 +590,7 @@ try {
   await testHongshi();
   await testReconnect();
   await testLeaveDuringPlay();
+  await testSupport();
 } catch (e) {
   failed += 1;
   console.error('  ✗ 异常:', e.message);
