@@ -29,7 +29,7 @@
 - 正文：system-ui 优先（PingFang SC / MiSans / Noto Sans CJK / Noto Sans KR）。
 - 展示字体（自托管 OFL 子集，`design/fonts.css`）：中文标题 ZCOOL XiaoWei `--font-display-zh`、
   韩文标题 Nanum Myeongjo `--font-display-ko`、书法（门风 / 牌面）Ma Shan Zheng `--font-calligraphy`、
-  拉丁字标 Cinzel `--font-brand`；详细字号表见 docs/11 §1.2，许可证见 `THIRD_PARTY_ASSETS.md`。
+  拉丁字标 Cinzel `--font-brand`；详细字号表见 docs/11 §1.2，许可证见 `THIRD_PARTY_NOTICES.md`。
 - 数字（金币/倒计时）：等宽变体 `font-variant-numeric: tabular-nums`。
 - 字阶（px @375 宽基准，rem 缩放）：display 28 / h1 22 / h2 18 / body 15 / caption 13 / micro 11。行高 1.4–1.6。
 

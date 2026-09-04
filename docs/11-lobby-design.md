@@ -79,7 +79,7 @@ Token 定义在 `apps/client-game/src/design/tokens.css`（设计系统「玄夜
 - 游戏名使用金属渐变文字（`background-clip: text`，白→米→暗金三段），不是纯色，
   外加三层 `drop-shadow`（深棕描边 → 黑色离地投影 → 金色柔光）。
 
-**展示字体（自托管子集，`design/fonts.css`，许可证见 `THIRD_PARTY_ASSETS.md`）**
+**展示字体（自托管子集，`design/fonts.css`，许可证见 `THIRD_PARTY_NOTICES.md`）**
 
 | Token | 字体 | 用途 | 字重 / 尺寸 |
 | --- | --- | --- | --- |
@@ -89,7 +89,7 @@ Token 定义在 `apps/client-game/src/design/tokens.css`（设计系统「玄夜
 | `--font-brand` | Cinzel（OFL） | `YANBIAN GAME` 拉丁字标 | 600，字距 `.4em` |
 
 - 子集只包含实际用到的字形（游戏名 / 品牌 / 牌面汉字 + ASCII），每个 4–25 KB，`font-display: swap`；
-  新增用到展示字体的文案，必须同步更新 `THIRD_PARTY_ASSETS.md` 里的 `pyftsubset --text` 并重新生成。
+  新增用到展示字体的文案，必须同步更新 `THIRD_PARTY_NOTICES.md` 里的 `pyftsubset --text` 并重新生成。
 - 语言切换只换字族与字号，不换布局：`.p-title.ko` / `.b-cn.ko` / `.mark.ko`。
 
 ### 1.3 材质与光影（不是简单 box-shadow）
@@ -406,7 +406,7 @@ bottom: calc(var(--safe-bottom) + 18px);   /* Dock */
 **原创性与素材边界**：Logo / UI / Icon / 头像纹章 / 背景 / 牌桌 / 牌背 / 鱼类 / 炮台 / 水果机符号 / 动画
 均为本项目矢量绘制（SVG / Pixi Graphics），无竞品资源提取、无反编译内容。
 仅麻将牌面（CC0）、扑克牌面（公共领域）与四款展示字体（OFL）来自 GitHub 开源仓库，
-许可证文件随素材入库，来源与合规说明见 [`THIRD_PARTY_ASSETS.md`](../THIRD_PARTY_ASSETS.md)。
+许可证文件随素材入库，来源与合规说明见 [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md)。
 
 ---
 

@@ -82,6 +82,7 @@ import { currentLocale, t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
 import { fmt } from '../../ui/format.js';
 import { asset, pixiTextures, release } from '../../assets/assets.js';
+import { contentBounds } from '../../assets/bounds.js';
 import { audio } from '../../audio/AudioManager.js';
 import GameButton from '../../ui/GameButton.vue';
 import CurrencyBar from '../../ui/CurrencyBar.vue';
@@ -239,8 +240,9 @@ function acquireFish(f: { fishId: number; typeId: string; pathId: number; spawnA
   const texture = tex[spec.key];
   if (texture) {
     lf.sprite.texture = texture;
-    const scale = spec.w / texture.width;
-    lf.sprite.scale.set(scale);
+    const b = contentBounds(texture); // 素材带透明安全边距：按内容宽度缩放、按内容中心锚定
+    lf.sprite.anchor.set(b.cx, b.cy);
+    lf.sprite.scale.set(spec.w / b.w);
   }
   lf.sprite.tint = spec.tint ?? 0xffffff;
   lf.sprite.alpha = 1;
@@ -463,11 +465,13 @@ function bossHitFx(f: LiveFish): void {
 }
 
 function coinFly(x: number, y: number, n: number): void {
-  const coinTex = tex.iconCoinDollar;
+  const coinTex = tex.coinYanbian;
   for (let i = 0; i < n; i += 1) {
     const coin = coinTex ? new Sprite(coinTex) : new Sprite();
     coin.anchor.set(0.5);
-    coin.scale.set(coinTex ? 26 / coinTex.width : 1);
+    const coinW = coinTex ? contentBounds(coinTex).w : 26;
+    if (coinTex) coin.anchor.set(contentBounds(coinTex).cx, contentBounds(coinTex).cy);
+    coin.scale.set(26 / coinW);
     coin.position.set(x + (Math.random() - 0.5) * 50, y + (Math.random() - 0.5) * 36);
     fxLayer.addChild(coin);
     const tx = 150;
@@ -481,7 +485,7 @@ function coinFly(x: number, y: number, n: number): void {
       const ease = p * p * (3 - 2 * p);
       coin.x = sx + (tx - sx) * ease;
       coin.y = sy + (ty - sy) * ease - Math.sin(p * Math.PI) * 70;
-      coin.scale.x = (coinTex ? 26 / coinTex.width : 1) * Math.abs(Math.cos(p * 9));
+      coin.scale.x = (26 / coinW) * Math.abs(Math.cos(p * 9));
       if (p < 1 && !destroyed) requestAnimationFrame(tick);
       else coin.destroy();
     };
@@ -765,7 +769,7 @@ onMounted(async () => {
   await app.init({ resizeTo: stageEl.value!, background: 0x06121e, antialias: true, resolution: Math.min(2, window.devicePixelRatio), autoDensity: true });
   stageEl.value!.appendChild(app.canvas);
   tex = await pixiTextures('fishing');
-  Object.assign(tex, await pixiTextures('common', ['iconCoinDollar']));
+  Object.assign(tex, await pixiTextures('common', ['coinYanbian']));
 
   world = new Container();
   app.stage.addChild(world);
@@ -850,7 +854,9 @@ onMounted(async () => {
     const tx = tex[key];
     if (tx && cannon.texture !== tx) cannon.texture = tx;
     const targetH = Math.max(110, Math.min(170, H() * 0.24));
-    cannon.scale.set(targetH / cannon.texture.height);
+    const b = contentBounds(cannon.texture);
+    cannon.anchor.set(b.cx, (b.y + b.h * 0.78) / cannon.texture.height);
+    cannon.scale.set(targetH / b.h);
   };
   applyCannon();
   reticle = new Graphics();
@@ -1236,11 +1242,16 @@ onBeforeUnmount(() => {
 .skill.active {
   filter: drop-shadow(0 0 12px rgba(255, 226, 138, 0.95));
 }
+/* 素材自带 16% 透明安全边距：图标盒按 1/0.68 放大并负偏移，视觉尺寸与按钮占位一致 */
 .sk-icon {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: -23.5%;
+  width: 147%;
+  height: 147%;
   object-fit: contain;
+  object-position: center;
   border-radius: 12px;
+  pointer-events: none;
 }
 .skill.cd .sk-icon {
   filter: grayscale(0.7) brightness(0.55);

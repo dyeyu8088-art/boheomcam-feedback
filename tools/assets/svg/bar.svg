@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- 原创：水果机「BAR」符号（三层金条 + 深红字）。本项目自绘，无第三方素材。 -->
+  <defs>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff3bf"/><stop offset="0.35" stop-color="#f1c65a"/><stop offset="0.7" stop-color="#c9922a"/><stop offset="1" stop-color="#8a5a12"/>
+    </linearGradient>
+    <linearGradient id="text" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b3172a"/><stop offset="1" stop-color="#6d0c18"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)" font-family="'Liberation Sans','DejaVu Sans',Arial,sans-serif" font-weight="900" text-anchor="middle">
+    <g transform="translate(128 74)">
+      <rect x="-80" y="-24" width="160" height="48" rx="10" fill="url(#bar)" stroke="#5a3608" stroke-width="5"/>
+      <rect x="-74" y="-18" width="148" height="12" rx="6" fill="#fff" opacity="0.35"/>
+      <text y="14" font-size="36" fill="url(#text)" letter-spacing="4">BAR</text>
+    </g>
+    <g transform="translate(128 128)">
+      <rect x="-86" y="-24" width="172" height="48" rx="10" fill="url(#bar)" stroke="#5a3608" stroke-width="5"/>
+      <rect x="-80" y="-18" width="160" height="12" rx="6" fill="#fff" opacity="0.35"/>
+      <text y="14" font-size="36" fill="url(#text)" letter-spacing="4">BAR</text>
+    </g>
+    <g transform="translate(128 182)">
+      <rect x="-80" y="-24" width="160" height="48" rx="10" fill="url(#bar)" stroke="#5a3608" stroke-width="5"/>
+      <rect x="-74" y="-18" width="148" height="12" rx="6" fill="#fff" opacity="0.35"/>
+      <text y="14" font-size="36" fill="url(#text)" letter-spacing="4">BAR</text>
+    </g>
+  </g>
+</svg>

@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## [0.3.1] - 2026-09-04 素材裁切全面检查修复（PHASE 21 · P13）
+
+### 检查工具（tools/assets/）
+- `audit.py`：全量扫描 PNG / WebP，标记贴边 `CUT_*` / `EDGE_*`、边距不足 `LOW_MARGIN`、无透明 `NO_ALPHA`、深色底 `DARK_BG`、方框背景 `CORNER_OPAQUE`；
+  输出 JSON / MD / HTML 预览网格 + **PNG 检查表 `build/asset-check-*.png`**（棋盘格 + 12% 安全线 + 红黄绿框）
+- `pad_margins.py`：独立对象类素材裁到包围盒后补透明边到 **16%**（不缩放、不重采样；`--trim/--crop` 先去外来碎片）
+- `build-slot-symbols.py` + `render-svg.mjs` + `svg/{seven,bar,coin}.svg`：水果机符号集生成（Fluent 3D MIT + 原创 SVG 光栅化）
+- 规范文档 `docs/12-asset-guidelines.md`；`THIRD_PARTY_ASSETS.md` 更名为 `THIRD_PARTY_NOTICES.md` 并登记 Fluent UI Emoji（MIT）与原创 SVG
+
+### 素材（审计前独立对象类 123/123 不合格 → 0）
+- 101 个图标 / 鱼 / 炮台 / 人物 / 特效 / 底板补边到 16%；财神发牌右缘外来白条裁除
+- 水果机 10 个符号整套更换为独立透明 PNG（西瓜 / 樱桃 / 柠檬 / 橙子 / 葡萄 / 蓝宝石 / 星 / 礼盒 ← Fluent 3D；7 / BAR / 金币 ← 原创），新增 **BAR**
+- `sparkle_coin`（黑底方块）→ 透明星光；新增平台金币 `coin_yanbian`（无 `$`，长白山 + 江水徽记）
+- 删除 15 个不合格素材：深色底图标 7、素材站边框碎片 4、`$` 金币 3、烙字轮盘横幅 1
+
+### 客户端
+- 新增 `src/assets/bounds.ts`：`contentBounds(texture)` 读取纹理内容包围盒；捕鱼鱼 / 炮台 / 金币、水果机符号一律按**内容尺寸**缩放与锚定，换素材不改常量
+- 水果机符号不再画深蓝方框底板；WILD / BONUS 文字由 Pixi 程序绘制；符号可见尺寸 0.8 格
+- 全局 `img { object-fit: contain; object-position: center }` + `.asset-icon` 工具类；轮盘去掉唯一的 `object-fit: cover`（烙字横幅改为 HTML 标题）
+- 捕鱼技能图标 / Jackpot 底板按 1/0.68 放大盒子补偿内置边距；大厅活动 / 任务 / 邮件 / VIP / 商城图标改用完整圆形版本；金币展示统一 `coin_yanbian`
+
+### 水果机数学
+- 赔付表 **fruit_gold_v3**：每列卷轴条第 2、5 个 LEMON 位置改为 BAR，全表赔率上调约 7%；`scripts/slot-rtp-sim.ts` 600k 次实测 RTP **95.63%**（线奖 81.7% + Scatter 3.6% + 免费旋转 10.4%，命中率 48.0%）；
+  模拟器新增 `SLOT_PAYS=<json>` 临时覆盖赔率做候选对比；migrate 自动激活 v3 并退役 v2
+
 ## [0.3.0] - 2026-09-03 新版美术全量接入（PHASE 20 · P1–P5）
 
 ### P1–P2 项目扫描与素材入库
@@ -155,7 +180,7 @@
 
 ## [0.2.1] - 2026-09-03 GitHub 开源素材接入（PHASE 19 美术精修 · 续）
 
-### 素材来源与合规（新增 `THIRD_PARTY_ASSETS.md`）
+### 素材来源与合规（新增 `THIRD_PARTY_NOTICES.md`）
 - 只接入 GitHub 上许可证明确允许商业使用的开源素材：CC0 / 公共领域 / SIL OFL 1.1；
   每项素材目录内保留原始许可证文件，并在清单中登记来源 URL、许可证与落地位置
 - 仍然不含任何竞品 APK 提取资源、商标、Logo、游戏名称、受版权保护的音乐 / 角色 / 美术图；

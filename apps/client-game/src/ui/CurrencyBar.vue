@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<{ kind: 'coin' | 'diamond'; value: number
 });
 defineEmits<{ (e: 'add'): void }>();
 const plate = computed(() => (props.kind === 'coin' ? asset('common', props.size === 'wide' ? 'plateCoinWide' : 'plateCoin') : asset('common', props.size === 'wide' ? 'plateDiamondWide' : 'plateDiamond')));
-const icon = computed(() => (props.kind === 'coin' ? asset('common', 'iconCoinLg') : asset('common', 'iconGemBlue')));
+const icon = computed(() => (props.kind === 'coin' ? asset('common', 'coinYanbian') : asset('common', 'iconGemBlue')));
 </script>
 
 <style scoped>

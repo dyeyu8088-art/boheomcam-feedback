@@ -54,7 +54,7 @@ const products = ref<Product[]>([]);
 const loading = ref(false);
 const pending = ref('');
 const reward = ref<InstanceType<typeof RewardAnimation> | null>(null);
-const coinIcon = asset('common', 'iconCoinLg');
+const coinIcon = asset('common', 'coinYanbian');
 const gemIcon = asset('common', 'iconGemBlue');
 const fallbackIcon = asset('common', 'iconGiftBox');
 

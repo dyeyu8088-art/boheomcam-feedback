@@ -1,6 +1,6 @@
 /**
  * 水果机 RTP 蒙特卡洛模拟器。
- * 用法：npx tsx scripts/slot-rtp-sim.ts [spins]
+ * 用法：npx tsx scripts/slot-rtp-sim.ts [spins]   （SLOT_PAYS=<json> 可临时覆盖赔率做候选对比）
  * 输出：总 RTP、命中率、各来源贡献（线奖/Scatter/免费旋转）、方差指标。
  * 后台发布新 Paytable 前必须附本报告（写入 config_versions.metadata）。
  */
@@ -9,7 +9,8 @@ import { spin } from '../packages/game-common/src/slot/engine.js';
 import { secureRng } from '../packages/game-common/src/rng.js';
 
 const spins = Number(process.argv[2] ?? 1_000_000);
-const cfg = FRUIT_GOLD_V1;
+// 调参：SLOT_PAYS='{"CHERRY":{"3":12,...}}' 临时覆盖赔率（不改源码即可对比候选方案）
+const cfg = process.env.SLOT_PAYS ? { ...FRUIT_GOLD_V1, pays: { ...FRUIT_GOLD_V1.pays, ...(JSON.parse(process.env.SLOT_PAYS) as Record<string, Record<number, number>>) } } : FRUIT_GOLD_V1;
 const betPerLine = 100;
 const lines = 20;
 

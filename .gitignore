@@ -12,3 +12,4 @@ apps/client/ios/
 deploy/certs/
 deploy/backup/data/
 *.tsbuildinfo
+__pycache__/

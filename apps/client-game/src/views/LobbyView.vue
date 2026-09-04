@@ -157,16 +157,16 @@ const navs = computed(() => [
   { key: 'tournament', icon: asset('common', 'navIconTrophy'), label: t('nav.tournament') },
   { key: 'friends', icon: asset('common', 'navIconFriends'), label: t('nav.friends') },
   { key: 'bag', icon: asset('common', 'navIconBag'), label: t('nav.bag') },
-  { key: 'shop', icon: asset('common', 'iconShopIngot'), label: t('nav.shop') },
+  { key: 'shop', icon: asset('common', 'iconAncientCoinRound'), label: t('nav.shop') },
 ]);
 const featureList = [
-  { key: 'activity', icon: asset('common', 'iconEventGift'), label: 'feature.activity' },
+  { key: 'activity', icon: asset('common', 'iconGiftRound'), label: 'feature.activity' },
   { key: 'signin', icon: asset('common', 'iconDailyBonusBag'), label: 'feature.welfare' },
-  { key: 'tasks', icon: asset('common', 'iconTaskScroll'), label: 'feature.tasks' },
-  { key: 'mail', icon: asset('common', 'iconMail'), label: 'feature.mail' },
+  { key: 'tasks', icon: asset('common', 'iconTaskRound'), label: 'feature.tasks' },
+  { key: 'mail', icon: asset('common', 'iconMailRound'), label: 'feature.mail' },
   { key: 'rank', icon: asset('common', 'navIconRank'), label: 'feature.rank' },
   { key: 'announce', icon: asset('common', 'iconMegaphoneRound'), label: 'feature.announce' },
-  { key: 'vip', icon: asset('common', 'iconVipCrown'), label: 'feature.vip' },
+  { key: 'vip', icon: asset('common', 'iconCrownRound'), label: 'feature.vip' },
 ];
 
 /* 音频设置（响应式镜像） */

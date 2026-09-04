@@ -61,10 +61,14 @@ function pick(): void {
 .chip.lg {
   --d: 84px;
 }
+/* 素材自带 16% 透明安全边距：图片盒按 1/0.68 放大并负偏移，可见板件与按钮盒等大（docs/12） */
 .chip img {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: -23.5%;
+  width: 147%;
+  height: 147%;
   object-fit: contain;
+  object-position: center;
   pointer-events: none;
 }
 .chip:hover:not(:disabled) {

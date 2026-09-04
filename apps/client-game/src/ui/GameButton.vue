@@ -137,12 +137,14 @@ function onClick(ev: MouseEvent): void {
   filter: grayscale(0.7) brightness(0.6) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 /* 位图成品 */
+/* 素材自带 16% 透明安全边距：图片盒按 1/0.68 放大并负偏移，可见板件与按钮盒等大（docs/12） */
 .gb-art {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: -23.5%;
+  width: 147%;
+  height: 147%;
   object-fit: contain;
+  object-position: center;
   pointer-events: none;
 }
 .gb.art {

@@ -88,7 +88,8 @@ VPS 快速上手（韩文：服务商选择 / 端口放行 / 源码包上传 / A
 - [总体架构](docs/01-architecture.md) ｜ [数据库](docs/02-database.md) ｜ [通信协议](docs/03-protocol.md)
 - [钱包账本](docs/04-wallet.md) ｜ [安全与防作弊](docs/06-security.md) ｜ [设计系统](docs/07-design-system.md)
 - [大厅视觉规范](docs/11-lobby-design.md)（Design Token / Icon / 游戏卡 / 动效 / 多分辨率适配）
-- [第三方开源素材清单](THIRD_PARTY_ASSETS.md)（麻将牌面 CC0 / 扑克牌公共领域 / 四款 OFL 字体，含许可证与复现命令）
+- [第三方开源素材清单](THIRD_PARTY_NOTICES.md)（麻将牌面 CC0 / 扑克牌公共领域 / 四款 OFL 字体 / Fluent UI Emoji MIT，含许可证与复现命令）
+- [素材完整性规范与检查流程](docs/12-asset-guidelines.md)（`tools/assets/audit.py` 全量检查 → `pad_margins.py` 补边 → PNG 检查表；显示规则 `object-fit: contain` + `contentBounds()`）
 - 规则确认表：[延边麻将](docs/05-game-rules/yanbian-mahjong-rules-confirmation.md) ｜ [红十](docs/05-game-rules/hongshi-rules-confirmation.md)
 - 游戏架构：[捕鱼](docs/05-game-rules/fishing-architecture.md) ｜ [水果机](docs/05-game-rules/slots-architecture.md)
 
@@ -99,4 +100,4 @@ VPS 快速上手（韩文：服务商选择 / 端口放行 / 源码包上传 / A
 - 账本不可篡改：交易/分录/调账只增不改，触发器拒绝 UPDATE/DELETE。
 - 每 PHASE：Build → Run → Test → Review → 修复 → 复测 → 更新 README/CHANGELOG。
 - 素材合规：只接入许可证允许商业使用的开源素材（CC0 / 公共领域 / OFL），许可证文件随素材入库并登记到
-  [THIRD_PARTY_ASSETS.md](THIRD_PARTY_ASSETS.md)；禁止竞品 APK 提取资源、商标、Logo、受版权保护的音乐 / 美术。
+  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)；禁止竞品 APK 提取资源、商标、Logo、受版权保护的音乐 / 美术。

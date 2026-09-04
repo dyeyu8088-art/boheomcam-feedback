@@ -42,7 +42,7 @@ function play(opts: { amount: number; tier?: 'normal' | 'big' | 'mega' | 'epic';
   banner.value = opts.banner ?? '';
   caption.value = opts.caption ?? '';
   const n = tier.value === 'epic' ? 42 : tier.value === 'mega' ? 30 : tier.value === 'big' ? 20 : 12;
-  const srcs = [asset('common', 'iconCoinDollar'), asset('common', 'iconCoinTilt'), asset('common', 'iconCoinLg')];
+  const srcs = [asset('common', 'coinYanbian')];
   coins.value = Array.from({ length: n }, (_, i) => ({
     id: ++seq,
     src: srcs[i % srcs.length]!,

@@ -29,8 +29,6 @@ const frame = computed(() => {
       return asset('slots', 'jackpotMinor');
     case 'mini':
       return asset('slots', 'jackpotMini');
-    case 'roulette':
-      return asset('roulette', 'jackpotBanner');
     case 'red10':
       return asset('red10', 'jackpotBanner');
     default:
@@ -62,12 +60,14 @@ const frame = computed(() => {
 .jb.mahjong {
   aspect-ratio: 2.55 / 1;
 }
+/* 底板素材自带 16% 透明安全边距：按 1/0.68 放大并负偏移，可见底板与 .jb 盒子等大 */
 .jb-frame {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: -23.5%;
+  width: 147%;
+  height: 147%;
   object-fit: contain;
+  object-position: center;
   pointer-events: none;
 }
 .jb-num {

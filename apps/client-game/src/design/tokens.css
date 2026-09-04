@@ -253,3 +253,20 @@ body,
     transform: rotate(360deg);
   }
 }
+
+/* ── 素材显示规则（docs/12-asset-guidelines.md）──
+   独立对象类素材（图标 / 水果 / 鱼 / 人物 / 道具）自带 ≥16% 透明安全边距（tools/assets/pad_margins.py）。
+   <img> 一律等比缩放、居中、不裁切（禁止用 object-fit: cover 展示独立对象）；底板 / 九宫格类才允许 fill。 */
+img {
+  object-fit: contain;
+  object-position: center;
+}
+.asset-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  box-sizing: border-box;
+  padding: var(--icon-pad, 6%);
+  display: block;
+}

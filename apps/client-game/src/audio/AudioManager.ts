@@ -1,6 +1,6 @@
 /**
  * AudioManager（用户要求 §十五）
- * - SFX：WebAudio 解码缓冲，可重叠播放、零延迟；文件为 Kenney CC0 音效转 MP3（THIRD_PARTY_ASSETS.md）
+ * - SFX：WebAudio 解码缓冲，可重叠播放、零延迟；文件为 Kenney CC0 音效转 MP3（THIRD_PARTY_NOTICES.md）
  * - BGM：程序生成的环境音乐（WebAudio 振荡器 + 滤波 + 混响尾巴），按游戏切换调式 / 速度，切换游戏时淡出释放
  * - Voice：预留同 SFX 通道（播报类语音走 `voice()`，独立音量）
  * - 设置：音乐 / 音效开关与音量持久化到 localStorage；首个用户手势后自动 resume AudioContext

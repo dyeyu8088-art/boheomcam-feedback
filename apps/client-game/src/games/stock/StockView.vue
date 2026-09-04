@@ -885,6 +885,7 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
 }
 .chip {
+  position: relative;
   width: 44px;
   height: 44px;
   padding: 0;
@@ -894,10 +895,14 @@ onBeforeUnmount(() => {
   transition: transform 120ms var(--ease-out);
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
 }
+/* 素材自带 16% 透明安全边距：图片盒按 1/0.68 放大并负偏移，可见板件与按钮盒等大（docs/12） */
 .chip img {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: -23.5%;
+  width: 147%;
+  height: 147%;
   object-fit: contain;
+  object-position: center;
 }
 .chip.on {
   transform: translateY(-5px) scale(1.12);

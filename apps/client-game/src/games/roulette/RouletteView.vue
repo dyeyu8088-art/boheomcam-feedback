@@ -4,8 +4,7 @@
     <div class="hud-top">
       <GameButton round size="md" :art="exitArt" class="hback" sfx="close" @click="exit" />
       <div class="title">
-        <img v-if="zh" class="banner" :src="bannerArt" alt="" draggable="false" />
-        <span v-else class="title-text sk-gold-text">{{ t('game.roulette') }}</span>
+        <span class="title-text sk-gold-text">{{ t('game.roulette') }}</span>
       </div>
       <div class="phase sk-panel" :class="round?.phase">
         <span class="phase-label">{{ phaseLabel }}</span>
@@ -131,7 +130,7 @@ import { useRouter } from 'vue-router';
 import { Ev } from '@yanbian/protocol';
 import { gameSocket } from '../../net/ws.js';
 import { useUserStore } from '../../stores/user.js';
-import { currentLocale, t } from '../../i18n/index.js';
+import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
 import { fmt } from '../../ui/format.js';
 import { asset } from '../../assets/assets.js';
@@ -180,10 +179,8 @@ interface StakeInfo {
 
 const router = useRouter();
 const user = useUserStore();
-const zh = computed(() => currentLocale.value === 'zh');
 
 const exitArt = asset('common', 'btnExitRound');
-const bannerArt = asset('roulette', 'jackpotBanner');
 const spinArt = asset('roulette', 'btnSpin');
 const repeatArt = asset('roulette', 'btnRepeat');
 const closeArt = asset('roulette', 'btnClose');
@@ -708,14 +705,6 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   min-width: 0;
-}
-/* 素材横幅自带 JACKPOT 缎带（轮盘无奖池）：只展示上部「幸运轮盘」牌匾 */
-.banner {
-  width: 160px;
-  height: 43px;
-  object-fit: cover;
-  object-position: top;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
 }
 .title-text {
   font-family: var(--font-display);
@@ -1244,10 +1233,6 @@ onBeforeUnmount(() => {
   }
 }
 @media (max-width: 900px), (max-height: 600px) {
-  .banner {
-    width: 120px;
-    height: 36px;
-  }
   .title-text {
     font-size: 18px;
   }

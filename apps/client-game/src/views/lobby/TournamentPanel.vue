@@ -79,7 +79,7 @@ const items = ref<Tournament[]>([]);
 const loading = ref(false);
 const pending = ref('');
 const now = ref(Date.now());
-const coinIcon = asset('common', 'iconCoinLg');
+const coinIcon = asset('common', 'coinYanbian');
 const gemIcon = asset('common', 'iconGemBlue');
 let timer = 0;
 

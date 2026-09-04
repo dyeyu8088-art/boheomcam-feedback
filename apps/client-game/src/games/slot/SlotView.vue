@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Application, Container, Graphics, Rectangle, Sprite, type Texture } from 'pixi.js';
+import { Application, Container, Graphics, Rectangle, Sprite, Text, type Texture } from 'pixi.js';
 import { Ev } from '@yanbian/protocol';
 import { gameSocket } from '../../net/ws.js';
 import { useUserStore } from '../../stores/user.js';
@@ -58,6 +58,7 @@ import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/toast.js';
 import { fmt } from '../../ui/format.js';
 import { asset, pixiTextures, release } from '../../assets/assets.js';
+import { contentBounds } from '../../assets/bounds.js';
 import { audio } from '../../audio/AudioManager.js';
 import GameButton from '../../ui/GameButton.vue';
 import CurrencyBar from '../../ui/CurrencyBar.vue';
@@ -104,6 +105,7 @@ const SYMBOL_KEY: Record<string, string> = {
   ORANGE: 'slotOrange',
   GRAPE: 'slotGrape',
   MELON: 'slotWatermelon',
+  BAR: 'slotBar',
   DIAMOND: 'slotDiamond',
   SEVEN: 'slotSeven',
   GOLD: 'slotGold',
@@ -128,23 +130,33 @@ let destroyed = false;
 let lastGrid: string[][] = [];
 const offs: (() => void)[] = [];
 
+/** 符号 = 独立透明图标（不画方框底板），按内容包围盒等比缩放、居中；WILD / BONUS 加柔光晕与程序文字标签（不烙进图片） */
 function makeSymbol(sym: string): Container {
   const c = new Container();
   const special = sym === 'WILD' || sym === 'BONUS';
-  const card = new Graphics();
-  const w = cellW * 0.9;
-  const h = cellH * 0.9;
-  card.roundRect(-w / 2, -h / 2, w, h, 12).fill(special ? 0x1a1230 : 0x0d1a3c);
-  card.roundRect(-w / 2 + 2, -h / 2 + 2, w - 4, h * 0.34, 10).fill({ color: 0xffffff, alpha: 0.05 });
-  card.roundRect(-w / 2, -h / 2, w, h, 12).stroke({ color: special ? 0xf0c14e : 0x3a4a78, width: special ? 2.4 : 1.2 });
-  c.addChild(card);
+  if (special) {
+    const halo = new Graphics();
+    halo.circle(0, 0, Math.min(cellW, cellH) * 0.44).fill({ color: sym === 'WILD' ? 0xffd25a : 0xc77dff, alpha: 0.16 });
+    c.addChild(halo);
+  }
   const texture = tex[SYMBOL_KEY[sym] ?? 'slotCherry'];
   if (texture) {
+    const b = contentBounds(texture);
     const s = new Sprite(texture);
-    s.anchor.set(0.5);
-    const fit = Math.min((cellW * 0.78) / texture.width, (cellH * 0.78) / texture.height);
+    s.anchor.set(b.cx, b.cy);
+    const fit = Math.min((cellW * 0.8) / b.w, (cellH * (special ? 0.62 : 0.8)) / b.h);
     s.scale.set(fit);
+    if (special) s.y = -cellH * 0.08;
     c.addChild(s);
+  }
+  if (special) {
+    const label = new Text({
+      text: sym,
+      style: { fontSize: Math.max(10, Math.round(cellH * 0.17)), fontWeight: '900', fill: sym === 'WILD' ? 0xffe27a : 0xf3d1ff, stroke: { color: 0x2a1500, width: 3 }, letterSpacing: 1 },
+    });
+    label.anchor.set(0.5);
+    label.y = cellH * 0.33;
+    c.addChild(label);
   }
   return c;
 }

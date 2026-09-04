@@ -181,7 +181,7 @@ public/assets-manifest.json      运行时清单（按组 → key → URL）
 src/assets/manifest.gen.ts       编译期类型（AssetGroup / AssetKey）
 ```
 
-合计 343 文件 / 10.8 MB（PNG，后续按需转 WebP）。来源登记见 `THIRD_PARTY_ASSETS.md`（新版素材为用户提供的 AI 生成图，无第三方版权主张）。
+合计 343 文件 / 10.8 MB（PNG，后续按需转 WebP）。来源登记见 `THIRD_PARTY_NOTICES.md`（新版素材为用户提供的 AI 生成图，无第三方版权主张）。
 
 **素材使用原则**（用户要求 §十八）：素材只提供背景 / 框 / 按钮 / 图标 / 角色 / 装饰；金币、昵称、等级、倒计时、Jackpot 金额、赔率、投注额、HP、排名等动态数字一律程序 Text 绘制。Sheet 中烙有数字的板件已在切图时抹除数字（`clear` 区域），烙有中文文案的按钮以 `_zh` 后缀保留，仅在中文环境使用，韩文环境用程序文字 + CSS 板件。
 
@@ -207,7 +207,7 @@ src/assets/manifest.gen.ts       编译期类型（AssetGroup / AssetKey）
 | 后台 | `apps/admin-web/src/views/{ConfigsPage,RoomsPage,DashboardPage}.vue` | 新游戏类型、Jackpot 池、技能记录 |
 | i18n | `src/i18n/{zh,ko}.ts` | 新增约 120 key |
 | 测试 | `tests/e2e-smoke.mjs` · `tests/ui-smoke.mjs` · `game-common/test/{roulette,stock}.test.ts`(新) | 新游戏与防重复领奖用例 |
-| 文档 | `README.md` · `CHANGELOG.md` · `THIRD_PARTY_ASSETS.md` · `ASSET_MAPPING.md`(新) · `docs/03-protocol.md` · `docs/05-game-rules/{roulette,stock}.md`(新) | |
+| 文档 | `README.md` · `CHANGELOG.md` · `THIRD_PARTY_NOTICES.md` · `ASSET_MAPPING.md`(新) · `docs/03-protocol.md` · `docs/05-game-rules/{roulette,stock}.md`(新) | |
 
 ---
 
