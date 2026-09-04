@@ -2,6 +2,7 @@
 
 > 素材根目录 `apps/client-game/public/assets/`，运行时通过 `asset(group, key)`（`src/assets/assets.ts`）读取；
 > key 由文件名自动生成（`btn_spin.png → slots.btnSpin`），清单：`public/assets-manifest.json`。
+> 体积 ≥ 30 KB 的 PNG 切片已转为同名 `.webp`（质量 88，含 alpha），资源清单 key 不变；下表仍按原始切片文件名（.png）标注。
 > 状态：✅ 已接入 · 🔧 本轮接入中 · 📦 已入库备用（装饰 / 后续功能）。
 > 规则：素材只承担 背景 / 框 / 按钮 / 图标 / 角色 / 装饰；所有动态数字（金币 / 倒计时 / Jackpot / 倍率 / HP / 排名）由程序 Text 绘制。
 > `_zh` 后缀 = 烙有中文文案的成品按钮或演出，仅 `locale === 'zh'` 使用；韩文环境由 `GameButton` 用 CSS 板件 + 程序文字渲染。

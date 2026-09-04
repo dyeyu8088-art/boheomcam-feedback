@@ -1196,9 +1196,18 @@ onBeforeUnmount(() => {
   .players {
     display: none;
   }
+  .chips {
+    gap: 3px;
+  }
   .chip {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
+  }
+  .d-label {
+    display: none;
+  }
+  .digits {
+    gap: 3px;
   }
   .big {
     height: clamp(48px, 11vh, 64px);
@@ -1221,6 +1230,8 @@ onBeforeUnmount(() => {
   }
   .digit {
     height: 22px;
+    min-width: 0;
+    padding: 0;
     font-size: 11px;
   }
   .rg-l {

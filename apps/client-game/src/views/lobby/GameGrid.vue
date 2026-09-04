@@ -630,6 +630,28 @@ function joinRoom(): void {
     display: none;
   }
 }
+/* 手机横屏：六张卡单行，只留标题与在线数 */
+@media (orientation: landscape) and (max-height: 450px) {
+  .cards {
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: minmax(96px, 1fr);
+    gap: 8px;
+  }
+  .gcard {
+    border-radius: 14px;
+  }
+  .g-title {
+    font-size: 15px;
+  }
+  .g-title.ko {
+    font-size: 13px;
+  }
+  .g-sub,
+  .g-enter,
+  .g-tag {
+    display: none;
+  }
+}
 @media (max-width: 720px) {
   .cards {
     grid-template-columns: repeat(2, 1fr);

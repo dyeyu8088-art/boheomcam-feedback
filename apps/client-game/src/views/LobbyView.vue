@@ -447,6 +447,46 @@ async function logout(): Promise<void> {
     padding-bottom: 8px;
   }
 }
+/* 手机横屏（高度 ≤ 450）：顶栏 / 功能栏压扁，功能栏只留图标，六张卡单行 */
+@media (orientation: landscape) and (max-height: 450px) {
+  .topbar {
+    padding-top: calc(var(--safe-top) + 2px);
+    padding-bottom: 2px;
+  }
+  .tb-profile {
+    --h: 40px;
+  }
+  .body {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .side {
+    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    gap: 6px;
+    padding: 0;
+    overflow: visible;
+  }
+  .feat {
+    width: 44px;
+  }
+  .f-ico {
+    width: 30px;
+    height: 30px;
+  }
+  .f-label {
+    display: none;
+  }
+  .content {
+    padding-bottom: 2px;
+  }
+  .navbar {
+    width: min(640px, calc(100% - 24px));
+    margin-bottom: calc(var(--safe-bottom) + 2px);
+    --h: 40px;
+  }
+}
 @media (max-width: 720px) {
   .topbar {
     gap: 8px;

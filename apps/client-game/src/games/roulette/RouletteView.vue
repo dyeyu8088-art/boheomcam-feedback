@@ -40,7 +40,8 @@
             <Stake :stake="stakeAt('straight:0')" :chip-art="chipArtFor" />
           </button>
           <div class="grid">
-            <button v-for="n in 36" :key="n" class="cell" :class="colorOf(n)" type="button" @click="place('straight', String(n))">
+            <!-- 显式指定行列：1 在左下、3 在左上，与真实轮盘台一致（auto-flow 会产生阶梯错位） -->
+            <button v-for="n in 36" :key="n" class="cell" :class="colorOf(n)" :style="{ gridColumn: Math.ceil(n / 3), gridRow: 3 - ((n - 1) % 3) }" type="button" @click="place('straight', String(n))">
               <span class="cell-n num">{{ n }}</span>
               <Stake :stake="stakeAt(`straight:${n}`)" :chip-art="chipArtFor" />
             </button>
@@ -934,19 +935,11 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   grid-template-rows: repeat(3, var(--cell));
-  grid-auto-flow: column;
-  direction: ltr;
   gap: 3px;
+  min-width: 0;
 }
-/* 1 在左下、3 在左上：按列填充时反转行序 */
-.grid .cell:nth-child(3n + 1) {
-  grid-row: 3;
-}
-.grid .cell:nth-child(3n + 2) {
-  grid-row: 2;
-}
-.grid .cell:nth-child(3n) {
-  grid-row: 1;
+.grid .cell {
+  min-width: 0;
 }
 .cols {
   grid-row: 1;
