@@ -7,7 +7,7 @@
  * 状态机：spawn / swim / turn / hit / stun / escape / death —— 由 FishingView 按服务器事件驱动。
  * 局部动作按 fps 节流（普通鱼 8–12、Boss 12–18），场景移动每帧插值，二者互不影响。
  */
-import { Container, Graphics, MeshPlane, type Texture } from 'pixi.js';
+import { Container, Graphics, MeshPlane, Rectangle, Sprite, Texture } from 'pixi.js';
 import { contentBounds } from '../../assets/bounds.js';
 
 export type FishState = 'spawn' | 'swim' | 'turn' | 'hit' | 'stun' | 'escape' | 'death';
@@ -35,6 +35,11 @@ export interface RigSpec {
   mouth?: [number, number];
   fins?: { x: number; y: number; len: number; dir: 1 | -1 }[];
   shadow?: boolean;
+  /**
+   * 方案 A：帧序列 sprite sheet（8–16 帧游泳循环，尺寸中心一致、透明、无跳动）。
+   * 配置后局部动作改为逐帧播放（网格变形关闭，叠加层仍可用）；sheet 缺失时自动退回网格骨骼。
+   */
+  frames?: { key: string; cols: number; rows: number; count: number; fps: number };
 }
 
 /* 纹理像素采样（眼皮 / 鳍配色取自素材本身） */
@@ -97,6 +102,10 @@ export class FishRig {
   /** 镜像与状态位移（scale.x = 朝向） */
   readonly body = new Container();
   mesh: MeshPlane | null = null;
+  /** 帧序列模式（方案 A）：逐帧精灵，代替网格变形 */
+  private frameSprite: Sprite | null = null;
+  private frameTextures: Texture[] = [];
+  private frameIdx = 0;
   private base: Float32Array | null = null;
   private cols = 0;
   private rows = 0;
@@ -136,7 +145,7 @@ export class FishRig {
     this.node.addChild(this.body);
   }
 
-  setup(spec: RigSpec, texture: Texture, lowEnd: boolean, nowMs: number, initialAngle = 0): void {
+  setup(spec: RigSpec, texture: Texture, lowEnd: boolean, nowMs: number, initialAngle = 0, sheet?: Texture): void {
     this.spec = spec;
     this.lowEnd = lowEnd;
     this.tintBase = spec.tint ?? 0xffffff;
@@ -152,8 +161,36 @@ export class FishRig {
       this.mesh.destroy();
       this.mesh = null;
     }
+    if (this.frameSprite) {
+      this.frameSprite.destroy();
+      this.frameSprite = null;
+    }
+    this.frameTextures = [];
     this.body.removeChildren();
+    // 方案 A：帧序列（sheet 有效时）
+    if (spec.frames && sheet && sheet.width > 0) {
+      const fw = sheet.width / spec.frames.cols;
+      const fh = sheet.height / spec.frames.rows;
+      for (let i = 0; i < spec.frames.count; i += 1) {
+        const fx = (i % spec.frames.cols) * fw;
+        const fy = Math.floor(i / spec.frames.cols) * fh;
+        this.frameTextures.push(new Texture({ source: sheet.source, frame: new Rectangle(sheet.frame.x + fx, sheet.frame.y + fy, fw, fh) }));
+      }
+      const first = this.frameTextures[0]!;
+      const fb = contentBounds(first);
+      this.bx = fb.x;
+      this.by = fb.y;
+      this.bw = fb.w;
+      this.bh = fb.h;
+      this.scale = spec.w / fb.w;
+      this.frameSprite = new Sprite(first);
+      this.frameSprite.anchor.set(fb.cx, fb.cy);
+      this.frameSprite.scale.set(this.scale);
+      this.frameSprite.tint = this.tintBase;
+      this.frameIdx = Math.floor(Math.random() * this.frameTextures.length);
+    }
     this.mesh = new MeshPlane({ texture, verticesX: cols, verticesY: rows });
+    this.mesh.visible = !this.frameSprite;
     this.cols = cols;
     this.rows = rows;
     const buf = this.mesh.geometry.getAttribute('aPosition').buffer;
@@ -167,6 +204,7 @@ export class FishRig {
       this.shadow.y = (b.h * this.scale) * 0.55;
       this.body.addChild(this.shadow);
     } else this.shadow = null;
+    if (this.frameSprite) this.body.addChild(this.frameSprite);
     this.body.addChild(this.mesh, this.overlay);
     this.overlay.scale.set(this.scale);
     this.overlay.position.set(-(b.w * this.scale) / 2, -(b.h * this.scale) / 2); // 叠加层用内容框归一化坐标
@@ -233,6 +271,11 @@ export class FishRig {
     return { x: this.node.x + lx * c, y: this.node.y + lx * s };
   }
 
+  private setTint(c: number): void {
+    if (this.mesh) this.mesh.tint = c;
+    if (this.frameSprite) this.frameSprite.tint = c;
+  }
+
   /** @returns death 动画是否已结束（外部回收） */
   update(nowMs: number, dtMs: number, moveSpeed: number, frozen: boolean): boolean {
     if (!this.mesh || !this.base) return false;
@@ -261,7 +304,7 @@ export class FishRig {
     } else if (this.state === 'hit') {
       const p = Math.min(1, sinceState / 170);
       this.body.position.set(this.hitDx * (1 - p), this.hitDy * (1 - p));
-      this.mesh.tint = p < 0.45 ? 0xffffff : this.tintBase;
+      this.setTint(p < 0.45 ? 0xffffff : this.tintBase);
       if (p >= 1) {
         this.body.position.set(0, 0);
         this.setState('swim', nowMs);
@@ -271,7 +314,7 @@ export class FishRig {
       const e = p * p;
       this.body.rotation = this.facing * (Math.PI * 0.55) * Math.min(1, p * 1.6);
       this.body.position.y = 46 * e;
-      this.mesh.tint = darken(this.tintBase, 1 - 0.55 * p);
+      this.setTint(darken(this.tintBase, 1 - 0.55 * p));
       this.node.alpha = p < 0.55 ? 1 : 1 - (p - 0.55) / 0.45;
       finished = p >= 1;
     } else if (this.state === 'escape') {
@@ -279,10 +322,10 @@ export class FishRig {
     }
     if (this.state === 'swim' || this.state === 'escape') {
       this.body.scale.set(this.facing, 1);
-      if (!frozen) this.mesh.tint = this.angry && Math.floor(nowMs / 220) % 2 === 0 ? 0xff9a8a : this.tintBase;
+      if (!frozen) this.setTint(this.angry && Math.floor(nowMs / 220) % 2 === 0 ? 0xff9a8a : this.tintBase);
     }
     if (frozen && this.state !== 'death') {
-      this.mesh.tint = 0x9fd8ff;
+      this.setTint(0x9fd8ff);
       return finished; // 冰冻：局部动作暂停
     }
     if (this.state === 'stun') this.setState('swim', nowMs);
@@ -293,7 +336,12 @@ export class FishRig {
     this.localT += dtMs * boost;
     if (nowMs - this.localAt < 1000 / fps && this.state !== 'death') return finished;
     this.localAt = nowMs;
-    this.deform(this.localT / 1000);
+    if (this.frameSprite && this.frameTextures.length) {
+      // 帧序列：按 sheet 自身 fps × 游速倍率推进（循环衔接）
+      const fr = this.spec.frames!;
+      this.frameIdx = Math.floor((this.localT / 1000) * fr.fps) % this.frameTextures.length;
+      this.frameSprite.texture = this.frameTextures[this.frameIdx]!;
+    } else this.deform(this.localT / 1000);
     this.drawOverlay(nowMs, this.localT / 1000);
     return finished;
   }
@@ -399,6 +447,7 @@ export class FishRig {
   }
 
   destroy(): void {
+    this.frameSprite?.destroy();
     this.mesh?.destroy();
     this.overlay.destroy();
     this.node.destroy({ children: true });

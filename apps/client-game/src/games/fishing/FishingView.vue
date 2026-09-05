@@ -235,7 +235,8 @@ function acquireFish(f: { fishId: number; typeId: string; pathId: number; spawnA
   lf.lastTrail = 0;
   const texture = tex[spec.key];
   const path0 = pathById.get(f.pathId);
-  if (texture) lf.rig.setup(spec, texture, lowEnd, serverNow(), path0 ? headingOnPath(path0, 0.002).angle : 0);
+  const sheet = spec.frames ? tex[spec.frames.key] : undefined; // 方案 A 帧序列（有素材时自动启用）
+  if (texture) lf.rig.setup(spec, texture, lowEnd, serverNow(), path0 ? headingOnPath(path0, 0.002).angle : 0, sheet);
   lf.lane = laneForFish(f.fishId, type?.size ?? 'small');
   lf.size = spec.w * 0.45;
   lf.node.visible = false;

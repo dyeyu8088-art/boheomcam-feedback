@@ -96,3 +96,12 @@
 | 水果机滚轮 | 真实纵向滚动（符号带） | 已合格 |
 | 海底背景是否静止 | 光束 / 焦散静止 | 光束摆动、焦散起伏、水草摆动、颗粒视差、气泡 |
 | 特效是否只是发光图 | 捕鱼技能为程序绘制 | 已合格 |
+
+## 10. 方案 A（帧序列）接入方式
+
+`FISH_RIGS[typeId].frames = { key, cols, rows, count, fps }` —— `key` 为 `assets-manifest` 里的 sheet 键（放进 `public/assets/fishing/fish/`，跑 `build-manifest.mjs`）。
+sheet 存在时该鱼种自动切换为逐帧播放（循环衔接、随机起始帧、游速 / 逃逸 / 愤怒倍率仍生效），网格变形关闭；sheet 缺失时自动退回网格骨骼。
+要求：每帧尺寸与中心一致、透明背景、四周 ≥16% 安全边距（`pad_margins.py` 可逐帧处理）、8–16 帧、来源 MIT / Apache / CC0 / 可商用并登记 `THIRD_PARTY_NOTICES.md`。
+
+素材搜索记录（2026-09-05）：本环境只能访问 GitHub Raw，opengameart.org / itch.io / kenney.nl 被网络策略拦截；GitHub 上可确认的 CC0 鱼类包只有 Kenney Fish Pack（静态单帧、扁平矢量风格，与本项目 HD 风格不符），
+未找到可直接使用的 HD 8–16 帧游泳序列。候选（需在可访问网络下核对许可证与风格）：OpenGameArt「Cute Fish Sprites」（多动作帧）、「Swimming Fish」（CC0，32×32 像素风）、「Swimming Whale」、「Fish Sprite sheet」。
