@@ -228,6 +228,10 @@ export class FishRig {
     this.wagBoost = 1;
     this.nextBlink = nowMs + 1500 + Math.random() * 3000;
     this.nextMouth = nowMs + 2000 + Math.random() * 4000;
+    // 对象池复用：上一条鱼可能停在 death（setState 对 death 不再转移），这里显式复位
+    this.state = 'swim';
+    this.hitDx = 0;
+    this.hitDy = 0;
     this.setState('spawn', nowMs);
   }
 
